@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+
+
+	<script>
+		var SCOPE = "https://www.googleapis.com/auth/drive.file";
+		var discoveryUrl = "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+
+		// document.onreadystatechange = () => {
+		// 	script = document.createElement("script");
+		// 	script.onload = this.handleClientLoad;
+		// 	script.src = "https://apis.google.com/js/api.js";
+		// 	document.body.appendChild(script);
+
+		// 	handleClientLoad = () => {
+		// 		window.gapi.load("client", this.initClient);
+		// 	}
+
+		// 	initClient = () => {
+		// 		try {
+		// 			window.gapi.client.init({
+		// 				"apiKey": "AIzaSyDaxitMumGVkJRqTSK0tdIqwK2OpNlj7Zc",
+		// 				"clientId": "611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com",
+		// 				"scope": SCOPE,
+		// 				"discoveryDocs": [discoveryUrl]
+		// 			}).then(() => {
+		// 				this.setState({
+		// 					googleAuth: window.gapi.auth2.getAuthInstance()
+		// 				})
+		// 				this.state.googleAuth.isSignedIn.listen(this.updateSigninStatus);
+		// 				document.getElementById("signin - btn").addEventListener("click", this.signInFunction);
+		// 				document.getElementById("signout - btn").addEventListener("click", this.signOutFunction);
+		// 			});
+		// 		} catch (e) {
+		// 			console.log(e);
+		// 		}
+		// 	}
+		// }
+		// function handleCredentialResponse(...args) {
+		// 	console.log(...args);
+		// }
+
+		let access_token;
+		function initClient() {
+			console.log("init client");
+			client = google.accounts.oauth2.initTokenClient({
+				client_id: '611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com',
+				scope: 'https://www.googleapis.com/auth/drive',
+				callback: (tokenResponse) => {
+					console.log("token response");
+					console.log(tokenResponse);
+					access_token = tokenResponse.access_token;
+				},
+			});
+		}
+
+		function getToken() {
+			client.requestAccessToken();
+		}
+
+		let images;
+
+		
+		async function handleFiles(files) {
+			console.log(files);
+			images = await Promise.all(Array.from(files).map(processImageFile));
+			console.log(images);
+		}
+		function processImageFile(file) {
+			const image = {
+				blob: file,
+				name: file.name,
+				size: file.size,
+				type: file.type,
+			};
+
+			var url = URL.createObjectURL(image.blob);
+			var img = new Image;
+			return new Promise((resolve, reject) => {
+				img.onload = function() {
+					image.width = img.width;
+					image.height = img.height;
+					image.trueRatio = img.width / img.height;
+					image.closestRatio = Object.keys(aspect_ratios).reduce((min, ratio) => Math.abs(aspect_ratios[ratio] - image.trueRatio) < Math.abs(aspect_ratios[min] - image.trueRatio) ? ratio : min);
+					URL.revokeObjectURL(img.src); // free memory
+					resolve(image);
+				};
+				img.src = url;
+			});
+		}
+
+		const testFolderId = '1emrqAh2n3tZBVLVFqdv1Mt_jzTgXsIQS';
+		function uploadImage(image) {
+			if (!image?.blob) return;
+			const form = new FormData();
+			form.append('metadata', new Blob([JSON.stringify({name: image.name, parents: [testFolderId]})], {type: 'application/json'}));
+			form.append('file', image.blob);
+			fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+				method: 'POST',
+				headers: new Headers({'Authorization': 'Bearer ' + access_token}),
+				body: form
+			}).then(res => res.json()).then(val => afterUpload(val, image));
+		};
+
+		function afterUpload(res, image) {
+			console.log(res);
+			image.googleId = res.id;
+			document.body.insertAdjacentHTML('beforeend', /*html*/`<img src="https://drive.google.com/thumbnail?id=${res.id}&sz=w400-h400" />`);
+			document.body.insertAdjacentHTML('beforeend', /*html*/`<img src="https://drive.google.com/thumbnail?id=${res.id}" />`);
+			document.body.insertAdjacentHTML('beforeend', /*html*/`<img src="https://drive.google.com/thumbnail?id=1gFG9EH_Y-hr0ur09qUHgVOQY0Ro_2o6u&sz=w1200-h2400"/>`);
+			document.body.insertAdjacentHTML('beforeend', /*html*/`<a href="https://drive.google.com/uc?export=download&id=${res.id}">Download</a>`);
+		}
+
+		const aspect_ratios = {
+			'1:1': 1,
+			// tall
+			'3:2': 3 / 2,
+			'5:4': 5 / 4,
+			'16:9': 16 / 9,
+			// wide
+			'2:3': 2 / 3,
+			'4:5': 4 / 5,
+			'9:16': 9 / 16,
+		}
+
+	</script>
+	<script src="https://accounts.google.com/gsi/client" onload="initClient()"></script>
+
+</head>
+
+<body>
+	<!-- // login with redirect -->
+	<!-- <a
+		href="https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=http://127.0.0.1:5500/src/index.html&prompt=consent&response_type=token&client_id=611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive">
+		login
+	</a> -->
+
+	<!-- // login with auto stuff -->
+		<!-- <div id="g_id_onload" data-client_id="611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com"
+			data-callback="handleCredentialResponse">
+		</div>
+		<div class="g_id_signin" data-type="standard"></div> -->
+
+		<!-- // login with popup and callback -->
+		<a onclick="getToken();">Get access token</a><br><br>
+
+		<input type="file" id="file" onchange="handleFiles(this.files)">
+
+		<p onClick="uploadImage()">Do Upload</p>
+
+
+		<img src="https://drive.google.com/thumbnail?id=1amxi1d5mkaE0PXgG31CSQKDXfFubf2gF&sz=w100-h400"></img>
+		<img src="https://drive.google.com/thumbnail?id=1amxi1d5mkaE0PXgG31CSQKDXfFubf2gF&sz=w4800"></img>
+		<img src="https://drive.google.com/thumbnail?id=1amxi1d5mkaE0PXgG31CSQKDXfFubf2gF" ></img>
+
+
+</body>
+
+
+</html>
