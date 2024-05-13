@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router';
 import { reactive, onBeforeMount, onMounted, onBeforeUnmount } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
+import Slideshow from './Slideshow.vue';
 
 const router = useRouter();
 
@@ -10,6 +11,8 @@ const state = reactive({
 	isLoading: true,
 	galleryId: router.currentRoute.value.params.galleryId,
 	gallery: null,
+	showSlideshow: false,
+	firstSlideshowPhoto: null,
 });
 
 const aspect_ratios = {
@@ -122,6 +125,18 @@ onBeforeUnmount(() => {
 	window.removeEventListener('resize', () => computeImagePlacement());
 });
 
+function downloadHighRes(photo) {
+	const link = document.createElement('a');
+	link.href = `https://drive.google.com/uc?export=download&id=${photo.googleFileId}`;
+	link.download = photo.filename;
+	link.click();
+}
+
+function openSlideshow(photo?) {
+	state.firstSlideshowPhoto = photo;
+	state.showSlideshow = true;
+}
+
 </script>
 
 
@@ -131,19 +146,26 @@ onBeforeUnmount(() => {
 		<h1>{{state.gallery.name}}</h1>
 
 		<div v-for="section in state.gallery.Sections" :key="section.id" class="section mt-3">
-			<center><h2>{{section.name}}</h2></center>
+			<h2>{{section.name}}</h2>
 			<div class="photo-grid" :style="{height: section.height + 'px'}">
 				<template v-for="photo in section.photos" :key="photo.id">
 					<div v-if="photo.rect" class="photo-grid-item" :style="{width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px'}">
-						<div class="photo-frame"><PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true" :fillMethod="'cover'" /></div>
+						<div class="photo-frame" @click="openSlideshow(photo)"><PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true" :fillMethod="'cover'" /></div>
+						<div class="bottom-bar">
+							<div class="buttons">
+								<div class="button"><i class="fa fa-heart-o" /></div>
+								<div class="button" @click="downloadHighRes(photo)"><i class="fa fa-download" /></div>
+							</div>
+						</div>
 					</div>
 				</template>
 			</div>
 		</div>
+		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.Sections.flatMap(s => s.photos)" :firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
 	</div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 #viewGallery {
 	/* make sure there is a scrollbar before the images load so they have the right width */
 	min-height: 101vh;
@@ -152,14 +174,53 @@ onBeforeUnmount(() => {
 .photo-grid {
 	margin-top: 10px;
 	position: relative;
+
+	.photo-grid-item {
+		position: absolute;
+
+		.photo-frame {
+			width: 100%;
+			height: 100%;
+			cursor: pointer;
+		}
+
+		.bottom-bar {
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+			background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5) 2em);
+			color: white !important;
+			opacity: 0;
+			padding-top: 1em;
+
+			.buttons {
+				width: auto;
+				display: inline-flex;
+
+				.button {
+					width: 40px;
+					height: 40px;
+					font-size: 20px;
+					display: inline-flex;
+					justify-content: center;
+					align-items: center;
+					cursor: pointer;
+				}
+				&:hover .button {
+					opacity: .5;
+
+					&:hover {
+						opacity: 1;
+					}
+				}
+			}
+		}
+		&:hover .bottom-bar {
+			opacity: 1;
+			transition: 500ms;
+		}
+	}
 }
 
-.photo-grid-item {
-	position: absolute;
-}
 
-.photo-frame {
-	width: 100%;
-	height: 100%;
-}
 </style>

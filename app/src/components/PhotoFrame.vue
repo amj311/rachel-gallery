@@ -2,6 +2,14 @@
 import { onMounted, reactive } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
 
+const windowWithCache = window as unknown as Window & {
+	photoCache: Map<string, HTMLImageElement>
+};
+
+if (!windowWithCache.photoCache) {
+	windowWithCache.photoCache = new Map();
+}
+
 const { photo, size = 'xs', watermark, fillMethod } = defineProps<{
 	photo: {
 		id: string,
@@ -10,7 +18,7 @@ const { photo, size = 'xs', watermark, fillMethod } = defineProps<{
 		height: number,
 	},
 	fillMethod?: 'cover' | 'contain',
-	size?: 'xs' | 'sm' | 'md' | 'lg',
+	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
 	watermark?: boolean,
 }>()
 
@@ -22,58 +30,94 @@ const sizeWidths = {
 	xl: 2400
 }
 
+// Cap resolution with screen size to reduce strain on small devices
+const usingSize = Math.min(sizeWidths[size], window.innerWidth * 2);
+
 const canvasId = 'canvas_' + Date.now() + Math.random();
 
 const state = reactive({
-	canvasW: sizeWidths[size],
-	canvasH: photo.height * (sizeWidths[size] / photo.width),
+	canvasW: usingSize,
+	canvasH: photo.height * (usingSize / photo.width),
+	isLoadingHiRes: false,
 })
 
-onMounted(() => {
+async function loadImage(src) {
+	const isWeb = typeof src === 'string' && src.startsWith('http');
+	if (isWeb && windowWithCache.photoCache.has(src)) {
+		return windowWithCache.photoCache.get(src)!
+	}
+	const img = new Image();
+	await new Promise((res) => {
+		img.referrerPolicy = "no-referrer";
+		img.addEventListener("load", res);
+		img.src = src;
+	});
+	if (isWeb) {
+		windowWithCache.photoCache.set(src, img);
+		setTimeout(() => windowWithCache.photoCache.delete(src), 1000 * 60 * 5);
+	}
+	return img;
+}
+
+async function drawImage(source, doWatermark = false) {
 	const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
 	const ctx = canvas!.getContext('2d')!;
 
-	const img = new Image(); // Create new img element
-	img.addEventListener("load", () => {
-		ctx.drawImage(img, 0, 0, state.canvasW, state.canvasH);
+	const img = await loadImage(source);
+	ctx.globalAlpha = 1;
+	ctx.drawImage(img, 0, 0, state.canvasW, state.canvasH);
 
-		if (watermark) {
-			const wtr = new Image();
-			wtr.addEventListener("load", () => {
-				const wtrW = wtr.width;
-				const wtrH = wtr.height;
-				let newWtrW;
-				let newWtrH;
-				const scaleFactor = 5;
-
-				// choose smallest side to base watermark on
-				if (state.canvasW < state.canvasH) {
-					newWtrW = state.canvasW / scaleFactor;
-					newWtrH = wtrH * (newWtrW / wtrW);
-				} else {
-					newWtrH = state.canvasH / scaleFactor;
-					newWtrW = wtrW * (newWtrH / wtrH);
-				}
-
-				const edgeMargin = state.canvasW * 0.02;
-				const wtrOffW = state.canvasW - newWtrW - edgeMargin;
-				const wtrOffH = state.canvasH - newWtrH - edgeMargin;
-
-				ctx.globalAlpha = 0.3;
-				ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
-			});
+	if (doWatermark) {
+		const wtr = new Image();
+		await new Promise((res) => {
+			wtr.addEventListener("load", res);
 			wtr.src = watermarkImage;
-			// wtr.src = "https://www.chestysoft.com/images/watermark.png";
-		}
-	});
+		});
 
-	const imageSrc = (photo.googleFileId ?
-		`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${state.canvasW}` :
+		const wtrW = wtr.width;
+		const wtrH = wtr.height;
+		let newWtrW;
+		let newWtrH;
+		const scaleFactor = 5;
+
+		// choose smallest side to base watermark on
+		if (state.canvasW < state.canvasH) {
+			newWtrW = state.canvasW / scaleFactor;
+			newWtrH = wtrH * (newWtrW / wtrW);
+		} else {
+			newWtrH = state.canvasH / scaleFactor;
+			newWtrW = wtrW * (newWtrH / wtrH);
+		}
+
+		const edgeMargin = state.canvasW * 0.02;
+		const wtrOffW = state.canvasW - newWtrW - edgeMargin;
+		const wtrOffH = state.canvasH - newWtrH - edgeMargin;
+
+		ctx.globalAlpha = 0.3;
+		ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
+	}
+}
+
+onMounted(async () => {
+	const isGooglePhoto = Boolean(photo.googleFileId);
+	const needsInitialLoad = isGooglePhoto && usingSize >= sizeWidths['lg'];
+
+	if (needsInitialLoad) {
+		state.isLoadingHiRes = true;
+	}
+
+	const firstImageSize = needsInitialLoad ? sizeWidths['sm'] : usingSize;
+	const imageSrc = (isGooglePhoto ?
+		`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${firstImageSize}` :
 		photo.dataUrl
 	);
 
-	img.referrerPolicy = "no-referrer";
-	img.src = imageSrc;
+	await drawImage(imageSrc, watermark);
+	if (needsInitialLoad) {
+		// await new Promise((res) => setTimeout(res, 1000));
+		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`, watermark);
+		state.isLoadingHiRes = false;
+	}
 })
 
 </script>
@@ -81,21 +125,28 @@ onMounted(() => {
 <template>
 	<div class="photoframe">
 		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain' }"></canvas>
+		<i v-if="state.isLoadingHiRes" class="loader fa fa-spinner fa-spin" />
 	</div>
 </template>
 
 <style scoped>
 .photoframe {
-	width:100%;
-	height:100%;
-	position:relative;
-	/* background:blue; */
+	width: 100%;
+	height: 100%;
+	position: relative;
 }
 .photoframe canvas {
-	/* background:green; */
 	width: 100%;
 	height: 100%;
 	pointer-events: none;
 	user-select: none;
+}
+.loader {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font-size: 2rem;
+	color: white;
 }
 </style>

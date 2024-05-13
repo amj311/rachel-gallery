@@ -65,7 +65,7 @@ const routes: Array<RouteRecordRaw> = [
 	},
 	{
 		path: '/gallery/:galleryId',
-		component: () => import('@/views/ViewGallery.vue'),
+		component: () => import('@/views/viewGallery/ViewGallery.vue'),
 	},
 	{
 		path: '/:pathMatch(.*)*',
