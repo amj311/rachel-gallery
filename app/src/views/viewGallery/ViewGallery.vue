@@ -4,6 +4,7 @@ import { reactive, onBeforeMount, onMounted, onBeforeUnmount } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import Slideshow from './Slideshow.vue';
+import GalleryCover from '@/components/GalleryCover.vue';
 
 const router = useRouter();
 
@@ -143,7 +144,9 @@ function openSlideshow(photo?) {
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else id="viewGallery">
-		<h1>{{state.gallery.name}}</h1>
+		<div class="cover">
+			<GalleryCover :gallery="state.gallery" />
+		</div>
 
 		<div v-for="section in state.gallery.Sections" :key="section.id" class="section mt-3">
 			<h2>{{section.name}}</h2>
@@ -169,6 +172,14 @@ function openSlideshow(photo?) {
 #viewGallery {
 	/* make sure there is a scrollbar before the images load so they have the right width */
 	min-height: 101vh;
+	// temporary: remove page padding
+	margin: -32px;
+}
+
+.cover {
+	width: 100%;
+	height: 100vh;
+	position: relative;
 }
 
 .photo-grid {
@@ -188,7 +199,7 @@ function openSlideshow(photo?) {
 			position: absolute;
 			bottom: 0;
 			width: 100%;
-			background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5) 2em);
+			background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 2em);
 			color: white !important;
 			opacity: 0;
 			padding-top: 1em;

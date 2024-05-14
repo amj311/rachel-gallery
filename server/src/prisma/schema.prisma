@@ -24,15 +24,16 @@ model User {
 // }
 
 model Gallery {
-    id          String  @id //@default(uuid())
-    clientEmail String?
-    name        String?
-    slug        String?
-    date        String?
-    isPublished Boolean @default(false)
-    coverPhoto  Photo?  @relation(fields: [coverPhotoId], references: [id])
-    coverStyle  String?
-    coverTarget String?
+    id            String  @id //@default(uuid())
+    clientName    String?
+    clientEmail   String?
+    name          String?
+    slug          String?
+    date          String?
+    isPublished   Boolean @default(false)
+    coverPhoto    Photo?  @relation(fields: [coverPhotoId], references: [id])
+    coverStyle    String?
+    coverSettings Json?
 
     Sections     GallerySection[]
     coverPhotoId String?          @unique

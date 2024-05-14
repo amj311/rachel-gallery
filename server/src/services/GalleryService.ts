@@ -46,13 +46,15 @@ export const GalleryService = {
                 id,
             },
             data: {
-				clientEmail: galleryData.clientEmail,
 				name: galleryData.name,
 				slug: galleryData.slug,
+				clientEmail: galleryData.clientEmail,
+				clientName: galleryData.clientName,
 				// date: galleryData.date,
 				isPublished: galleryData.isPublished,
 				coverStyle: galleryData.coverStyle,
-				coverTarget: galleryData.coverTarget,
+				coverPhotoId: galleryData.coverPhotoId,
+				coverSettings: galleryData.coverSettings || undefined,
 			},
         });
     },

@@ -55,7 +55,6 @@ export default (route, _, done) => {
 
 	// Update an existing gallery
 	route.put('/gallery/:galleryId', async (request, reply) => {
-		console.log("updating gallery", request.body, request.params)
 		const { galleryId } = request.params;
 		const data = request.body;
 		const gallery = await GalleryService.updateGallery(galleryId, data);

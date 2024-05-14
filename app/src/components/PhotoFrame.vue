@@ -10,7 +10,7 @@ if (!windowWithCache.photoCache) {
 	windowWithCache.photoCache = new Map();
 }
 
-const { photo, size = 'xs', watermark, fillMethod } = defineProps<{
+const { photo, size = 'xs', watermark, fillMethod, position } = defineProps<{
 	photo: {
 		id: string,
 		googleFileId: string,
@@ -18,6 +18,7 @@ const { photo, size = 'xs', watermark, fillMethod } = defineProps<{
 		height: number,
 	},
 	fillMethod?: 'cover' | 'contain',
+	position?: string,
 	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
 	watermark?: boolean,
 }>()
@@ -59,43 +60,43 @@ async function loadImage(src) {
 	return img;
 }
 
-async function drawImage(source, doWatermark = false) {
+async function drawImage(source) {
 	const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
 	const ctx = canvas!.getContext('2d')!;
-
 	const img = await loadImage(source);
-	ctx.globalAlpha = 1;
 	ctx.drawImage(img, 0, 0, state.canvasW, state.canvasH);
+}
 
-	if (doWatermark) {
-		const wtr = new Image();
-		await new Promise((res) => {
-			wtr.addEventListener("load", res);
-			wtr.src = watermarkImage;
-		});
+async function drawWatermark() {
+	const canvas = document.getElementById(canvasId+'wtr') as HTMLCanvasElement;
+	const ctx = canvas!.getContext('2d')!;
+	const wtr = new Image();
+	await new Promise((res) => {
+		wtr.addEventListener("load", res);
+		wtr.src = watermarkImage;
+	});
 
-		const wtrW = wtr.width;
-		const wtrH = wtr.height;
-		let newWtrW;
-		let newWtrH;
-		const scaleFactor = 5;
+	const wtrW = wtr.width;
+	const wtrH = wtr.height;
+	let newWtrW;
+	let newWtrH;
+	const scaleFactor = 5;
 
-		// choose smallest side to base watermark on
-		if (state.canvasW < state.canvasH) {
-			newWtrW = state.canvasW / scaleFactor;
-			newWtrH = wtrH * (newWtrW / wtrW);
-		} else {
-			newWtrH = state.canvasH / scaleFactor;
-			newWtrW = wtrW * (newWtrH / wtrH);
-		}
-
-		const edgeMargin = state.canvasW * 0.02;
-		const wtrOffW = state.canvasW - newWtrW - edgeMargin;
-		const wtrOffH = state.canvasH - newWtrH - edgeMargin;
-
-		ctx.globalAlpha = 0.3;
-		ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
+	// choose smallest side to base watermark on
+	if (state.canvasW < state.canvasH) {
+		newWtrW = state.canvasW / scaleFactor;
+		newWtrH = wtrH * (newWtrW / wtrW);
+	} else {
+		newWtrH = state.canvasH / scaleFactor;
+		newWtrW = wtrW * (newWtrH / wtrH);
 	}
+
+	const edgeMargin = state.canvasW * 0.02;
+	const wtrOffW = state.canvasW - newWtrW - edgeMargin;
+	const wtrOffH = state.canvasH - newWtrH - edgeMargin;
+
+	ctx.globalAlpha = 0.3;
+	ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
 }
 
 onMounted(async () => {
@@ -112,10 +113,16 @@ onMounted(async () => {
 		photo.dataUrl
 	);
 
-	await drawImage(imageSrc, watermark);
+
+	if (watermark) {
+		drawWatermark();
+	}
+	
+	await drawImage(imageSrc);
+
 	if (needsInitialLoad) {
 		// await new Promise((res) => setTimeout(res, 1000));
-		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`, watermark);
+		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`);
 		state.isLoadingHiRes = false;
 	}
 })
@@ -124,7 +131,8 @@ onMounted(async () => {
 
 <template>
 	<div class="photoframe">
-		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain' }"></canvas>
+		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
+		<canvas :id="canvasId+'wtr'" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<!-- <i v-if="state.isLoadingHiRes" class="loader fa fa-spinner fa-spin" /> -->
 	</div>
 </template>
@@ -136,6 +144,9 @@ onMounted(async () => {
 	position: relative;
 }
 .photoframe canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
 	pointer-events: none;

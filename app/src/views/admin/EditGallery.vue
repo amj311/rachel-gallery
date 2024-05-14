@@ -1,29 +1,65 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount } from 'vue';
+import { reactive, onBeforeMount, watch } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
 import { GoogleDriveService } from '@/services/googleDrive';
+import GalleryCover from '@/components/GalleryCover.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
 
+const coverStyles = [
+	'full',
+	'half',
+];
+
 const state = reactive({
+	isSaving: false,
 	galleryId: router.currentRoute.value.params.galleryId,
 	gallery: null,
 	showUploadToSection: null,
 	imagesToUpload: new Set(),
 });
 
-
 onBeforeMount(async () => {
 	const { data } = await request.get('gallery/' + state.galleryId);
 	state.gallery = data.data;
+
+	// set some defaults....
+	if (!state.gallery.coverStyle) {
+		state.gallery.coverStyle = 'full';
+	}
+	if (!state.gallery.coverSettings) {
+		state.gallery.coverSettings = {
+			textPlacement: 'center',
+			border: false,
+		};
+	}
 })
 
-async function updateGallery() {
-	await request.put('admin/gallery/' + state.galleryId, state.gallery);
+let oldGallery = 'null';
+watch(state, (newState) => {
+	if (oldGallery !== 'null' && JSON.stringify(newState.gallery) !== oldGallery) {
+		updateGallery();
+	}
+	oldGallery = JSON.stringify(newState.gallery);
+})
+
+const saveDebounceTime = 1500;
+let nextDebounce = 0;
+
+function updateGallery() {
+	console.log("updating gallery");
+	if (nextDebounce > 0) {
+		clearTimeout(nextDebounce);
+	}
+	state.isSaving = true;
+	nextDebounce = setTimeout(async () => {
+		request.put('admin/gallery/' + state.galleryId, state.gallery);
+		state.isSaving = false;
+	}, saveDebounceTime);
 }
 
 function openUploadToSection(section) {
@@ -31,15 +67,20 @@ function openUploadToSection(section) {
 }
 
 async function handleFiles(files) {
-	console.log(files);
 	for (const file of files) {
 		state.imagesToUpload.add(await processImageFile(file));
 	}
-	console.log(state.imagesToUpload);
 }
 
 function onImageUploadComplete(newPhoto) {
 	state.gallery.Sections.find(s => s.id === newPhoto.gallerySectionId)!.photos.push(newPhoto);
+
+	// Use first uploaded image as gallery cover
+	if (!state.gallery.coverPhoto) {
+		state.gallery.coverPhoto = newPhoto;
+		state.gallery.coverPhotoId = newPhoto.id;
+		updateGallery();
+	}
 }
 
 function processImageFile(file) {
@@ -75,33 +116,18 @@ function sendToUploader() {
 	state.showUploadToSection = null;
 }
 
-const aspect_ratios = {
-	'1:1': 1,
-	// tall
-	'3:2': 3 / 2,
-	'5:4': 5 / 4,
-	'16:9': 16 / 9,
-	// wide
-	'2:3': 2 / 3,
-	'4:5': 4 / 5,
-	'9:16': 9 / 16,
-}
-
-
 function onDragOver(event) {
 	event.stopPropagation();
 	event.preventDefault();
 	event.dataTransfer.dropEffect = 'copy';
 	event.target.classList.add('drag-over');
 }
-
 function onDragLeave(event) {
 	event.stopPropagation();
 	event.preventDefault();
 	event.dataTransfer.dropEffect = 'none';
 	event.target.classList.remove('drag-over');
 }
-
 function onDrop(event) {
 	event.stopPropagation();
 	event.preventDefault();
@@ -144,16 +170,61 @@ async function deleteSection(section) {
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
-		<h1>Manage Gallery</h1>
 		<hr />
+		<div class="flex align-items-center gap-4"><h1>Manage Gallery</h1> <span v-if="state.isSaving"><i class="fa fa-spinner fa-spin"/> Saving...</span></div>
 		<input v-model="state.gallery.name" placeholder="Gallery Name" /> <br />
 		/ <input v-model="state.gallery.slug" placeholder="link" /> <br />
-		<button @click="updateGallery">Save</button>
+		<input v-model="state.gallery.clientName" placeholder="Client Name" /> <br />
+		<input v-model="state.gallery.clientEmail" placeholder="Client Email" /> <br />
+
+
+		<h2>Cover</h2>
+
+		<div v-if="!state.gallery.coverPhoto">Upload some photos to choose a cover</div>
+		<div v-else class="flex">
+			<div class="cover-settings flex-grow-1">
+				<div>Style</div>
+				<div class="cover-style-options">
+					<div v-for="style in coverStyles" :key="style" @click="() => state.gallery.coverStyle = style" :classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
+						<div class="cover-small"><GalleryCover :gallery="state.gallery" :style="style" /></div>
+					</div>
+				</div>
+				<div>Settings</div>
+				<div v-if="state.gallery.coverStyle === 'full'">
+					<div>
+						<span>Text placement: </span>
+						<select v-model="state.gallery.coverSettings.textPlacement">
+							<option value="center">Center</option>
+							<option value="bottom">Bottom</option>
+						</select>
+					</div>
+					<div>
+						<span>Border: </span>
+						<input type="checkbox" v-model="state.gallery.coverSettings.border" />
+					</div>
+				</div>
+			</div>
+			<div class="cover-previews">
+				<div class="cover-preview-wrapper desktop">
+					<div class="cover-preview">
+						<GalleryCover :gallery="state.gallery" />
+					</div>
+				</div>
+				<div class="cover-preview-wrapper mobile">
+					<div class="cover-preview">
+						<GalleryCover :gallery="state.gallery" :pretendMobile="true" />
+					</div>
+					<div class="faux-button" />
+				</div>
+			</div>
+			
+		</div>
+
 
 		<div v-for="section in state.gallery.Sections" :key="section.id" class="mt-3">
+			<hr />
 			<h2><input v-model="section.name" /></h2>
 			<button @click="deleteSection(section)">Delete</button>
-			<hr />
 			<div class="photo-grid">
 				<div key="add-photos" class="photo-grid-item add-photos" @click="openUploadToSection(section)" />
 
@@ -192,13 +263,73 @@ async function deleteSection(section) {
 </template>
 
 <style scoped>
-#main {
-	background-color: white;
+
+.cover-style-options {
+	display: flex;
+	gap: 1rem;		
 }
 
-.about {
-	color: white;
+.cover-style-option {
+	cursor: pointer;
+	outline: 1px solid grey;
+
+	&:hover {
+	}
+	&.selected {
+		outline: 2px solid blue;
+	}
+
+	.cover-small {
+		width: 1000px;
+		aspect-ratio: 1.75;
+		zoom: .1;
+		pointer-events: none;
+		user-select: none;
+	}
 }
+
+.cover-preview-wrapper {
+    border-radius: 10px;
+    padding: 15px;
+    position: relative;
+    display: inline-block;
+    border: 2px solid grey;
+    background: #fff;
+
+	&.mobile {
+		padding: 10px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+		margin-left: -90px;
+		
+		.faux-button {
+			position: absolute;
+			top: 6px;
+			left: 50%;
+			transform: translateX(-50%);
+			border: 2px solid grey;
+			border-radius: 2px;
+			width: 15px;
+		}
+	}
+
+	.cover-preview {
+		position: relative;
+		width: 1200px;
+		aspect-ratio: 1.6;
+		zoom: .5;
+		pointer-events: none;
+		user-select: none;
+		border: 1px solid grey;
+	}
+
+	&.mobile .cover-preview {
+		width: 375px;
+        aspect-ratio: .56;
+        zoom: .4;
+	}
+}
+
 
 .photo-grid {
 	margin-top: 10px;
