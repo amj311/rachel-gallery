@@ -54,6 +54,10 @@ export const useUploaderStore = defineStore('uploader', {
 			const token = await GoogleDriveService.getToken();
 			if (token) {
 				this.googleDriveInfo = await GoogleDriveService.getDriveInfo();
+				if (!this.googleDriveInfo.targetFolder) {
+					await GoogleDriveService.createTargetFolder();
+					this.googleDriveInfo = await GoogleDriveService.driveInfo;
+				}
 				this.checkGoogleStatus();
 				this.startUploadLoop()
 			}
@@ -72,7 +76,7 @@ export const useUploaderStore = defineStore('uploader', {
 				this.isGoogleReady = false;
 				return;
 			}
-			if (this.googleDriveInfo.owner && GoogleDriveService.hasValidToken) {
+			if (this.googleDriveInfo.targetFolder && GoogleDriveService.hasValidToken) {
 				this.isGoogleReady = true;
 			}
 		},

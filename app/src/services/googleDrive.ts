@@ -1,9 +1,7 @@
 import axios from "axios";
 
 // 'google' provided from script tag in index.html
-
-// TODO determine upload folder
-const testFolderId = '1emrqAh2n3tZBVLVFqdv1Mt_jzTgXsIQS';
+const uploadFolderName = '__rachel_gallery_photos__';
 
 export const GoogleDriveService = {
 	googleClient: null,
@@ -50,17 +48,30 @@ export const GoogleDriveService = {
 		if (this.driveInfo) return this.driveInfo;
 		const { data: owner } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + this.token.access_token);
 		const { data: drive } = await axios.get('https://www.googleapis.com/drive/v3/about?fields=storageQuota&access_token=' + this.token.access_token);
+		const { data: folderSearch } = await axios.get(`https://www.googleapis.com/drive/v3/files?q=name+%3d+%27${uploadFolderName}%27+and+mimeType+%3d+%27application/vnd.google-apps.folder%27+and+trashed+%3d+false&access_token=` + this.token.access_token);
 		this.driveInfo = {
 			owner,
 			storage: drive.storageQuota,
+			targetFolder: folderSearch?.files?.[0],
 		};
 		return this.driveInfo;
 	},
 
+	async createTargetFolder() {
+		if (!this.driveInfo) throw Error("Must load drive info first");
+		if (this.driveInfo.targetFolder) throw Error("Target folder already exists");
+		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/?access_token=' + this.token.access_token, {
+			name: uploadFolderName,
+			mimeType: 'application/vnd.google-apps.folder',
+		});
+		this.driveInfo.targetFolder = data;
+	},
+
 	async uploadImage(image) {
-		if (!image?.blob) return;
+		if (!this.driveInfo?.targetFolder) throw Error("no target folder");
+		if (!image?.blob) throw Error("no image blob");
 		const form = new FormData();
-		form.append('metadata', new Blob([JSON.stringify({name: image.filename, parents: [testFolderId]})], {type: 'application/json'}));
+		form.append('metadata', new Blob([JSON.stringify({ name: image.filename, parents: [this.driveInfo.targetFolder.id] })], { type: 'application/json' }));
 		form.append('file', image.blob);
 		const { data } = await axios.post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&access_token=' + this.token.access_token, form);
 		console.log(data)
@@ -70,7 +81,7 @@ export const GoogleDriveService = {
 	async deleteFile(fileId) {
 		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + this.token.access_token, { trashed: true });
 	},
-	
+
 	async restoreFile(fileId) {
 		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + this.token.access_token, { trashed: false });
 	}
