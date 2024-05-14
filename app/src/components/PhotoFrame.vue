@@ -125,7 +125,7 @@ onMounted(async () => {
 <template>
 	<div class="photoframe">
 		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain' }"></canvas>
-		<i v-if="state.isLoadingHiRes" class="loader fa fa-spinner fa-spin" />
+		<!-- <i v-if="state.isLoadingHiRes" class="loader fa fa-spinner fa-spin" /> -->
 	</div>
 </template>
 

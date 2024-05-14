@@ -24,10 +24,10 @@ export const GalleryService = {
 		});
     },
 
-    async getGalleryFull(id: string) {
-        return await prisma.gallery.findUnique({
+    async getGalleryFull(idOrSlug: string) {
+        return await prisma.gallery.findFirst({
             where: {
-                id,
+                OR: [ { id: idOrSlug }, { slug: idOrSlug } ],
             },
 			include: {
 				coverPhoto: true,
@@ -41,11 +41,19 @@ export const GalleryService = {
     },
 
     async updateGallery(id: string, galleryData: Partial<Gallery>) {
-        return await prisma.gallery.update({
+        await prisma.gallery.update({
             where: {
                 id,
             },
-            data: galleryData,
+            data: {
+				clientEmail: galleryData.clientEmail,
+				name: galleryData.name,
+				slug: galleryData.slug,
+				// date: galleryData.date,
+				isPublished: galleryData.isPublished,
+				coverStyle: galleryData.coverStyle,
+				coverTarget: galleryData.coverTarget,
+			},
         });
     },
 

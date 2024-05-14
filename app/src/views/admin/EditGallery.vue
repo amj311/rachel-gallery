@@ -23,8 +23,7 @@ onBeforeMount(async () => {
 })
 
 async function updateGallery() {
-	const { data } = await request.put('admin/gallery/' + state.galleryId, state.gallery);
-	state.gallery = data.data;
+	await request.put('admin/gallery/' + state.galleryId, state.gallery);
 }
 
 function openUploadToSection(section) {
@@ -147,7 +146,9 @@ async function deleteSection(section) {
 	<div v-else>
 		<h1>Manage Gallery</h1>
 		<hr />
-		<input v-model="state.gallery.name" /><button @click="updateGallery">Save</button>
+		<input v-model="state.gallery.name" placeholder="Gallery Name" /> <br />
+		/ <input v-model="state.gallery.slug" placeholder="link" /> <br />
+		<button @click="updateGallery">Save</button>
 
 		<div v-for="section in state.gallery.Sections" :key="section.id" class="mt-3">
 			<h2><input v-model="section.name" /></h2>
