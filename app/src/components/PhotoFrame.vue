@@ -32,7 +32,7 @@ const sizeWidths = {
 }
 
 // Cap resolution with screen size to reduce strain on small devices
-const usingSize = Math.min(sizeWidths[size], window.innerWidth * 2);
+const usingSize = Math.min(sizeWidths[size], Math.max(window.innerWidth, window.innerHeight) * 2);
 
 const canvasId = 'canvas_' + Date.now() + Math.random();
 
