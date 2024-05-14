@@ -6,6 +6,7 @@ import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
 import { GoogleDriveService } from '@/services/googleDrive';
 import GalleryCover from '@/components/GalleryCover.vue';
+import dayjs from 'dayjs';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -173,6 +174,7 @@ async function deleteSection(section) {
 		<hr />
 		<div class="flex align-items-center gap-4"><h1>Manage Gallery</h1> <span v-if="state.isSaving"><i class="fa fa-spinner fa-spin"/> Saving...</span></div>
 		<input v-model="state.gallery.name" placeholder="Gallery Name" /> <br />
+		Gallery date: {{state.gallery.date ? dayjs(state.gallery.date).format('MMM DD, YYYY') : ''}}<input v-model="state.gallery.date" type="date" /> <br />
 		/ <input v-model="state.gallery.slug" placeholder="link" /> <br />
 		<input v-model="state.gallery.clientName" placeholder="Client Name" /> <br />
 		<input v-model="state.gallery.clientEmail" placeholder="Client Email" /> <br />

@@ -50,7 +50,7 @@ export const GalleryService = {
 				slug: galleryData.slug,
 				clientEmail: galleryData.clientEmail,
 				clientName: galleryData.clientName,
-				// date: galleryData.date,
+				date: galleryData.date ? new Date(galleryData.date).toISOString() : undefined,
 				isPublished: galleryData.isPublished,
 				coverStyle: galleryData.coverStyle,
 				coverPhotoId: galleryData.coverPhotoId,

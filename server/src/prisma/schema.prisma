@@ -29,7 +29,7 @@ model Gallery {
     clientEmail   String?
     name          String?
     slug          String?
-    date          String?
+    date          DateTime?
     isPublished   Boolean @default(false)
     coverPhoto    Photo?  @relation(fields: [coverPhotoId], references: [id])
     coverStyle    String?

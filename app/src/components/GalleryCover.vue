@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
-import watermarkImage from '@/assets/images/watermark.png'
+import { computed } from 'vue';
 import PhotoFrame from './PhotoFrame.vue';
+import dayjs from 'dayjs';
 
 const { gallery, style: styleOverride, pretendMobile } = defineProps<{
 	gallery: any,
@@ -12,6 +12,7 @@ const { gallery, style: styleOverride, pretendMobile } = defineProps<{
 const style = computed(() => styleOverride || gallery.coverStyle || 'full');
 const settings = computed(() => gallery.coverSettings || {});
 const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
+const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, YYYY') : null);
 
 </script>
 
@@ -23,14 +24,18 @@ const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 			</div>
 			<div class="filter"></div>
 			<div v-if="settings.border" class="border"></div>
-			<div class="text" :class="{ [settings.textPlacement]: true }">{{ gallery.name }}</div>
+			<div class="text" :class="{ [settings.textPlacement]: true }">
+				<div class="title">{{ gallery.name }}</div>
+				<div v-if="date" class="subtext">{{ date }}</div>
+			</div>
 		</template>
 		<template v-if="style === 'half'">
 			<div class="bg">
 				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" />
 			</div>
 			<div class="text-side">
-				<div class="text">{{ gallery.name }}</div>
+				<div class="title">{{ gallery.name }}</div>
+				<div v-if="date" class="subtext">{{ date }}</div>
 			</div>
 		</template>
 	</div>
@@ -52,6 +57,15 @@ const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 }
 
 
+.title {
+	font-size: 3em;
+	line-height: 1.2em;
+}
+
+.subtext {
+	font-size: 1.5em;
+}
+
 .gallery-cover.full {
 	.bg {
 		position: absolute;
@@ -68,8 +82,6 @@ const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 
 	.text {
 		position: absolute;
-		font-size: 3em;
-		font-weight: bold;
 		color: white;
 
 		&.center {
@@ -112,13 +124,9 @@ const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 		height: 100%;
 		left: 50%;
 		display: flex;
-		align-items: center;
+		flex-direction: column;
+		justify-content: center;
 		padding: 2em;
-	}
-
-	.text {
-		font-size: 3em;
-		font-weight: bold;
 	}
 
 	&.mobile {
