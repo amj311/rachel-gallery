@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, onMounted, onBeforeUnmount, computed } from 'vue';
-import request from '@/services/request';
+import { reactive, onBeforeMount, onBeforeUnmount, computed, ref } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 
 const { photos, firstPhoto, onClose } = defineProps<{
@@ -26,6 +24,9 @@ onBeforeMount(async () => {
 		state.activePhotoIdx = photos.findIndex(p => p.id === firstPhoto.id);	
 	}
 	window.addEventListener('keydown', handleKeydown);
+	window.addEventListener('touchstart', handleTouchStart);
+	window.addEventListener('touchmove', handleTouchMove);
+	window.addEventListener('touchend', handleTouchEnd);
 })
 
 const animationTime = 500;
@@ -44,12 +45,7 @@ async function goToNext(animate = true) {
 		await new Promise(r => setTimeout(r, animationTime));
 	}
 	state.activePhotoIdx = (state.activePhotoIdx + 1) % photos.length;
-	// start and sto to reset time
-	if (isPlaying.value) {
-		stop();
-		play();
-	}
-	state.animationClass = '';
+	resetAfterSwap();
 }
 
 async function goToPrev(animate = true) {
@@ -58,12 +54,18 @@ async function goToPrev(animate = true) {
 		await new Promise(r => setTimeout(r, animationTime));
 	}
 	state.activePhotoIdx = (state.activePhotoIdx - 1 + photos.length) % photos.length;
+	resetAfterSwap();
+}
+
+function resetAfterSwap() {
+	state.animationClass = '';
 	// start and sto to reset time
 	if (isPlaying.value) {
 		stop();
 		play();
 	}
-	state.animationClass = '';
+	updateSwipeDelta(0);
+	swipeStartX = 0;
 }
 
 function play() {
@@ -82,6 +84,12 @@ function handleKeydown(e) {
 	} else if (e.key === 'ArrowLeft') {
 		e.preventDefault();
 		uiSwap(goToPrev);
+	} else if (e.key === 'ArrowUp') {
+		e.preventDefault();
+		uiSwap(goToPrev);
+	} else if (e.key === 'ArrowDown') {
+		e.preventDefault();
+		uiSwap(goToNext);
 	} else if (e.key === 'Escape') {
 		e.preventDefault();
 		onClose();
@@ -94,9 +102,35 @@ function handleKeydown(e) {
 	}
 }
 
+let swipeStartX = 0;
+
+function updateSwipeDelta(val) {
+	document.documentElement.style.setProperty('--swipe-delta', val+'px');
+}
+
+function handleTouchStart(e) {
+	swipeStartX = e.touches[0].clientX;
+}
+function handleTouchMove(e) {
+	updateSwipeDelta(e.touches[0].clientX - swipeStartX);
+}
+function handleTouchEnd(e) {
+	const swipeEndX = e.changedTouches[0].clientX;
+	if (swipeStartX - swipeEndX > 100) {
+		uiSwap(goToNext);
+	} else if (swipeEndX - swipeStartX > 100) {
+		uiSwap(goToPrev);
+	} else {
+		updateSwipeDelta(0);
+	}
+}
+
 onBeforeUnmount(() => {
 	clearTimeout(state.playingTimer);
 	window.removeEventListener('keydown', handleKeydown);
+	window.removeEventListener('touchstart', handleTouchStart);
+	window.removeEventListener('touchmove', handleTouchMove);
+	window.removeEventListener('touchend', handleTouchEnd);
 });
 
 </script>
@@ -134,6 +168,7 @@ onBeforeUnmount(() => {
 	right: 0;
 	bottom: 0;
 	background-color: #fffe;
+	backdrop-filter: blur(5px);
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
@@ -179,22 +214,33 @@ onBeforeUnmount(() => {
 	}
 
 	.prev {
-		transform: translateX(-100vw);
-		opacity: 0;
+		transform: translateX(calc(-100vw + var(--swipe-delta)));
 	}
 	.next {
-		transform: translateX(100vw);
-		opacity: 0;
+		transform: translateX(calc(100vw + var(--swipe-delta)));
+	}
+	.active {
+		transform: translateX(var(--swipe-delta));
 	}
 
 	&.slideNext {
 		.next {
 			transform: translateX(0);
-			opacity: 1;
 			transition: 500ms ease;
 		}
 		.active {
 			transform: translateX(-100vw);
+			transition: 500ms ease;
+		}
+	}
+
+	&.slidePrev {
+		.prev {
+			transform: translateX(0);
+			transition: 500ms ease;
+		}
+		.active {
+			transform: translateX(100vw);
 			opacity: 0;
 			transition: 500ms ease;
 		}
