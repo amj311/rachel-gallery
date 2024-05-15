@@ -140,7 +140,7 @@ onBeforeUnmount(() => {
 	<div id="Slideshow">
 		<div id="topBar">
 			
-			<div class="button" @click="onClose">&times;</div>
+			<div class="button" @click="onClose"><i class="pi pi-times"></i></div>
 		</div>
 		<div :class="{ 'photo-frame': true, [state.animationClass]: true }">
 			<div class="prev"><PhotoFrame :key="prevPhoto.id" :photo="prevPhoto" :watermark="true" :size="'xl'" /></div>
@@ -148,10 +148,10 @@ onBeforeUnmount(() => {
 			<div class="next"><PhotoFrame :key="nextPhoto.id" :photo="nextPhoto" :watermark="true" :size="'xl'" /></div>
 		</div>
 		<div id="bottomBar">
-			<div class="button" @click="() => uiSwap(goToPrev)"><i class="fa fa-chevron-left"></i></div>
-			<div v-if="!isPlaying" class="button" @click="play"><i class="fa fa-play"></i></div>
-			<div v-if="isPlaying" class="button" @click="stop"><i class="fa fa-pause"></i></div>
-			<div class="button" @click="() => uiSwap(goToNext)"><i class="fa fa-chevron-right"></i></div>
+			<div class="button" @click="() => uiSwap(goToPrev)"><i class="pi pi-chevron-left"></i></div>
+			<div v-if="!isPlaying" class="button" @click="play"><i class="pi pi-play"></i></div>
+			<div v-if="isPlaying" class="button" @click="stop"><i class="pi pi-pause"></i></div>
+			<div class="button" @click="() => uiSwap(goToNext)"><i class="pi pi-chevron-right"></i></div>
 		</div>
 
 		<div style="display: none">
