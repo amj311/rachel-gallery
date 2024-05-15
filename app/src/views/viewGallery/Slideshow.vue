@@ -230,6 +230,7 @@ onBeforeUnmount(() => {
 		}
 		.active {
 			transform: translateX(-100vw);
+			opacity: 0;
 			transition: 500ms ease;
 		}
 	}

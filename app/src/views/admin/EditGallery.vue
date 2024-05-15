@@ -6,7 +6,16 @@ import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
 import { GoogleDriveService } from '@/services/googleDrive';
 import GalleryCover from '@/components/GalleryCover.vue';
-import dayjs from 'dayjs';
+import Calendar from 'primevue/calendar';
+import FocalPointInput from '@/components/FocalPointInput.vue';
+import Button from 'primevue/button';
+import { v4 } from 'uuid';
+import InputText from 'primevue/inputtext';
+import SelectButton from 'primevue/selectbutton';
+import Dropdown from 'primevue/dropdown';
+import Checkbox from 'primevue/checkbox';
+import Menu from 'primevue/menu';
+import DropdownMenu from '@/components/DropdownMenu.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -14,10 +23,12 @@ const uploaderStore = useUploaderStore();
 const coverStyles = [
 	'full',
 	'half',
+	'overlay',
 ];
 
 const state = reactive({
 	isSaving: false,
+	skipAutoSave: false,
 	galleryId: router.currentRoute.value.params.galleryId,
 	gallery: null,
 	showUploadToSection: null,
@@ -27,6 +38,8 @@ const state = reactive({
 onBeforeMount(async () => {
 	const { data } = await request.get('gallery/' + state.galleryId);
 	state.gallery = data.data;
+
+	if (state.gallery.date) state.gallery.date = new Date(state.gallery.date);
 
 	// set some defaults....
 	if (!state.gallery.coverStyle) {
@@ -42,7 +55,7 @@ onBeforeMount(async () => {
 
 let oldGallery = 'null';
 watch(state, (newState) => {
-	if (oldGallery !== 'null' && JSON.stringify(newState.gallery) !== oldGallery) {
+	if (!state.skipAutoSave && oldGallery !== 'null' && JSON.stringify(newState.gallery) !== oldGallery) {
 		updateGallery();
 	}
 	oldGallery = JSON.stringify(newState.gallery);
@@ -52,13 +65,13 @@ const saveDebounceTime = 1500;
 let nextDebounce = 0;
 
 function updateGallery() {
-	console.log("updating gallery");
 	if (nextDebounce > 0) {
 		clearTimeout(nextDebounce);
 	}
 	state.isSaving = true;
 	nextDebounce = setTimeout(async () => {
-		request.put('admin/gallery/' + state.galleryId, state.gallery);
+		const { data } = await request.put('admin/gallery/' + state.galleryId, state.gallery);
+		state.gallery = data.data;
 		state.isSaving = false;
 	}, saveDebounceTime);
 }
@@ -74,7 +87,7 @@ async function handleFiles(files) {
 }
 
 function onImageUploadComplete(newPhoto) {
-	state.gallery.Sections.find(s => s.id === newPhoto.gallerySectionId)!.photos.push(newPhoto);
+	state.gallery.sections.find(s => s.id === newPhoto.gallerySectionId)!.photos.push(newPhoto);
 
 	// Use first uploaded image as gallery cover
 	if (!state.gallery.coverPhoto) {
@@ -153,7 +166,7 @@ async function deletePhoto(photo, skipConfirm = false) {
 		await GoogleDriveService.restoreFile(photo.googleFileId);
 		return;
 	}
-	const deleteFromSection = state.gallery.Sections.find(s => s.id === photo.gallerySectionId);
+	const deleteFromSection = state.gallery.sections.find(s => s.id === photo.gallerySectionId);
 	deleteFromSection.photos = deleteFromSection.photos.filter(p => p.id !== photo.id);
 }
 
@@ -162,7 +175,15 @@ async function deleteSection(section) {
 		return;
 	}
 	await Promise.all(section.photos.map(deletePhoto, true));
-	// state.gallery.Sections = state.gallery.Sections.filter(s => s.id !== section.id);
+	section.marked_for_deletion = true;
+}
+
+function addSection() {
+	state.gallery.sections.push({
+		id: null,
+		name: 'New Section',
+		photos: [],
+	});
 }
 
 </script>
@@ -173,12 +194,14 @@ async function deleteSection(section) {
 	<div v-else>
 		<hr />
 		<div class="flex align-items-center gap-4"><h1>Manage Gallery</h1> <span v-if="state.isSaving"><i class="fa fa-spinner fa-spin"/> Saving...</span></div>
-		<input v-model="state.gallery.name" placeholder="Gallery Name" /> <br />
-		Gallery date: {{state.gallery.date ? dayjs(state.gallery.date).format('MMM DD, YYYY') : ''}}<input v-model="state.gallery.date" type="date" /> <br />
-		/ <input v-model="state.gallery.slug" placeholder="link" /> <br />
-		<input v-model="state.gallery.clientName" placeholder="Client Name" /> <br />
-		<input v-model="state.gallery.clientEmail" placeholder="Client Email" /> <br />
-
+		
+		<div class="settings-grid">
+			<label>Gallery name</label>  <div><InputText v-model="state.gallery.name" placeholder="Gallery Name" size="small" /></div>
+			<label>Gallery date</label>  <div><Calendar v-model="state.gallery.date" class="galleryDate" style="zoom: .9" /></div>
+			<label>Direct link</label>  <div><InputText v-model="state.gallery.slug" placeholder="link" size="small" /></div>
+			<label>Client</label>  <div><InputText v-model="state.gallery.clientName" placeholder="Name" size="small" /> <InputText v-model="state.gallery.clientEmail" placeholder="Email" size="small" /></div>
+		</div>
+		
 
 		<h2>Cover</h2>
 
@@ -192,19 +215,20 @@ async function deleteSection(section) {
 					</div>
 				</div>
 				<div>Settings</div>
-				<div v-if="state.gallery.coverStyle === 'full'">
-					<div>
-						<span>Text placement: </span>
-						<select v-model="state.gallery.coverSettings.textPlacement">
-							<option value="center">Center</option>
-							<option value="bottom">Bottom</option>
-						</select>
-					</div>
-					<div>
-						<span>Border: </span>
-						<input type="checkbox" v-model="state.gallery.coverSettings.border" />
-					</div>
+
+				<div class="settings-grid">
+					<label>Focal point: </label>   <div><FocalPointInput v-model="state.gallery.coverSettings.focalPoint" /></div>
+
+					<template v-if="state.gallery.coverStyle === 'full'">
+						<label>Border: </label>   <div><Checkbox v-model="state.gallery.coverSettings.border" binary /></div>
+						<label>Text placement: </label>   <div>
+							<Dropdown v-model="state.gallery.coverSettings.textPlacement" :options="['center', 'bottom']"  size="small" />
+						</div>
+					</template>
 				</div>
+
+
+				
 			</div>
 			<div class="cover-previews">
 				<div class="cover-preview-wrapper desktop">
@@ -223,8 +247,9 @@ async function deleteSection(section) {
 		</div>
 
 
-		<div v-for="section in state.gallery.Sections" :key="section.id" class="mt-3">
+		<div v-for="section in state.gallery.sections" :key="section.id" class="mt-3">
 			<hr />
+			{{  section.id }}
 			<h2><input v-model="section.name" /></h2>
 			<button @click="deleteSection(section)">Delete</button>
 			<div class="photo-grid">
@@ -234,11 +259,17 @@ async function deleteSection(section) {
 					<div class="photo-frame">
 						<PhotoFrame :photo="photo" />
 					</div>
-					<div class="removePhoto" @click="deletePhoto(photo)">&times;</div>
+					<div class="options">
+						<DropdownMenu :model="[{ label: 'Make Cover', command: () => {} }, { label: 'Delete', command: () => deletePhoto(photo), class: 'red' }]">
+							<i class="pi pi-ellipsis-v" />
+						</DropdownMenu>
+					</div>
 					<div class="filename">{{ photo.filename }}</div>
 				</div>
 			</div>
 		</div>
+
+		<Button @click="addSection" size="small" outlined>&plus; Add Section</Button>
 
 		<div v-if="state.showUploadToSection" id="uploadModal" class="modal">
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
@@ -265,6 +296,18 @@ async function deleteSection(section) {
 </template>
 
 <style scoped>
+
+.settings-grid {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: .5em;
+	align-items: center;
+
+	.galleryDate input {
+		font-size: 0.875rem;
+		padding: 0.4375rem 0.65625rem;
+	}
+}
 
 .cover-style-options {
 	display: flex;
@@ -295,7 +338,7 @@ async function deleteSection(section) {
     padding: 15px;
     position: relative;
     display: inline-block;
-    border: 2px solid grey;
+    border: 2px solid #444;
     background: #fff;
 
 	&.mobile {
@@ -345,10 +388,57 @@ async function deleteSection(section) {
 .photo-grid-item {
 	position: relative;
     max-width: 100px;
-}
 
-.photo-grid-item:hover {
-	background-color: #f5f5f5;
+	&:hover {
+		background-color: #f5f5f5;
+	}
+
+	.removePhoto {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 1;
+		width: 1.5em;
+		height: 1.5em;
+		line-height: 1.3em;
+		transform: translate(25%, -25%);
+		justify-content: center;
+		border-radius: 50%;
+		background: #555;
+		color: white;
+		cursor: pointer;
+		display: none;
+
+		&:hover {
+			background: red;
+		}
+	}
+
+	&:hover .removePhoto {
+		display: flex;
+	}
+
+
+	.options {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 1;
+		width: 1.5em;
+		height: 1.5em;
+		line-height: 1.3em;
+		transform: translate(25%, -25%);
+		justify-content: center;
+		border-radius: 50%;
+		background: #555;
+		color: white;
+		cursor: pointer;
+		display: none;
+	}
+
+	&:hover .options {
+		display: flex;
+	}
 }
 
 .add-photos {
@@ -409,30 +499,6 @@ async function deleteSection(section) {
 	cursor: pointer;
 }
 
-.removePhoto {
-	position: absolute;
-	top: 0;
-	right: 0;
-	z-index: 1;
-	width: 1.5em;
-	height: 1.5em;
-	line-height: 1.3em;
-	transform: translate(25%, -25%);
-	justify-content: center;
-	border-radius: 50%;
-	background: #555;
-	color: white;
-	cursor: pointer;
-	display: none;
-}
-
-.photo-grid-item:hover .removePhoto {
-	display: flex;
-}
-
-.removePhoto:hover {
-	background: red;
-}
 
 .photo-frame {
 	width: 100px;

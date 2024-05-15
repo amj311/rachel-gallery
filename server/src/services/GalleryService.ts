@@ -7,7 +7,7 @@ export const GalleryService = {
         return await prisma.gallery.create({
 			data: {
 				id: uuid(),
-				Sections: {
+				sections: {
 					create: {
 						name: 'Section 1',
 					}
@@ -31,7 +31,7 @@ export const GalleryService = {
             },
 			include: {
 				coverPhoto: true,
-				Sections: {
+				sections: {
 					include: {
 						photos: true
 					}
@@ -40,8 +40,8 @@ export const GalleryService = {
         });
     },
 
-    async updateGallery(id: string, galleryData: Partial<Gallery>) {
-        await prisma.gallery.update({
+    async updateGallery(id: string, galleryData) {
+        return await prisma.gallery.update({
             where: {
                 id,
             },
@@ -55,7 +55,31 @@ export const GalleryService = {
 				coverStyle: galleryData.coverStyle,
 				coverPhotoId: galleryData.coverPhotoId,
 				coverSettings: galleryData.coverSettings || undefined,
+				sections: {
+					create: galleryData.sections.filter(s => !s.id).map(section => ({
+						data: {
+							name: section.name,
+						}
+					})),
+					update: galleryData.sections.filter(s => s.id).map(section => ({
+						where: { id: section.id },
+						data: {
+							name: section.name,
+						}
+					})),
+					delete: galleryData.sections.filter(s => s.marked_for_deletion).map(section => ({
+						where: { id: section.id },
+					})),
+				},
 			},
+			include: {
+				coverPhoto: true,
+				sections: {
+					include: {
+						photos: true
+					}
+				},
+			}
         });
     },
 

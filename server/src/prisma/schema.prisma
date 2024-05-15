@@ -35,7 +35,7 @@ model Gallery {
     coverStyle    String?
     coverSettings Json?
 
-    Sections     GallerySection[]
+    sections     GallerySection[]
     coverPhotoId String?          @unique
 }
 
@@ -57,6 +57,6 @@ model Photo {
     size             Int
     type             String
     Gallery          Gallery?
-    GallerySection   GallerySection? @relation(fields: [gallerySectionId], references: [id])
+    GallerySection   GallerySection? @relation(fields: [gallerySectionId], references: [id], onDelete: Cascade)
     gallerySectionId String?
 }

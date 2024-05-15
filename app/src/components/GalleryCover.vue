@@ -13,6 +13,7 @@ const style = computed(() => styleOverride || gallery.coverStyle || 'full');
 const settings = computed(() => gallery.coverSettings || {});
 const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, YYYY') : null);
+const position = computed(() => settings.value.focalPoint ? `${settings.value.focalPoint.x}% ${settings.value.focalPoint.y}%` : undefined);
 
 </script>
 
@@ -20,7 +21,7 @@ const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, Y
 	<div :classList="['gallery-cover', style, isMobile ? 'mobile' : ''].join(' ')">
 		<template v-if="style === 'full'">
 			<div class="bg">
-				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" />
+				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="filter"></div>
 			<div v-if="settings.border" class="border"></div>
@@ -31,11 +32,22 @@ const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, Y
 		</template>
 		<template v-if="style === 'half'">
 			<div class="bg">
-				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" />
+				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="text-side">
 				<div class="title">{{ gallery.name }}</div>
 				<div v-if="date" class="subtext">{{ date }}</div>
+			</div>
+		</template>
+		<template v-if="style === 'overlay'">
+			<div class="bg">
+				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+			</div>
+			<div class="text">
+				<div>
+					<div class="title">{{ gallery.name }}</div>
+					<div v-if="date" class="subtext">{{ date }}</div>
+				</div>
 			</div>
 		</template>
 	</div>
@@ -142,4 +154,43 @@ const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, Y
 		}
 	}
 }
+
+
+
+
+
+
+.gallery-cover.overlay {
+	.bg {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+	}
+
+	.filter {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+	}
+
+	.text {
+		position: absolute;
+		color: white;
+		background-color: rgba(0, 0, 0, 0.5);
+		height: 100%;
+		width: 33%;
+		padding: 30px;
+		display: flex;
+		align-items: center;
+	}
+
+	&.mobile {
+		.text {
+			width: 100%;
+			bottom: 0;
+			height: auto;
+		}
+	}
+}
+
 </style>

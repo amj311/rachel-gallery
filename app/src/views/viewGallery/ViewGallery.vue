@@ -149,89 +149,102 @@ function openSlideshow(photo?) {
 		</div>
 
 		<div v-for="section in state.gallery.Sections" :key="section.id" class="section mt-3">
-			<h2>{{section.name}}</h2>
-			<div class="photo-grid" :style="{height: section.height + 'px'}">
+			<h2>{{ section.name }}</h2>
+			<div class="photo-grid" :style="{ height: section.height + 'px' }">
 				<template v-for="photo in section.photos" :key="photo.id">
-					<div v-if="photo.rect" class="photo-grid-item" :style="{width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px'}">
-						<div class="photo-frame" @click="openSlideshow(photo)"><PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true" :fillMethod="'cover'" /></div>
+					<div v-if="photo.rect" class="photo-grid-item"
+						:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
+						<div class="photo-frame" @click="openSlideshow(photo)">
+							<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true"
+								:fillMethod="'cover'" />
+						</div>
 						<div class="bottom-bar">
 							<div class="buttons">
-								<div class="button"><i class="fa fa-heart-o" /></div>
-								<div class="button" @click="downloadHighRes(photo)"><i class="fa fa-download" /></div>
+								<div class="button"><i class="pi pi-heart" /></div>
+								<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" /></div>
 							</div>
 						</div>
 					</div>
 				</template>
 			</div>
 		</div>
-		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.Sections.flatMap(s => s.photos)" :firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
+		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.Sections.flatMap(s => s.photos)"
+			:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
 	</div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
+:root {
+	--swipe-delta: 0px;
+}
+
 #viewGallery {
 	/* make sure there is a scrollbar before the images load so they have the right width */
 	min-height: 101vh;
 	// temporary: remove page padding
 	margin: -32px;
-}
 
-.cover {
-	width: 100%;
-	height: 100vh;
-	position: relative;
-}
 
-.photo-grid {
-	margin-top: 10px;
-	position: relative;
 
-	.photo-grid-item {
-		position: absolute;
 
-		.photo-frame {
-			width: 100%;
-			height: 100%;
-			cursor: pointer;
-		}
+	.cover {
+		width: 100%;
+		height: 100vh;
+		position: relative;
+	}
 
-		.bottom-bar {
+	.photo-grid {
+		margin-top: 10px;
+		position: relative;
+
+		.photo-grid-item {
 			position: absolute;
-			bottom: 0;
-			width: 100%;
-			background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 2em);
-			color: white !important;
-			opacity: 0;
-			padding-top: 1em;
 
-			.buttons {
-				width: auto;
-				display: inline-flex;
+			.photo-frame {
+				width: 100%;
+				height: 100%;
+				cursor: pointer;
+			}
 
-				.button {
-					width: 40px;
-					height: 40px;
-					font-size: 20px;
+			.bottom-bar {
+				position: absolute;
+				bottom: 0;
+				width: 100%;
+				background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 2em);
+				color: white !important;
+				opacity: 0;
+				padding-top: 1em;
+
+				.buttons {
+					width: auto;
 					display: inline-flex;
-					justify-content: center;
-					align-items: center;
-					cursor: pointer;
-				}
-				&:hover .button {
-					opacity: .5;
 
-					&:hover {
-						opacity: 1;
+					.button {
+						width: 40px;
+						height: 40px;
+						font-size: 20px;
+						display: inline-flex;
+						justify-content: center;
+						align-items: center;
+						cursor: pointer;
+					}
+
+					&:hover .button {
+						opacity: .5;
+
+						&:hover {
+							opacity: 1;
+						}
 					}
 				}
 			}
-		}
-		&:hover .bottom-bar {
-			opacity: 1;
-			transition: 500ms;
+
+			&:hover .bottom-bar {
+				opacity: 1;
+				transition: 500ms;
+			}
 		}
 	}
+
 }
-
-
 </style>
