@@ -47,7 +47,7 @@ function computeImagePlacement() {
 	const columnWidth = (fullWidth - (margin * (numCols - 1))) / numCols;
 	const lineMatchRange = margin;
 
-	for (const section of state.gallery.Sections) {
+	for (const section of state.gallery.sections) {
 		let imagesSinceDouble = 30;
 
 		const cols: ImageRect[] = [];
@@ -148,7 +148,7 @@ function openSlideshow(photo?) {
 			<GalleryCover :gallery="state.gallery" />
 		</div>
 
-		<div v-for="section in state.gallery.Sections" :key="section.id" class="section mt-3">
+		<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
 			<h2>{{ section.name }}</h2>
 			<div class="photo-grid" :style="{ height: section.height + 'px' }">
 				<template v-for="photo in section.photos" :key="photo.id">
@@ -168,7 +168,7 @@ function openSlideshow(photo?) {
 				</template>
 			</div>
 		</div>
-		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.Sections.flatMap(s => s.photos)"
+		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.sections.flatMap(s => s.photos)"
 			:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
 	</div>
 </template>
