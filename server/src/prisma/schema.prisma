@@ -24,14 +24,14 @@ model User {
 // }
 
 model Gallery {
-    id            String  @id //@default(uuid())
+    id            String    @id //@default(uuid())
     clientName    String?
     clientEmail   String?
     name          String?
     slug          String?
     date          DateTime?
-    isPublished   Boolean @default(false)
-    coverPhoto    Photo?  @relation(fields: [coverPhotoId], references: [id])
+    isPublished   Boolean   @default(false)
+    coverPhoto    Photo?    @relation(fields: [coverPhotoId], references: [id])
     coverStyle    String?
     coverSettings Json?
 
@@ -45,6 +45,7 @@ model GallerySection {
     galleryId String
     name      String
     photos    Photo[]
+    order     Int
 }
 
 model Photo {
@@ -59,4 +60,5 @@ model Photo {
     Gallery          Gallery?
     GallerySection   GallerySection? @relation(fields: [gallerySectionId], references: [id], onDelete: Cascade)
     gallerySectionId String?
+    order            Int
 }

@@ -2,14 +2,32 @@ import { Gallery } from "@prisma/client";
 import { prisma } from "../prisma/client";
 import { v4 as uuid } from 'uuid';
 
+const fullGalleryInclusion = {
+	coverPhoto: true,
+	sections: {
+		include: {
+			photos: {
+				orderBy: {
+					order: 'asc' as any,
+				}
+			}
+		},
+		orderBy: {
+			order: 'asc' as any,
+		}
+	},
+};
+
 export const GalleryService = {
 	async createGallery() {
         return await prisma.gallery.create({
 			data: {
 				id: uuid(),
+				name: 'New Gallery',
 				sections: {
 					create: {
 						name: 'Section 1',
+						order: 0,
 					}
 				}
 			}
@@ -29,14 +47,7 @@ export const GalleryService = {
             where: {
                 OR: [ { id: idOrSlug }, { slug: idOrSlug } ],
             },
-			include: {
-				coverPhoto: true,
-				sections: {
-					include: {
-						photos: true
-					}
-				},
-			}
+			include: fullGalleryInclusion,
         });
     },
 
@@ -72,14 +83,7 @@ export const GalleryService = {
 					})),
 				},
 			},
-			include: {
-				coverPhoto: true,
-				sections: {
-					include: {
-						photos: true
-					}
-				},
-			}
+			include: fullGalleryInclusion,
         });
     },
 
@@ -92,17 +96,23 @@ export const GalleryService = {
     // },
 
 	async createNewGallerySection(galleryId: string) {
+		const order = (await prisma.gallerySection.count({ where: { galleryId } }));
 		return await prisma.gallerySection.create({
 			data: {
 				galleryId,
 				name: 'New Section',
+				order,
 			}
 		});
 	},
 
 	async addPhotoToSection(gallerySectionId: string, photoData: any) {
+		const order = (await prisma.photo.count({ where: { gallerySectionId } }));
 		return await prisma.photo.create({
-			data: photoData
+			data: {
+				...photoData,
+				order,
+			},
 		});
 	},
 
