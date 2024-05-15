@@ -71,9 +71,13 @@ function updateGallery() {
 	state.isSaving = true;
 	nextDebounce = setTimeout(async () => {
 		const { data } = await request.put('admin/gallery/' + state.galleryId, state.gallery);
-		state.gallery = data.data;
 		state.isSaving = false;
 	}, saveDebounceTime);
+}
+
+function assignCoverPhoto(photo) {
+	state.gallery.coverPhoto = photo;
+	state.gallery.coverPhotoId = photo.id;
 }
 
 function openUploadToSection(section) {
@@ -91,9 +95,7 @@ function onImageUploadComplete(newPhoto) {
 
 	// Use first uploaded image as gallery cover
 	if (!state.gallery.coverPhoto) {
-		state.gallery.coverPhoto = newPhoto;
-		state.gallery.coverPhotoId = newPhoto.id;
-		updateGallery();
+		assignCoverPhoto(newPhoto);
 	}
 }
 
@@ -178,12 +180,9 @@ async function deleteSection(section) {
 	section.marked_for_deletion = true;
 }
 
-function addSection() {
-	state.gallery.sections.push({
-		id: null,
-		name: 'New Section',
-		photos: [],
-	});
+async function addSection() {
+	const { data } = await request.post('admin/gallery/' + state.galleryId + '/section');
+	state.gallery.sections.push(data.data);
 }
 
 </script>
@@ -217,7 +216,7 @@ function addSection() {
 				<div>Settings</div>
 
 				<div class="settings-grid">
-					<label>Focal point: </label>   <div><FocalPointInput v-model="state.gallery.coverSettings.focalPoint" /></div>
+					<label>Focal point: </label>   <div><FocalPointInput v-model="state.gallery.coverSettings.focalPoint" :photo="state.gallery.coverPhoto" /></div>
 
 					<template v-if="state.gallery.coverStyle === 'full'">
 						<label>Border: </label>   <div><Checkbox v-model="state.gallery.coverSettings.border" binary /></div>
@@ -249,7 +248,6 @@ function addSection() {
 
 		<div v-for="section in state.gallery.sections" :key="section.id" class="mt-3">
 			<hr />
-			{{  section.id }}
 			<h2><input v-model="section.name" /></h2>
 			<button @click="deleteSection(section)">Delete</button>
 			<div class="photo-grid">
@@ -260,8 +258,8 @@ function addSection() {
 						<PhotoFrame :photo="photo" />
 					</div>
 					<div class="options">
-						<DropdownMenu :model="[{ label: 'Make Cover', command: () => {} }, { label: 'Delete', command: () => deletePhoto(photo), class: 'red' }]">
-							<i class="pi pi-ellipsis-v" />
+						<DropdownMenu :model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
+							<i class="pi pi-ellipsis-v" style="font-size: 10px;" />
 						</DropdownMenu>
 					</div>
 					<div class="filename">{{ photo.filename }}</div>
@@ -297,6 +295,10 @@ function addSection() {
 
 <style scoped>
 
+:deep(.p-menuitem-link) {
+	color: red;
+}
+
 .settings-grid {
 	display: grid;
 	grid-template-columns: auto 1fr;
@@ -326,7 +328,7 @@ function addSection() {
 
 	.cover-small {
 		width: 1000px;
-		aspect-ratio: 1.75;
+		aspect-ratio: 1.6;
 		zoom: .1;
 		pointer-events: none;
 		user-select: none;

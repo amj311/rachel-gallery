@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import PhotoFrame from './PhotoFrame.vue';
 
 const position = defineModel<{x: number, y: number}>();
-const { style } = defineProps<{
-	style?: any
+const { style = {}, photo } = defineProps<{
+	style?: any,
+	photo?: any
 }>();
 
 const isDragging = ref(false);
@@ -35,7 +37,8 @@ function updatePosition(e) {
 </script>
 
 <template>
-	<div class="focal-point-input" :style="style" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp">
+	<div class="focal-point-input" :style="{ width: photo ? ((photo.width * 60 / photo.height) + 'px') : '60px', ...style }" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp">
+		<div class="photo-frame"><PhotoFrame :key="photo.id" :photo="photo" :size="'sm'" :fillMethod="'cover'" /></div>
 		<div class="crosshair x" />
 		<div class="crosshair y" />
 		<div class="grabber" :style="{ left: `${position?.x || 50}%`, top: `${position?.y || 50}%` }" />
@@ -46,24 +49,39 @@ function updatePosition(e) {
 .focal-point-input {
 	display: inline-block;
 	vertical-align: middle;
-	width: 50px;
-	height: 50px;
+	height: 60px;
 	position: relative;
 	border: 1px solid lightgray;
 	border-radius: 5px;
 	cursor: pointer;
+
+	&:hover {
+		.crosshair {
+			display: block;
+		}
+	}
+}
+.photo-frame {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	opacity: 0.5;
+	border-radius: 4px;
+	overflow: hidden;
 }
 .crosshair.x {
 	position: absolute;
 	top: 50%;
 	width: 100%;
-	border-top: 1px solid lightgray;
+	border-top: 1px solid darkgray;
+	display: none;
 }
 .crosshair.y {
 	position: absolute;
 	left: 50%;
 	height: 100%;
-	border-left: 1px solid lightgray;
+	border-left: 1px solid darkgray;
+	display: none;
 }
 .grabber {
 	position: absolute;

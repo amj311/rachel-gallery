@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, watch } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
 
 const windowWithCache = window as unknown as Window & {
@@ -100,7 +100,7 @@ async function drawWatermark() {
 	ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
 }
 
-onMounted(async () => {
+async function initPhoto() {
 	const isGooglePhoto = Boolean(photo.googleFileId);
 	const needsInitialLoad = isGooglePhoto && usingSize >= sizeWidths['lg'];
 
@@ -126,12 +126,15 @@ onMounted(async () => {
 		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`);
 		state.isLoadingHiRes = false;
 	}
-})
+}
+
+watch(photo, initPhoto);
+onMounted(initPhoto);
 
 </script>
 
 <template>
-	<div class="photoframe">
+	<div class="photoframe" :key="photo.id || canvasId">
 		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<canvas :id="canvasId+'wtr'" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<i v-if="showLoading && state.isLoadingHiRes" class="loader fa fa-spinner fa-spin" />

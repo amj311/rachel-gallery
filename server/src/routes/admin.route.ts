@@ -64,6 +64,17 @@ export default (route, _, done) => {
 		}
 	})
 
+	// Update an existing gallery
+	route.post('/gallery/:galleryId/section', async (request, reply) => {
+		const { galleryId } = request.params;
+		// const data = request.body;
+		const section = await GalleryService.createNewGallerySection(galleryId);
+		return {
+			success: true,
+			data: section
+		}
+	})
+
 
 	// Upload a photo to a gallery section
 	route.post('/photo', async (request, reply) => {

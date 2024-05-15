@@ -91,8 +91,16 @@ export const GalleryService = {
     //     });
     // },
 
+	async createNewGallerySection(galleryId: string) {
+		return await prisma.gallerySection.create({
+			data: {
+				galleryId,
+				name: 'New Section',
+			}
+		});
+	},
+
 	async addPhotoToSection(gallerySectionId: string, photoData: any) {
-		console.log("adding photo to section", gallerySectionId, photoData)
 		return await prisma.photo.create({
 			data: photoData
 		});

@@ -21,7 +21,7 @@ const position = computed(() => settings.value.focalPoint ? `${settings.value.fo
 	<div :classList="['gallery-cover', style, isMobile ? 'mobile' : ''].join(' ')">
 		<template v-if="style === 'full'">
 			<div class="bg">
-				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="filter"></div>
 			<div v-if="settings.border" class="border"></div>
@@ -32,7 +32,7 @@ const position = computed(() => settings.value.focalPoint ? `${settings.value.fo
 		</template>
 		<template v-if="style === 'half'">
 			<div class="bg">
-				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="text-side">
 				<div class="title">{{ gallery.name }}</div>
@@ -41,7 +41,7 @@ const position = computed(() => settings.value.focalPoint ? `${settings.value.fo
 		</template>
 		<template v-if="style === 'overlay'">
 			<div class="bg">
-				<PhotoFrame :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="text">
 				<div>
