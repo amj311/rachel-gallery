@@ -9,33 +9,17 @@ import UploaderWindow from './uploader/UploaderWindow.vue';
 
 const router = useRouter();
 
-// const state = reactive({
-// 	showSidePanel: false
-// });
-
 const userStore = useUserStore();
 if (!userStore.hasLoadedSessionData) {
 	userStore.loadSessionData();
 }
 
-// if (userStore.currentUser) {
-// 	const redirect = new URL(window.location.href).searchParams.get('redirect');
-// 	useIonRouter().push(redirect || '/');
-// }
-
 </script>
 
 
 <template>
-	<div v-if="!userStore.hasLoadedSessionData">Loading...</div>
-	<div v-else-if="!userStore.currentUser?.isAdmin">
-		<p>Please log in as an admin to proceed.</p>
-		<p><LoginForm /></p>
-	</div>
-	<div v-else>
-		I am admin
+	<div>
 		<RouterView />
-		<UploaderWindow />
 	</div>
 </template>
 

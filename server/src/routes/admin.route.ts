@@ -43,13 +43,22 @@ export default (route, _, done) => {
 
 
 
-	// Create a new gallery
-	route.post('/gallery', async (request, reply) => {
+	// list all galleries
+	route.get('/gallery', async (request, reply) => {
 		// const data = request.body as Omit<Gallery, 'id'>;
-		const user = await GalleryService.createGallery();
+		const list = await GalleryService.getGalleryList();
 		return {
 			success: true,
-			data: user
+			data: list
+		}
+	})
+
+	route.post('/gallery', async (request, reply) => {
+		// const data = request.body as Omit<Gallery, 'id'>;
+		const gallery = await GalleryService.createGallery();
+		return {
+			success: true,
+			data: gallery
 		}
 	})
 
@@ -64,7 +73,7 @@ export default (route, _, done) => {
 		}
 	})
 
-	// Update an existing gallery
+	// Create a new section for a gallery
 	route.post('/gallery/:galleryId/section', async (request, reply) => {
 		const { galleryId } = request.params;
 		// const data = request.body;

@@ -50,13 +50,13 @@ const bytesToGB = (bytes: number) => {
 					<div class="filename">{{ photo.filename }}</div>
 					<div class="status" v-if="photo.uploadStatus">
 						<div class="status" v-if="photo.uploadStatus === 'complete'">
-							<i class="fa fa-check" style="color: green" />
+							<i class="pi pi-check" style="color: green" />
 						</div>
 						<div class="status retry" v-else-if="photo.uploadStatus === 'error'">
-							<i class="fa fa-exclamation" style="color: red" />
-							<i class="fa fa-repeat" @click="uploaderStore.retryUploadPhoto(photo)" />
+							<i class="pi pi-exclamation-triangle" style="color: red" />
+							<i class="pi pi-replay" @click="uploaderStore.retryUploadPhoto(photo)" />
 						</div>
-						<i v-else-if="photo.uploadStatus === 'uploading'" class="fa fa-spinner fa-spin" />
+						<i v-else-if="photo.uploadStatus === 'uploading'" class="pi pi-spinner pi-spin" />
 					</div>
 				</div>
 			</div>

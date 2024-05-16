@@ -18,7 +18,6 @@ const stopEditing = () => {
 	input.value?.blur();
 };
 
-const attrs = useAttrs();
 </script>
 
 <template>

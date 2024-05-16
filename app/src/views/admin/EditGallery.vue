@@ -13,7 +13,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import DropdownMenu from '@/components/DropdownMenu.vue';
-import GhostInput from '@/components/GhostInput.vue';
+import GhostInput from '@/components/InlineInput.vue';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
 
@@ -44,6 +44,12 @@ const state = reactive({
 
 onBeforeMount(async () => {
 	const { data } = await request.get('gallery/' + state.galleryId);
+
+	if (!data.data) {
+		router.push('/admin/galleries');
+		return;
+	}
+
 	state.gallery = data.data;
 
 	if (state.gallery.date) state.gallery.date = new Date(state.gallery.date);
@@ -206,12 +212,12 @@ function swapSections(aIdx, bIdx) {
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
-		<hr />
-		<div class="flex align-items-center gap-3 mt-2 mb-6">
-			<Button icon="pi pi-arrow-left" text @click="router.back()" />
+		<div class="flex align-items-center gap-3 mt-2 mb-4">
+			<RouterLink to="/admin/galleries" ><Button icon="pi pi-arrow-left" text /></RouterLink>
 			<h1><GhostInput v-model="state.gallery.name" placeholder="Gallery name..." /></h1>
+			<span v-if="state.isSaving"><i class="pi pi-spinner pi-spin" /> Saving...</span>
+			<div class="flex-grow-1"></div>
 			<Dropdown v-model="state.gallery.visibility" :options="visibilityOptions" outline />
-			<span v-if="state.isSaving"><i class="fa fa-spinner fa-spin" /> Saving...</span>
 		</div>
 
 		<div class="flex gap-5 my-3">
@@ -240,42 +246,39 @@ function swapSections(aIdx, bIdx) {
 					</TabPanel>
 
 					<TabPanel header="Cover">
-						<div v-if="!state.gallery.coverPhoto">Upload some photos to choose a cover</div>
-
-						<div>Style</div>
-						<div class="cover-style-options">
-							<div v-for="style in coverStyles" :key="style" @click="() => state.gallery.coverStyle = style"
-								:classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
-								<div class="cover-small">
-									<GalleryCover :gallery="state.gallery" :style="style" />
+						<div v-if="!state.gallery.coverPhoto?.id">Upload your photos to choose a cover</div>
+						<div v-else>
+							<div>Style</div>
+							<div class="cover-style-options">
+								<div v-for="style in coverStyles" :key="style" @click="() => state.gallery.coverStyle = style"
+									:classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
+									<div class="cover-small">
+										<GalleryCover :gallery="state.gallery" :style="style" />
+									</div>
 								</div>
 							</div>
-						</div>
-						<br />
+							<br />
 
-						<div class="settings-grid">
-							<label>Focal point: </label>
-							<div>
-								<FocalPointInput v-model="state.gallery.coverSettings.focalPoint"
-									:photo="state.gallery.coverPhoto" />
+							<div class="settings-grid">
+								<label>Focal point: </label>
+								<div>
+									<FocalPointInput v-model="state.gallery.coverSettings.focalPoint"
+										:photo="state.gallery.coverPhoto" />
+								</div>
+
+								<template v-if="state.gallery.coverStyle === 'full'">
+									<label>Border: </label>
+									<div>
+										<Checkbox v-model="state.gallery.coverSettings.border" binary />
+									</div>
+									<label>Text placement: </label>
+									<div>
+										<Dropdown v-model="state.gallery.coverSettings.textPlacement"
+											:options="['center', 'bottom']" size="small" />
+									</div>
+								</template>
 							</div>
-
-							<template v-if="state.gallery.coverStyle === 'full'">
-								<label>Border: </label>
-								<div>
-									<Checkbox v-model="state.gallery.coverSettings.border" binary />
-								</div>
-								<label>Text placement: </label>
-								<div>
-									<Dropdown v-model="state.gallery.coverSettings.textPlacement"
-										:options="['center', 'bottom']" size="small" />
-								</div>
-							</template>
 						</div>
-
-
-
-
 
 					</TabPanel>
 				</TabView>
@@ -423,8 +426,9 @@ function swapSections(aIdx, bIdx) {
 	padding: 15px;
 	position: relative;
 	display: inline-block;
-	border: 2px solid #444;
-	background: #fff;
+    border: 1px solid #8a8a8a;
+    background: #fff;
+    box-shadow: 0px 3px 10px #0005;
 
 	&.mobile {
 		padding: 10px;

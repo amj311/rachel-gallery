@@ -6,8 +6,6 @@ const menu = ref<InstanceType<typeof Menu>>();
 
 
 function openMenu(event) {
-	console.log(event);
-		console.log(menu);
 	menu.value?.toggle(event);
 }
 

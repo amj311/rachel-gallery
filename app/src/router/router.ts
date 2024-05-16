@@ -43,6 +43,7 @@ const routes: Array<RouteRecordRaw> = [
 	},
 	{
 		path: '/admin',
+		name: "Admin",
 		component: () => import('@/views/admin/Admin.vue'),
 		// beforeEnter(to, from, next) {
 		// 	if (!useUserStore().currentUser?.is_admin) {
@@ -52,10 +53,22 @@ const routes: Array<RouteRecordRaw> = [
 		// },
 		children: [
 			{
-				path: '/admin/gallery/:galleryId',
-				component: () => import('@/views/admin/EditGallery.vue'),
+				path: '/admin/galleries',
+				component: () => import('@/views/admin/Galleries.vue'),
+
+				children: [
+					{
+						path: '',
+						component: () => import('@/views/admin/GalleryList.vue'),
+					},
+					{
+						path: '/admin/galleries/:galleryId',
+						component: () => import('@/views/admin/EditGallery.vue'),
+					},
+				],
+	
 			},
-			
+
 			// {
 			// 	path: '/admin/users',
 			// 	name: "Users",

@@ -86,7 +86,7 @@ const save = async () => {
 		<!-- FOOTER -->
 		<div class="flex justify-content-end mt-3 gap-2">
 			<Button @click="save" :disabled="state.isSaving || !state.editData.given_name || !state.editData.family_name">
-				<i v-if="state.isSaving" class="fa fa-spin fa-spinner mr-2" />
+				<i v-if="state.isSaving" class="pi pi-spin pi-spinner mr-2" />
 				Save
 			</Button>
 		</div>

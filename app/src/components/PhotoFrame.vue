@@ -137,7 +137,7 @@ onMounted(initPhoto);
 	<div class="photoframe" :key="photo.id || canvasId">
 		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<canvas :id="canvasId+'wtr'" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
-		<i v-if="showLoading && state.isLoadingHiRes" class="loader fa fa-spinner fa-spin" />
+		<i v-if="showLoading && state.isLoadingHiRes" class="loader pi pi-spinner pi-spin" />
 	</div>
 </template>
 

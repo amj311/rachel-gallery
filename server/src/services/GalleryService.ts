@@ -34,11 +34,24 @@ export const GalleryService = {
 		});
     },
 
-    async getGalleryList() {
+    async getGalleryList(where?) {
         return await prisma.gallery.findMany({
-			// orderBy: {
-			// 	givenName: 'asc',
-			// }
+			where,
+			orderBy: {
+				date: 'desc' as any,
+			},
+			include: {
+				coverPhoto: true,
+				sections: {
+					select: {
+						_count: {
+							select: {
+								photos: true,
+							}
+						}
+					}
+				}
+			},
 		});
     },
 

@@ -57,7 +57,7 @@ const closeAndReload = () => {
 
 <template>
 	<div class="text-right">
-		<Button @click="doNewUser"><i class="fa fa-plus" />&nbsp;&nbsp;New User</Button>
+		<Button @click="doNewUser"><i class="pi pi-plus" />&nbsp;&nbsp;New User</Button>
 	</div>
 	<Dialog v-model:visible="state.showUserModal" modal :header="state.userToEdit?.name ? 'Edit User' : 'New User'" @change="state.userToEdit = null" :style="{ width: '90vw', maxWidth: '600px' }">
 		<UserForm :user="state.userToEdit" @saved="closeAndReload" @deleted="closeAndReload" />
@@ -77,7 +77,7 @@ const closeAndReload = () => {
 		<Column :field="'actions'" :frozen="true" alignFrozen='right'>
 			<template #body="slotProps">
 				<Button @click="openUserModal(slotProps.data)" plain text>
-					<i class="fa fa-pencil"></i>
+					<i class="pi pi-pencil"></i>
 				</Button>
 			</template>
 		</Column>

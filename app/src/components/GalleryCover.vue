@@ -14,25 +14,25 @@ const settings = computed(() => gallery.coverSettings || {});
 const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, YYYY') : null);
 const position = computed(() => settings.value.focalPoint ? `${settings.value.focalPoint.x}% ${settings.value.focalPoint.y}%` : undefined);
-
+const hasCover = computed(() => !!gallery.coverPhoto);
 </script>
 
 <template>
-	<div :classList="['gallery-cover', style, isMobile ? 'mobile' : ''].join(' ')">
+	<div :classList="['gallery-cover', style || 'full', isMobile ? 'mobile' : ''].join(' ')">
 		<template v-if="style === 'full'">
 			<div class="bg">
-				<PhotoFrame :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="filter"></div>
 			<div v-if="settings.border" class="border"></div>
-			<div class="text" :class="{ [settings.textPlacement]: true }">
+			<div class="text" :class="{ [settings.textPlacement || 'center']: true }">
 				<div class="title">{{ gallery.name }}</div>
 				<div v-if="date" class="subtext">{{ date }}</div>
 			</div>
 		</template>
 		<template v-if="style === 'half'">
 			<div class="bg">
-				<PhotoFrame :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="text-side">
 				<div class="title">{{ gallery.name }}</div>
@@ -41,10 +41,10 @@ const position = computed(() => settings.value.focalPoint ? `${settings.value.fo
 		</template>
 		<template v-if="style === 'overlay'">
 			<div class="bg">
-				<PhotoFrame :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="text">
-				<div>
+				<div class="text-area">
 					<div class="title">{{ gallery.name }}</div>
 					<div v-if="date" class="subtext">{{ date }}</div>
 				</div>
@@ -181,7 +181,14 @@ const position = computed(() => settings.value.focalPoint ? `${settings.value.fo
 		width: 33%;
 		padding: 30px;
 		display: flex;
-		align-items: center;
+		align-items: top;
+
+		.text-area {
+			height: 50%;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+		}
 	}
 
 	&.mobile {

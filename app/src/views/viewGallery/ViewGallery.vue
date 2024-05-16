@@ -5,6 +5,7 @@ import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
+import DeferredContent from 'primevue/deferredcontent';
 
 const router = useRouter();
 
@@ -151,21 +152,24 @@ function openSlideshow(photo?) {
 		<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
 			<div class="section-header">{{ section.name }}</div>
 			<div class="photo-grid" :style="{ height: section.height + 'px' }">
-				<template v-for="photo in section.photos" :key="photo.id">
-					<div v-if="photo.rect" class="photo-grid-item"
-						:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
-						<div class="photo-frame" @click="openSlideshow(photo)">
-							<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true"
-								:fillMethod="'cover'" />
-						</div>
-						<div class="bottom-bar">
-							<div class="buttons">
-								<div class="button"><i class="pi pi-heart" /></div>
-								<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" /></div>
+				<DeferredContent>
+					<template v-for="photo in section.photos" :key="photo.id">
+						<div v-if="photo.rect" class="photo-grid-item"
+							:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
+							<div class="photo-frame" @click="openSlideshow(photo)">
+								<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true"
+									:fillMethod="'cover'" />
+							</div>
+							<div class="bottom-bar">
+								<div class="buttons">
+									<div class="button"><i class="pi pi-heart" /></div>
+									<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
+									</div>
+								</div>
 							</div>
 						</div>
-					</div>
-				</template>
+					</template>
+				</DeferredContent>
 			</div>
 		</div>
 		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.sections.flatMap(s => s.photos)"
