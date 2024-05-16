@@ -9,14 +9,13 @@ import GalleryCover from '@/components/GalleryCover.vue';
 import Calendar from 'primevue/calendar';
 import FocalPointInput from '@/components/FocalPointInput.vue';
 import Button from 'primevue/button';
-import { v4 } from 'uuid';
 import InputText from 'primevue/inputtext';
-import SelectButton from 'primevue/selectbutton';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
-import Menu from 'primevue/menu';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import GhostInput from '@/components/GhostInput.vue';
+import TabPanel from 'primevue/tabpanel';
+import TabView from 'primevue/tabview';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -25,6 +24,13 @@ const coverStyles = [
 	'full',
 	'half',
 	'overlay',
+];
+
+const visibilityOptions = [
+	'draft',
+	'public',
+	'client',
+	'archived',
 ];
 
 const state = reactive({
@@ -154,7 +160,7 @@ function onDrop(event) {
 
 async function deletePhoto(photo, skipConfirm = false) {
 	if (!skipConfirm) {
-		if(!confirm('Are you sure you want to delete this photo?')) return;
+		if (!confirm('Are you sure you want to delete this photo?')) return;
 	}
 	if (!GoogleDriveService.hasValidToken) {
 		await GoogleDriveService.getToken();
@@ -187,14 +193,10 @@ async function addSection() {
 }
 
 function swapSections(aIdx, bIdx) {
-	console.log(aIdx, bIdx);
-	console.log(state.gallery.sections);
 	const temp = state.gallery.sections[aIdx];
 	state.gallery.sections[aIdx] = state.gallery.sections[bIdx];
 	state.gallery.sections[bIdx] = temp;
-	console.log(state.gallery.sections);
 	state.gallery.sections.forEach((section, idx) => {
-		console.log(section);
 		section.order = idx
 	});
 }
@@ -205,44 +207,78 @@ function swapSections(aIdx, bIdx) {
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
 		<hr />
-		<div class="flex align-items-center gap-4">
+		<div class="flex align-items-center gap-3 mt-2 mb-6">
+			<Button icon="pi pi-arrow-left" text @click="router.back()" />
 			<h1><GhostInput v-model="state.gallery.name" placeholder="Gallery name..." /></h1>
-			<span v-if="state.isSaving"><i class="fa fa-spinner fa-spin"/> Saving...</span>
+			<Dropdown v-model="state.gallery.visibility" :options="visibilityOptions" outline />
+			<span v-if="state.isSaving"><i class="fa fa-spinner fa-spin" /> Saving...</span>
 		</div>
-		
-		<div class="settings-grid">
-			<label>Gallery date</label>  <div><Calendar v-model="state.gallery.date" class="galleryDate" style="zoom: .9" /></div>
-			<label>Direct link</label>  <div><InputText v-model="state.gallery.slug" placeholder="link" size="small" /></div>
-			<label>Client</label>  <div><InputText v-model="state.gallery.clientName" placeholder="Name" size="small" /> <InputText v-model="state.gallery.clientEmail" placeholder="Email" size="small" /></div>
-		</div>
-		
 
-		<h2>Cover</h2>
-
-		<div v-if="!state.gallery.coverPhoto">Upload some photos to choose a cover</div>
-		<div v-else class="flex">
-			<div class="cover-settings flex-grow-1">
-				<div>Style</div>
-				<div class="cover-style-options">
-					<div v-for="style in coverStyles" :key="style" @click="() => state.gallery.coverStyle = style" :classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
-						<div class="cover-small"><GalleryCover :gallery="state.gallery" :style="style" /></div>
-					</div>
-				</div>
-				<div>Settings</div>
-
-				<div class="settings-grid">
-					<label>Focal point: </label>   <div><FocalPointInput v-model="state.gallery.coverSettings.focalPoint" :photo="state.gallery.coverPhoto" /></div>
-
-					<template v-if="state.gallery.coverStyle === 'full'">
-						<label>Border: </label>   <div><Checkbox v-model="state.gallery.coverSettings.border" binary /></div>
-						<label>Text placement: </label>   <div>
-							<Dropdown v-model="state.gallery.coverSettings.textPlacement" :options="['center', 'bottom']"  size="small" />
+		<div class="flex gap-5 my-3">
+			<div class="gallery-settings">
+				<TabView>
+					<TabPanel header="Details">
+						<div class="settings-grid">
+							<label>Gallery date</label>
+							<div>
+								<Calendar v-model="state.gallery.date" class="galleryDate" />
+							</div>
+							<label>Direct link</label>
+							<div>
+								<InputText v-model="state.gallery.slug" placeholder="link" />
+							</div>
+							<label>Client name</label>
+							<div>
+								<InputText v-model="state.gallery.clientName" placeholder="Name" />
+							</div>
+							<label>Client email</label>
+							<div>
+								<InputText v-model="state.gallery.clientEmail" placeholder="Email" />
+							</div>
 						</div>
-					</template>
-				</div>
+
+					</TabPanel>
+
+					<TabPanel header="Cover">
+						<div v-if="!state.gallery.coverPhoto">Upload some photos to choose a cover</div>
+
+						<div>Style</div>
+						<div class="cover-style-options">
+							<div v-for="style in coverStyles" :key="style" @click="() => state.gallery.coverStyle = style"
+								:classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
+								<div class="cover-small">
+									<GalleryCover :gallery="state.gallery" :style="style" />
+								</div>
+							</div>
+						</div>
+						<br />
+
+						<div class="settings-grid">
+							<label>Focal point: </label>
+							<div>
+								<FocalPointInput v-model="state.gallery.coverSettings.focalPoint"
+									:photo="state.gallery.coverPhoto" />
+							</div>
+
+							<template v-if="state.gallery.coverStyle === 'full'">
+								<label>Border: </label>
+								<div>
+									<Checkbox v-model="state.gallery.coverSettings.border" binary />
+								</div>
+								<label>Text placement: </label>
+								<div>
+									<Dropdown v-model="state.gallery.coverSettings.textPlacement"
+										:options="['center', 'bottom']" size="small" />
+								</div>
+							</template>
+						</div>
 
 
-				
+
+
+
+					</TabPanel>
+				</TabView>
 			</div>
 			<div class="cover-previews">
 				<div class="cover-preview-wrapper desktop">
@@ -257,38 +293,50 @@ function swapSections(aIdx, bIdx) {
 					<div class="faux-button" />
 				</div>
 			</div>
-			
 		</div>
 
 
-		<div v-for="(section, index) in state.gallery.sections" :key="section.id" class="my-6 section" :class="{ expanded: section.expanded }">
+		<div v-for="(section, index) in state.gallery.sections" :key="section.id" class="my-6 section"
+			:class="{ expanded: section.expanded }">
 			<hr />
-			<div class="flex align-items-center gap-3 py-2">
-				<h2><GhostInput v-model="section.name" placeholder="Section name..." /></h2>
+			<div class="flex align-items-center py-2">
+				<h2>
+					<GhostInput v-model="section.name" placeholder="Section name..." />
+				</h2>
 				<div class="flex-grow-1"></div>
-				<div class="button" v-if="index > 0" @click="swapSections(index, index - 1)"><i class="pi pi-chevron-up"  /></div>
-				<div class="button" v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"><i class="pi pi-chevron-down"  /></div>
-				<div class="button"><i class="pi pi-trash" @click="deleteSection(section)" /></div>
+				<Button v-if="index > 0" @click="swapSections(index, index - 1)" icon="pi pi-chevron-up" text />
+				<Button v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"
+					icon="pi pi-chevron-down" text />
+				<Button icon="pi pi-trash" text @click="deleteSection(section)" />
 			</div>
-			
-			<div class="photo-grid">
-				<div key="add-photos" class="photo-grid-item add-photos" @click="openUploadToSection(section)"><i class="pi pi-plus" /></div>
 
-				<div v-for="photo in section.photos" :key="photo.id" class="photo-grid-item">
-					<div class="photo-frame">
-						<PhotoFrame :photo="photo" />
+			<div v-if="section.photos.length">
+				<div class="photo-grid">
+					<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
+						<i class="pi pi-plus" />
 					</div>
-					<div class="options">
-						<DropdownMenu :model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
-							<i class="pi pi-ellipsis-v" style="font-size: 10px;" />
-						</DropdownMenu>
+
+					<div v-for="photo in section.photos" :key="photo.id" class="photo-grid-item">
+						<div class="photo-frame">
+							<PhotoFrame :photo="photo" />
+						</div>
+						<div class="options">
+							<DropdownMenu
+								:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
+								<i class="pi pi-ellipsis-v" style="font-size: 10px;" />
+							</DropdownMenu>
+						</div>
+						<div class="filename">{{ photo.filename }}</div>
 					</div>
-					<div class="filename">{{ photo.filename }}</div>
+				</div>
+				<div v-if="!section.expanded && section.photos.length > 0" class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4" @click="section.expanded = true">
+					View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
 				</div>
 			</div>
 
-			<div v-if="!section.expanded && section.photos.length > 0" class="flex align-items-center justify-content-center gap-2 cursor-pointer" @click="section.expanded = true">
-				View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
+			<div v-else class="flex align-items-center gap-2 cursor-pointer add-photos" @click="openUploadToSection(section)">
+					<i class="pi pi-plus" />
+					Add Photos
 			</div>
 		</div>
 
@@ -324,15 +372,15 @@ function swapSections(aIdx, bIdx) {
 </template>
 
 <style scoped>
-
-.button {
-	cursor: pointer;
+.gallery-settings {
+    width: calc(100% - 700px);
+    min-width: 360px;
 }
 
 .settings-grid {
 	display: grid;
 	grid-template-columns: auto 1fr;
-	gap: .5em;
+	gap: .5em 1em;
 	align-items: center;
 
 	.galleryDate input {
@@ -343,7 +391,9 @@ function swapSections(aIdx, bIdx) {
 
 .cover-style-options {
 	display: flex;
-	gap: 1rem;		
+	gap: 1rem;
+	overflow-x: auto;
+	padding: 2px;
 }
 
 .cover-style-option {
@@ -363,20 +413,27 @@ function swapSections(aIdx, bIdx) {
 	}
 }
 
-.cover-preview-wrapper {
-    border-radius: 10px;
-    padding: 15px;
+.cover-previews {
     position: relative;
-    display: inline-block;
-    border: 2px solid #444;
-    background: #fff;
+    padding: 0 30px 17px 0;
+}
+
+.cover-preview-wrapper {
+	border-radius: 10px;
+	padding: 15px;
+	position: relative;
+	display: inline-block;
+	border: 2px solid #444;
+	background: #fff;
 
 	&.mobile {
 		padding: 10px;
-        padding-top: 16px;
-        padding-bottom: 16px;
-		margin-left: -90px;
-		
+		padding-top: 16px;
+		padding-bottom: 16px;
+		position: absolute;
+        top: 117px;
+        left: 490px;
+
 		.faux-button {
 			position: absolute;
 			top: 6px;
@@ -400,14 +457,14 @@ function swapSections(aIdx, bIdx) {
 
 	&.mobile .cover-preview {
 		width: 375px;
-        aspect-ratio: .56;
-        zoom: .4;
+		aspect-ratio: .56;
+		zoom: .4;
 	}
 }
 
 .section {
 	.photo-grid {
-		height: 150px;
+		height: 145px;
 		overflow: hidden;
 	}
 
@@ -417,7 +474,8 @@ function swapSections(aIdx, bIdx) {
 }
 
 .photo-grid {
-	margin-top: 10px;
+	padding-top: 10px;
+	padding-right: 10px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 	grid-gap: 1rem;
@@ -427,7 +485,7 @@ function swapSections(aIdx, bIdx) {
 
 .photo-grid-item {
 	position: relative;
-    max-width: 100px;
+	max-width: 100px;
 
 	&:hover {
 		background-color: #f5f5f5;
@@ -488,8 +546,7 @@ function swapSections(aIdx, bIdx) {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 80px;
-	height: 80px;
+	padding: 30px;
 
 	&:hover {
 		color: gray;
@@ -553,7 +610,7 @@ function swapSections(aIdx, bIdx) {
 
 .filename {
 	font-size: 10px;
-    line-break: anywhere;
+	line-break: anywhere;
 	text-align: center;
 }
 </style>

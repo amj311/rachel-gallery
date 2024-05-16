@@ -34,6 +34,7 @@ model Gallery {
     coverPhoto    Photo?    @relation(fields: [coverPhotoId], references: [id])
     coverStyle    String?
     coverSettings Json?
+	visibility    String    @default("draft")
 
     sections     GallerySection[]
     coverPhotoId String?          @unique

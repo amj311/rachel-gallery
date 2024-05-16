@@ -56,6 +56,8 @@ function updatePosition(e) {
 	cursor: pointer;
 
 	&:hover {
+		border: 1px solid darkgray;
+
 		.crosshair {
 			display: block;
 		}
@@ -65,7 +67,7 @@ function updatePosition(e) {
 	position: absolute;
 	width: 100%;
 	height: 100%;
-	opacity: 0.5;
+	opacity: 0.8;
 	border-radius: 4px;
 	overflow: hidden;
 }

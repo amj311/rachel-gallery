@@ -66,6 +66,7 @@ export const GalleryService = {
 				coverStyle: galleryData.coverStyle,
 				coverPhotoId: galleryData.coverPhotoId,
 				coverSettings: galleryData.coverSettings || undefined,
+				visibility: galleryData.visibility,
 				sections: {
 					create: galleryData.sections.filter(s => !s.id).map(section => ({
 						data: {
