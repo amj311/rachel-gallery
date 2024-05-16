@@ -149,7 +149,7 @@ function openSlideshow(photo?) {
 		</div>
 
 		<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
-			<h2>{{ section.name }}</h2>
+			<div class="section-header">{{ section.name }}</div>
 			<div class="photo-grid" :style="{ height: section.height + 'px' }">
 				<template v-for="photo in section.photos" :key="photo.id">
 					<div v-if="photo.rect" class="photo-grid-item"
@@ -191,6 +191,12 @@ function openSlideshow(photo?) {
 		width: 100%;
 		height: 100vh;
 		position: relative;
+	}
+
+	.section-header {
+		font-size: 2em;
+		margin: 3em 0 2em;
+		text-align: center;
 	}
 
 	.photo-grid {

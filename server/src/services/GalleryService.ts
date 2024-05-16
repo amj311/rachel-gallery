@@ -70,12 +70,14 @@ export const GalleryService = {
 					create: galleryData.sections.filter(s => !s.id).map(section => ({
 						data: {
 							name: section.name,
+							order: section.order,
 						}
 					})),
 					update: galleryData.sections.filter(s => s.id).map(section => ({
 						where: { id: section.id },
 						data: {
 							name: section.name,
+							order: section.order,
 						}
 					})),
 					delete: galleryData.sections.filter(s => s.marked_for_deletion).map(section => ({

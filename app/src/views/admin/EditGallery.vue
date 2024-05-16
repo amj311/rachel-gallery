@@ -16,6 +16,7 @@ import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import Menu from 'primevue/menu';
 import DropdownMenu from '@/components/DropdownMenu.vue';
+import GhostInput from '@/components/GhostInput.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -185,6 +186,18 @@ async function addSection() {
 	state.gallery.sections.push(data.data);
 }
 
+function swapSections(aIdx, bIdx) {
+	console.log(aIdx, bIdx);
+	console.log(state.gallery.sections);
+	const temp = state.gallery.sections[aIdx];
+	state.gallery.sections[aIdx] = state.gallery.sections[bIdx];
+	state.gallery.sections[bIdx] = temp;
+	console.log(state.gallery.sections);
+	state.gallery.sections.forEach((section, idx) => {
+		console.log(section);
+		section.order = idx
+	});
+}
 </script>
 
 
@@ -192,10 +205,12 @@ async function addSection() {
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
 		<hr />
-		<div class="flex align-items-center gap-4"><h1>Manage Gallery</h1> <span v-if="state.isSaving"><i class="fa fa-spinner fa-spin"/> Saving...</span></div>
+		<div class="flex align-items-center gap-4">
+			<h1><GhostInput v-model="state.gallery.name" placeholder="Gallery name..." /></h1>
+			<span v-if="state.isSaving"><i class="fa fa-spinner fa-spin"/> Saving...</span>
+		</div>
 		
 		<div class="settings-grid">
-			<label>Gallery name</label>  <div><InputText v-model="state.gallery.name" placeholder="Gallery Name" size="small" /></div>
 			<label>Gallery date</label>  <div><Calendar v-model="state.gallery.date" class="galleryDate" style="zoom: .9" /></div>
 			<label>Direct link</label>  <div><InputText v-model="state.gallery.slug" placeholder="link" size="small" /></div>
 			<label>Client</label>  <div><InputText v-model="state.gallery.clientName" placeholder="Name" size="small" /> <InputText v-model="state.gallery.clientEmail" placeholder="Email" size="small" /></div>
@@ -246,12 +261,18 @@ async function addSection() {
 		</div>
 
 
-		<div v-for="section in state.gallery.sections" :key="section.id" class="mt-3">
+		<div v-for="(section, index) in state.gallery.sections" :key="section.id" class="my-6 section" :class="{ expanded: section.expanded }">
 			<hr />
-			<h2><input v-model="section.name" /></h2>
-			<button @click="deleteSection(section)">Delete</button>
+			<div class="flex align-items-center gap-3 py-2">
+				<h2><GhostInput v-model="section.name" placeholder="Section name..." /></h2>
+				<div class="flex-grow-1"></div>
+				<div class="button" v-if="index > 0" @click="swapSections(index, index - 1)"><i class="pi pi-chevron-up"  /></div>
+				<div class="button" v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"><i class="pi pi-chevron-down"  /></div>
+				<div class="button"><i class="pi pi-trash" @click="deleteSection(section)" /></div>
+			</div>
+			
 			<div class="photo-grid">
-				<div key="add-photos" class="photo-grid-item add-photos" @click="openUploadToSection(section)" />
+				<div key="add-photos" class="photo-grid-item add-photos" @click="openUploadToSection(section)"><i class="pi pi-plus" /></div>
 
 				<div v-for="photo in section.photos" :key="photo.id" class="photo-grid-item">
 					<div class="photo-frame">
@@ -265,9 +286,18 @@ async function addSection() {
 					<div class="filename">{{ photo.filename }}</div>
 				</div>
 			</div>
+
+			<div v-if="!section.expanded && section.photos.length > 0" class="flex align-items-center justify-content-center gap-2 cursor-pointer" @click="section.expanded = true">
+				View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
+			</div>
 		</div>
 
-		<Button @click="addSection" size="small" outlined>&plus; Add Section</Button>
+		<br />
+		<div class="flex justify-content-center"><Button @click="addSection" outlined>&plus; Add Section</Button></div>
+
+
+
+
 
 		<div v-if="state.showUploadToSection" id="uploadModal" class="modal">
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
@@ -295,8 +325,8 @@ async function addSection() {
 
 <style scoped>
 
-:deep(.p-menuitem-link) {
-	color: red;
+.button {
+	cursor: pointer;
 }
 
 .settings-grid {
@@ -320,8 +350,6 @@ async function addSection() {
 	cursor: pointer;
 	outline: 1px solid grey;
 
-	&:hover {
-	}
 	&.selected {
 		outline: 2px solid blue;
 	}
@@ -377,6 +405,16 @@ async function addSection() {
 	}
 }
 
+.section {
+	.photo-grid {
+		height: 150px;
+		overflow: hidden;
+	}
+
+	&.expanded .photo-grid {
+		height: auto;
+	}
+}
 
 .photo-grid {
 	margin-top: 10px;
@@ -452,12 +490,16 @@ async function addSection() {
 	align-items: center;
 	width: 80px;
 	height: 80px;
+
+	&:hover {
+		color: gray;
+	}
+
+	i {
+		font-size: 30px;
+	}
 }
 
-.add-photos::after {
-	content: '+';
-	font-size: 50px;
-}
 
 #uploadModal {
 	position: fixed;
@@ -472,6 +514,7 @@ async function addSection() {
 	overflow: hidden;
 	overflow-y: auto;
 	padding: 1em;
+	z-index: 2;
 }
 
 .drop-images {
