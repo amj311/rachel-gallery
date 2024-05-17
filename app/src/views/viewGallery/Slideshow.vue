@@ -21,7 +21,7 @@ const prevPhoto = computed(() => photos[(state.activePhotoIdx - 1 + photos.lengt
 
 onBeforeMount(async () => {
 	if (firstPhoto) {
-		state.activePhotoIdx = photos.findIndex(p => p.id === firstPhoto.id);	
+		state.activePhotoIdx = photos.findIndex(p => p.id === firstPhoto.id);
 	}
 	window.addEventListener('keydown', handleKeydown);
 	window.addEventListener('touchstart', handleTouchStart);
@@ -105,7 +105,7 @@ function handleKeydown(e) {
 let swipeStartX = 0;
 
 function updateSwipeDelta(val) {
-	document.documentElement.style.setProperty('--swipe-delta', val+'px');
+	document.documentElement.style.setProperty('--swipe-delta', val + 'px');
 }
 
 function handleTouchStart(e) {
@@ -139,13 +139,19 @@ onBeforeUnmount(() => {
 <template>
 	<div id="Slideshow">
 		<div id="topBar">
-			
+
 			<div class="button" @click="onClose"><i class="pi pi-times"></i></div>
 		</div>
 		<div :class="{ 'photo-frame': true, [state.animationClass]: true }">
-			<div class="prev"><PhotoFrame :key="prevPhoto.id" :photo="prevPhoto" :watermark="true" :size="'xl'" /></div>
-			<div class="active"><PhotoFrame :key="activePhoto.id" :photo="activePhoto" :watermark="true" :size="'xl'" /></div>
-			<div class="next"><PhotoFrame :key="nextPhoto.id" :photo="nextPhoto" :watermark="true" :size="'xl'" /></div>
+			<div class="prev">
+				<PhotoFrame :key="prevPhoto.id" :photo="prevPhoto" :watermark="true" :size="'xl'" />
+			</div>
+			<div class="active">
+				<PhotoFrame :key="activePhoto.id" :photo="activePhoto" :watermark="true" :size="'xl'" />
+			</div>
+			<div class="next">
+				<PhotoFrame :key="nextPhoto.id" :photo="nextPhoto" :watermark="true" :size="'xl'" />
+			</div>
 		</div>
 		<div id="bottomBar">
 			<div class="button" @click="() => uiSwap(goToPrev)"><i class="pi pi-chevron-left"></i></div>
@@ -155,12 +161,16 @@ onBeforeUnmount(() => {
 		</div>
 
 		<div style="display: none">
-			
+
 		</div>
 	</div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
+:root {
+	--swipe-delta: 0px;
+}
+
 #Slideshow {
 	position: fixed;
 	top: 0;
@@ -173,80 +183,85 @@ onBeforeUnmount(() => {
 	flex-direction: column;
 	justify-content: space-between;
 	align-items: center;
-}
+	z-index: 20;
 
-#topBar {
-	width: 100%;
-	display: flex;
-	justify-content: flex-end;
 
-	.button {
-		width: 40px;
-		height: 40px;
-		font-size: 30px;
-		cursor: pointer;
-		text-align: center;
-	}
-}
-
-#bottomBar {
-	display: flex;
-	justify-content: center;
-
-	.button {
-		width: 40px;
-		height: 40px;
-		font-size: 20px;
-		cursor: pointer;
-		text-align: center;
-	}
-}
-
-.photo-frame {
-	position: relative;
-	height: calc(100% - 110px);
-	width: calc(100% - 50px);
-
-	> div {
-		position: absolute;
+	#topBar {
 		width: 100%;
-		height: 100%;
-	}
+		display: flex;
+		justify-content: flex-end;
 
-	.prev {
-		transform: translateX(calc(-100vw + var(--swipe-delta)));
-	}
-	.next {
-		transform: translateX(calc(100vw + var(--swipe-delta)));
-	}
-	.active {
-		transform: translateX(var(--swipe-delta));
-	}
-
-	&.slideNext {
-		.next {
-			transform: translateX(0);
-			transition: 500ms ease;
-		}
-		.active {
-			transform: translateX(-100vw);
-			opacity: 0;
-			transition: 500ms ease;
+		.button {
+			width: 40px;
+			height: 40px;
+			font-size: 30px;
+			cursor: pointer;
+			text-align: center;
 		}
 	}
 
-	&.slidePrev {
+	#bottomBar {
+		display: flex;
+		justify-content: center;
+
+		.button {
+			width: 40px;
+			height: 40px;
+			font-size: 20px;
+			cursor: pointer;
+			text-align: center;
+		}
+	}
+
+	.photo-frame {
+		position: relative;
+		height: calc(100% - 110px);
+		width: calc(100% - 50px);
+
+		>div {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+		}
+
 		.prev {
-			transform: translateX(0);
-			transition: 500ms ease;
+			transform: translateX(calc(-100vw + var(--swipe-delta)));
 		}
+
+		.next {
+			transform: translateX(calc(100vw + var(--swipe-delta)));
+		}
+
 		.active {
-			transform: translateX(100vw);
-			opacity: 0;
-			transition: 500ms ease;
+			transform: translateX(var(--swipe-delta));
+		}
+
+		&.slideNext {
+			.next {
+				transform: translateX(0);
+				transition: 500ms ease;
+			}
+
+			.active {
+				transform: translateX(-100vw);
+				opacity: 0;
+				transition: 500ms ease;
+			}
+		}
+
+		&.slidePrev {
+			.prev {
+				transform: translateX(0);
+				transition: 500ms ease;
+			}
+
+			.active {
+				transform: translateX(100vw);
+				opacity: 0;
+				transition: 500ms ease;
+			}
 		}
 	}
+
 }
-
-
 </style>

@@ -1,23 +1,33 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, onMounted, onBeforeUnmount } from 'vue';
+import { reactive, onBeforeMount, onMounted, onBeforeUnmount, computed } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
 import DeferredContent from 'primevue/deferredcontent';
 import LoginModal from '@/components/LoginModal.vue';
+import NavBar from '@/components/NavBar.vue';
+import Button from 'primevue/button';
+import { useUserStore } from '@/stores/user.store';
+import Badge from 'primevue/badge';
 
 const router = useRouter();
+const userStore = useUserStore();
 
 const state = reactive({
 	isLoading: true,
-	galleryId: router.currentRoute.value.params.galleryId,
+	galleryIdOrSlug: router.currentRoute.value.params.galleryId,
 	canView: false,
 	gallery: null,
 	showSlideshow: false,
 	firstSlideshowPhoto: null,
+	favoriteIds: new Set(),
 });
+
+const isClient = computed(() => userStore.currentUser?.email === state.gallery.clientEmail);
+const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
+const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
 
 const aspect_ratios = {
 	// wide
@@ -117,7 +127,7 @@ function computeImagePlacement() {
 }
 
 onMounted(async () => {
-	const { data } = await request.get('gallery/' + state.galleryId);
+	const { data } = await request.get('gallery/' + state.galleryIdOrSlug);
 	state.gallery = data.data;
 	state.canView = data.canView;
 	state.isLoading = false;
@@ -125,6 +135,8 @@ onMounted(async () => {
 	if (state.canView) {
 		setTimeout(() => computeImagePlacement(), 500);
 		window.addEventListener('resize', () => computeImagePlacement());
+
+		state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
 	}
 });
 
@@ -144,6 +156,15 @@ function openSlideshow(photo?) {
 	state.showSlideshow = true;
 }
 
+function toggleFavorite(photo) {
+	if (state.favoriteIds.has(photo.id)) {
+		state.favoriteIds.delete(photo.id);
+	} else {
+		state.favoriteIds.add(photo.id);
+	}
+	localStorage.setItem(favoritesKey.value, JSON.stringify(Array.from(state.favoriteIds)));
+}
+
 </script>
 
 
@@ -158,30 +179,48 @@ function openSlideshow(photo?) {
 			<LoginModal message="Please sign in to view this gallery" />
 		</div>
 
-		<div v-else class="">
-			<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
-				<div class="section-header">{{ section.name }}</div>
-				<div class="photo-grid" :style="{ height: section.height + 'px' }">
-					<DeferredContent>
-						<template v-for="photo in section.photos" :key="photo.id">
-							<div v-if="photo.rect" class="photo-grid-item"
-								:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
-								<div class="photo-frame" @click="openSlideshow(photo)">
-									<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'"
-										:watermark="true" :fillMethod="'cover'" />
-								</div>
-								<div class="bottom-bar">
-									<div class="buttons">
-										<div class="button"><i class="pi pi-heart" /></div>
-										<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
+		<div v-else>
+			<NavBar>
+				<div class="flex align-items-center">
+					<div>
+
+					</div>
+					<div class="flex-grow-1"></div>
+					<div>
+						<Button icon="pi pi-heart" text />
+						<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size" class="small-badge" />
+						<Button icon="pi pi-download" text />
+						<Button icon="pi pi-share-alt" text />
+					</div>
+				</div>
+			</NavBar>
+
+			<div class="m-4">
+				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
+					<div class="section-header">{{ section.name }}</div>
+					<div class="photo-grid" :style="{ height: section.height + 'px' }">
+						<DeferredContent>
+							<template v-for="photo in section.photos" :key="photo.id">
+								<div v-if="photo.rect" class="photo-grid-item"
+									:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
+									<div class="photo-frame" @click="openSlideshow(photo)">
+										<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'"
+											:watermark="true" :fillMethod="'cover'" />
+									</div>
+									<div class="bottom-bar">
+										<div class="buttons">
+											<div class="button" @click="toggleFavorite(photo)"><i :class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" /></div>
+											<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
+											</div>
 										</div>
 									</div>
 								</div>
-							</div>
-						</template>
-					</DeferredContent>
+							</template>
+						</DeferredContent>
+					</div>
 				</div>
 			</div>
+			
 			<Slideshow v-if="state.showSlideshow" :photos="state.gallery.sections.flatMap(s => s.photos)"
 				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
 		</div>
@@ -189,7 +228,7 @@ function openSlideshow(photo?) {
 	</div>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
 .login-guard {
     position: fixed;
     top: 0;
@@ -214,6 +253,13 @@ function openSlideshow(photo?) {
 		gap: 1em;
 		align-items: center;
 	}
+}
+
+.small-badge {
+    position: absolute;
+    transform: translate(-25px, 0px);
+    zoom: .6;
+    font-size: 1em;
 }
 
 #viewGallery {

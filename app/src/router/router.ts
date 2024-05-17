@@ -42,47 +42,49 @@ const routes: Array<RouteRecordRaw> = [
 		// }
 
 		children: [
-			{
-				path: '/admin',
-				name: "Admin",
-				component: () => import('@/views/admin/Admin.vue'),
-				async beforeEnter(to, from, next) {
-					while (!useUserStore().hasLoadedSessionData) {
-						await new Promise((resolve) => setTimeout(resolve, 500));
-					}
+			
+		],
+	},
 
-					if (!useUserStore().currentUser?.isAdmin) {
-						return next('');
-					}
-					next();
-				},
+	{
+		path: '/admin',
+		name: "Admin",
+		component: () => import('@/views/admin/Admin.vue'),
+		async beforeEnter(to, from, next) {
+			while (!useUserStore().hasLoadedSessionData) {
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+
+			if (!useUserStore().currentUser?.isAdmin) {
+				return next('');
+			}
+			next();
+		},
+		children: [
+			{
+				path: '',
+				name: 'Galleries',
+				component: () => import('@/views/admin/Galleries.vue'),
+
 				children: [
 					{
 						path: '',
-						name: 'Galleries',
-						component: () => import('@/views/admin/Galleries.vue'),
-		
-						children: [
-							{
-								path: '',
-								name: 'GalleriesList',
-								component: () => import('@/views/admin/GalleryList.vue'),
-							},
-							{
-								path: '/admin/galleries/:galleryId',
-								component: () => import('@/views/admin/EditGallery.vue'),
-							},
-						],
-			
+						name: 'GalleriesList',
+						component: () => import('@/views/admin/GalleryList.vue'),
 					},
-		
-					// {
-					// 	path: '/admin/users',
-					// 	name: "Users",
-					// 	component: () => import('@/views/admin/Users.vue'),
-					// },
-				]
+					{
+						path: '/admin/galleries/:galleryId',
+						component: () => import('@/views/admin/EditGallery.vue'),
+					},
+				],
+	
 			},
+
+			// {
+			// 	path: '/admin/users',
+			// 	name: "Users",
+			// 	component: () => import('@/views/admin/Users.vue'),
+			// },
 		]
 	},
 	

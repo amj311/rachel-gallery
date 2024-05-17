@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { useRouter, RouterView } from 'vue-router';
 // import AdminMenu from './AdminMenu.vue'
-import { reactive } from 'vue';
 import { useUserStore } from '@/stores/user.store';
 import LoginForm from '@/components/LoginForm.vue';
-import request from '@/services/request';
 import UploaderWindow from './uploader/UploaderWindow.vue';
-
-const router = useRouter();
+import NavBar from '@/components/NavBar.vue';
 
 // const state = reactive({
 // 	showSidePanel: false
@@ -27,15 +24,11 @@ if (!userStore.hasLoadedSessionData) {
 
 
 <template>
-	<div v-if="!userStore.hasLoadedSessionData">Loading...</div>
-	<div v-else-if="!userStore.currentUser?.isAdmin">
-		<p>Please log in as an admin to proceed.</p>
-		<p><LoginForm /></p>
-	</div>
-	<div v-else>
-		<RouterView />
-		<UploaderWindow />
-	</div>
+	<NavBar>
+		<div>ghj dghj</div>
+	</NavBar>
+
+	<div class="px-4 pb-4"><RouterView /></div>
 </template>
 
 <style>

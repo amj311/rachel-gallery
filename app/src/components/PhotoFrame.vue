@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { onMounted, reactive, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
+
+
+const canvas = ref<HTMLCanvasElement>();
+const waterCanvas = ref<HTMLCanvasElement>();
 
 const windowWithCache = window as unknown as Window & {
 	photoCache: Map<string, HTMLImageElement>
@@ -62,15 +66,15 @@ async function loadImage(src) {
 }
 
 async function drawImage(source) {
-	const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-	const ctx = canvas!.getContext('2d')!;
+	const ctx = canvas.value!.getContext('2d')!;
+	ctx.clearRect(0, 0, state.canvasW, state.canvasH);
 	const img = await loadImage(source);
 	ctx.drawImage(img, 0, 0, state.canvasW, state.canvasH);
 }
 
 async function drawWatermark() {
-	const canvas = document.getElementById(canvasId+'wtr') as HTMLCanvasElement;
-	const ctx = canvas!.getContext('2d')!;
+	const ctx = waterCanvas.value!.getContext('2d')!;
+	ctx.clearRect(0, 0, state.canvasW, state.canvasH);
 	const wtr = new Image();
 	await new Promise((res) => {
 		wtr.addEventListener("load", res);
@@ -134,9 +138,9 @@ onMounted(initPhoto);
 </script>
 
 <template>
-	<div class="photoframe" :key="photo.id || canvasId">
-		<canvas :id="canvasId" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
-		<canvas :id="canvasId+'wtr'" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
+	<div class="photoframe">
+		<canvas :id="canvasId" ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
+		<canvas :id="canvasId+'wtr'" ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<i v-if="showLoading && state.isLoadingHiRes" class="loader pi pi-spinner pi-spin" />
 	</div>
 </template>
