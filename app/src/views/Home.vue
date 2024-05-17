@@ -1,46 +1,40 @@
-<script lang="ts">
+<script setup lang="ts">
+import UserMenu from '@/components/UserMenu.vue';
 import { useUserStore } from '@/stores/user.store';
-import { RouterLink } from 'vue-router';
+import { computed } from 'vue';
+import { RouterLink, RouterView } from 'vue-router';
 
 const userStore = useUserStore();
 
-export default {
-	components: {  },
+const isAdmin = computed(() => {
+	return userStore.currentUser?.isAdmin;
+});
 
-	data() {
-		return {
-			// loading: false,
-			// // tracks: new Map<any, any>(),
-			// // categories: new Map<any, any>(),
-
-			// activeCategory: <any>null,
-			// mode: 'browse',
-			// // activeTrack: null,
-		}
-	},
-
-	async beforeMount() {
-	},
-
-	methods: {
-	},
-
-	computed: {
-		isAdmin() {
-			return userStore.currentUser?.isAdmin;
-		},
-	},
-}
 </script>
 
 <template>
-	<div class="flex align-center justify-content-between">
-		<h1>Rachel Florence Photo</h1>
-		<RouterLink to="/admin" v-if="isAdmin">Admin</RouterLink>
+	<div>
+		<div class="nav-bar">
+			<h2>r.florence.photo</h2>
+			<RouterLink to="/admin" v-if="isAdmin">Admin</RouterLink>
+			<div class="flex-grow-1"></div>
+			<UserMenu />
+		</div>
+
+		<div class="px-4 pb-4"><RouterView /></div>
 	</div>
-	<hr />
 </template>
 
 <style scoped>
-
+.nav-bar {
+	position: sticky;
+	top: 0;
+	display: flex;
+	gap: 1em;
+	align-items: center;
+	z-index: 10;
+	background-color: #fffd;
+	backdrop-filter: blur(10px);
+	padding: 1em;
+}
 </style>

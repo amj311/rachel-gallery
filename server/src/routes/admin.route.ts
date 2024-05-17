@@ -45,6 +45,7 @@ export default (route, _, done) => {
 
 	// list all galleries
 	route.get('/gallery', async (request, reply) => {
+		console.log(request.sessionUser)
 		// const data = request.body as Omit<Gallery, 'id'>;
 		const list = await GalleryService.getGalleryList();
 		return {
@@ -56,6 +57,16 @@ export default (route, _, done) => {
 	route.post('/gallery', async (request, reply) => {
 		// const data = request.body as Omit<Gallery, 'id'>;
 		const gallery = await GalleryService.createGallery();
+		return {
+			success: true,
+			data: gallery
+		}
+	})
+
+	// Get admin gallery view
+	route.get('/gallery/:galleryId', async (request, reply) => {
+		const { galleryId } = request.params;
+		const gallery = await GalleryService.getGalleryFull(galleryId);
 		return {
 			success: true,
 			data: gallery

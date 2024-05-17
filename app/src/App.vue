@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useUserStore } from './stores/user.store';
 import { RouterView } from 'vue-router';
+import { useUserStore } from './stores/user.store';
 
 const userStore = useUserStore();
 
@@ -8,7 +8,8 @@ const userStore = useUserStore();
 
 
 <template>
-	<RouterView />
+	<div v-if="!userStore.hasLoadedSessionData">Loading...</div>
+	<RouterView v-else />
 </template>
 
 

@@ -34,7 +34,7 @@ model Gallery {
     coverPhoto    Photo?    @relation(fields: [coverPhotoId], references: [id])
     coverStyle    String?
     coverSettings Json?
-	visibility    String    @default("draft")
+    visibility    String    @default("draft")
 
     sections     GallerySection[]
     coverPhotoId String?          @unique
@@ -52,6 +52,7 @@ model GallerySection {
 model Photo {
     id               String          @id @default(uuid())
     filename         String
+    blob             Bytes
     googleFileId     String
     googleOwnerEmail String
     width            Int

@@ -26,11 +26,11 @@ const routes: Array<RouteRecordRaw> = [
 		component: () => import('@/views/Home.vue'),
 		async beforeEnter(to, from, next) {
 			await AuthService.signOut();
-			return next('/home');
+			return next('');
 		}
 	},
 	{
-		path: '/home',
+		path: '',
 		component: () => import('@/views/Home.vue'),
 		// beforeEnter(to, from, next) {
 		// 	const redirect = sessionStorage.getItem('redirectPath');
@@ -40,49 +40,59 @@ const routes: Array<RouteRecordRaw> = [
 		// 	}
 		// 	next();
 		// }
-	},
-	{
-		path: '/admin',
-		name: "Admin",
-		component: () => import('@/views/admin/Admin.vue'),
-		// beforeEnter(to, from, next) {
-		// 	if (!useUserStore().currentUser?.is_admin) {
-		// 		return next('/login');
-		// 	}
-		// 	next();
-		// },
+
 		children: [
 			{
-				path: '/admin/galleries',
-				component: () => import('@/views/admin/Galleries.vue'),
+				path: '/admin',
+				name: "Admin",
+				component: () => import('@/views/admin/Admin.vue'),
+				async beforeEnter(to, from, next) {
+					while (!useUserStore().hasLoadedSessionData) {
+						await new Promise((resolve) => setTimeout(resolve, 500));
+					}
 
+					if (!useUserStore().currentUser?.isAdmin) {
+						return next('');
+					}
+					next();
+				},
 				children: [
 					{
 						path: '',
-						component: () => import('@/views/admin/GalleryList.vue'),
+						name: 'Galleries',
+						component: () => import('@/views/admin/Galleries.vue'),
+		
+						children: [
+							{
+								path: '',
+								name: 'GalleriesList',
+								component: () => import('@/views/admin/GalleryList.vue'),
+							},
+							{
+								path: '/admin/galleries/:galleryId',
+								component: () => import('@/views/admin/EditGallery.vue'),
+							},
+						],
+			
 					},
-					{
-						path: '/admin/galleries/:galleryId',
-						component: () => import('@/views/admin/EditGallery.vue'),
-					},
-				],
-	
+		
+					// {
+					// 	path: '/admin/users',
+					// 	name: "Users",
+					// 	component: () => import('@/views/admin/Users.vue'),
+					// },
+				]
 			},
-
-			// {
-			// 	path: '/admin/users',
-			// 	name: "Users",
-			// 	component: () => import('@/views/admin/Users.vue'),
-			// },
 		]
 	},
+	
 	{
 		path: '/:galleryId',
 		component: () => import('@/views/viewGallery/ViewGallery.vue'),
 	},
 	{
 		path: '/:pathMatch(.*)*',
-		redirect: '/home'
+		redirect: ''
 	},
 ]
 
@@ -94,12 +104,12 @@ const router = createRouter({
 // const authRedirectGuard = async (checkAuth, to, from, next) => {
 // 	console.log("doing auth guard");
 // 	// make sure auth has a chance to load
-// 	// if (!useUserStore().hasLoadedSessionData) {
-// 	// 	await useUserStore().loadSessionData();
-// 	// }
-// 	// while (!useUserStore().hasLoadedSessionData) {
-// 	// 	await new Promise((resolve) => setTimeout(resolve, 500));
-// 	// }
+// 	if (!useUserStore().hasLoadedSessionData) {
+// 		await useUserStore().loadSessionData();
+// 	}
+// 	while (!useUserStore().hasLoadedSessionData) {
+// 		await new Promise((resolve) => setTimeout(resolve, 500));
+// 	}
 
 // 	const proceed = await checkAuth();
 

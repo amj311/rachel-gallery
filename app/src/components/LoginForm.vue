@@ -2,13 +2,16 @@
 import { useUserStore } from '../stores/user.store';
 import { AuthService } from '../services/authService';
 import { reactive } from 'vue';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
 
 const userStore = useUserStore();
 
 const state = reactive({
 	email: '',
 	password: '',
-	showPassword: false
+	showPassword: false,
+	isLoading: false,
 });
 
 // if (userStore.currentUser) {
@@ -16,28 +19,42 @@ const state = reactive({
 // 	useIonRouter().push(redirect || '/');
 // }
 
+async function loginWithEmail() {
+	try {
+		await AuthService.signInWithEmail(state.email, state.password);
+	}
+	catch (error: any) {
+		userStore.loginError = error.message;
+	}
+}
+async function loginWithGoogle() {
+	try {
+		await AuthService.signInWithGoogle();
+	}
+	catch (error: any) {
+		userStore.loginError = error.message;
+	}
+}
+
 </script>
 
 
 <template>
-	<div>
-		<h1>Login</h1>
-
+	<div class="flex flex-column gap-2 align-items-center" style="width: 15em">
 		<div v-if="userStore.loginError" class="bg-white border-round-3xl m-3">
 			{{ userStore.loginError }}
 		</div>
 
-		<div>
-			<input type="text" v-model="state.email" placeholder="Email" />
-		</div>
-		<div>
-			<input v-model="state.password" placeholder="Password" :type="state.showPassword ? 'text' : 'password'"/>
-		</div>
-		<div>
-			<button @click="AuthService.signInWithEmail(state.email, state.password)">Login</button>
+		<div class="flex flex-column gap-1 w-full align-items-center">
+			<InputText type="text" v-model="state.email" placeholder="Email" size="small" class="w-full" />
+			<InputText v-model="state.password" placeholder="Password" :type="state.showPassword ? 'text' : 'password'"  size="small" class="w-full" />
+			<Button @click="loginWithEmail" class="w-full justify-content-around">Sign in</button>
+			<small>New here? <a href="/signup">Sign up</a></small>
 		</div>
 
-		<button @click="AuthService.signInWithGoogle()">Sign in with Google</button>
+		<div>or</div>
+
+		<Button @click="loginWithGoogle" outlined class="w-full justify-content-between gap-2"><i class="pi pi-google" /><div class="flex-grow-1 text-align-center">Sign in with Google</div></button>
 	</div>
 </template>
 

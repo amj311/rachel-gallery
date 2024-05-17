@@ -73,8 +73,13 @@ export const GoogleDriveService = {
 		const form = new FormData();
 		form.append('metadata', new Blob([JSON.stringify({ name: image.filename, parents: [this.driveInfo.targetFolder.id] })], { type: 'application/json' }));
 		form.append('file', image.blob);
+		// upload image
 		const { data } = await axios.post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&access_token=' + this.token.access_token, form);
 		console.log(data)
+		const { data: file } = await axios.get('https://www.googleapis.com/drive/v3/files/' + data.id + '?&access_token=' + this.token.access_token);
+		console.log(file)
+		// make public
+		// await axios.post('https://www.googleapis.com/upload/drive/v3/files/' + data.id + '/permissions?access_token=' + this.token.access_token, { value: 'default', role: 'reader', type: 'anyone' });
 		return data;
 	},
 

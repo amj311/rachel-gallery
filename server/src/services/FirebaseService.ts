@@ -20,25 +20,21 @@ export const firebaseAuthMiddleware = async (request, reply) => {
     try {
         const authToken = request.headers.authorization;
 		if (!authToken) {
-			// Send 401 for no auth
-			reply.status(401).send();
+			return;
 		}
+
         // Verify the Firebase ID token
         const decodedToken = await admin.auth().verifyIdToken(authToken);
         const uid = decodedToken.uid;
 
         request.sessionUid = uid;
-		if (request.url === '/api/user/create-account') {
-			return;
-		}
-
+		
         // Attach the user ID to the request object
 		const user = await UserService.getUserByAuthId(uid);
-		if (!user) {
-			// Send 403 for auth but no account
-			reply.status(403).send();
+		if (user) {
+			request.sessionUser = user;
 		}
-        request.sessionUser = user;
+
     }
 	catch (error) {
         // Return an error response if the Firebase user session is not valid

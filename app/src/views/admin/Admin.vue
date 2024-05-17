@@ -33,7 +33,6 @@ if (!userStore.hasLoadedSessionData) {
 		<p><LoginForm /></p>
 	</div>
 	<div v-else>
-		I am admin
 		<RouterView />
 		<UploaderWindow />
 	</div>

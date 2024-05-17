@@ -13,7 +13,9 @@ function openMenu(event) {
 
 <template>
 	<div @click="openMenu" v-bind="$attrs"><slot></slot></div>
-	<Menu ref="menu" id="overlay_menu" :popup="true" v-bind="$attrs" />
+	<Menu ref="menu" id="overlay_menu" :popup="true" v-bind="$attrs">
+		<template #start><slot name="start"></slot></template>
+	</Menu>
 </template>
 
 <style scoped>

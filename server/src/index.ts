@@ -30,10 +30,10 @@ app.get('/api/firebase-config', () => {
 // public routes
 app.register(galleryRoute, { prefix: '/api/gallery' });
 
+app.addHook('preValidation', firebaseAuthMiddleware);
 
 // protected routes
 app.register((fastify, _, done) => {
-	fastify.addHook('preValidation', firebaseAuthMiddleware);
 	fastify.register(userRoute, { prefix: '/user' });
 	fastify.register(adminRoute, { prefix: '/admin' });
 	done();

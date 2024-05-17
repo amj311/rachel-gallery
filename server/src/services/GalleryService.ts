@@ -1,6 +1,7 @@
 import { Gallery } from "@prisma/client";
 import { prisma } from "../prisma/client";
 import { v4 as uuid } from 'uuid';
+import { GoogleDriveService } from "./GoogleDriveService";
 
 const fullGalleryInclusion = {
 	coverPhoto: true,
@@ -55,6 +56,18 @@ export const GalleryService = {
 		});
     },
 
+
+    async getGallerySimple(idOrSlug: string) {
+        return await prisma.gallery.findFirst({
+            where: {
+                OR: [ { id: idOrSlug }, { slug: idOrSlug } ],
+            },
+			include: {
+				coverPhoto: true,
+			}
+        });
+    },
+
     async getGalleryFull(idOrSlug: string) {
         return await prisma.gallery.findFirst({
             where: {
@@ -95,7 +108,7 @@ export const GalleryService = {
 						}
 					})),
 					delete: galleryData.sections.filter(s => s.marked_for_deletion).map(section => ({
-						where: { id: section.id },
+						id: section.id,
 					})),
 				},
 			},

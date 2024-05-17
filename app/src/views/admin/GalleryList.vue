@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { useRouter, RouterView } from 'vue-router';
-// import AdminMenu from './AdminMenu.vue'
 import { onBeforeMount, reactive } from 'vue';
-import { useUserStore } from '@/stores/user.store';
-import LoginForm from '@/components/LoginForm.vue';
 import request from '@/services/request';
-import UploaderWindow from './uploader/UploaderWindow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
 import Card from 'primevue/card';
 import dayjs from 'dayjs';
 import Button from 'primevue/button';
+import { visibilityOptions } from '@/utils/visibilityOptions';
 
 const router = useRouter();
 
@@ -46,21 +43,29 @@ async function createNewGallery() {
 			<template v-for="gallery in state.galleries" :key="gallery.id" >
 				<Card size="small" :style="{ maxWidth: '400px', zoom: .8 }" class="overflow-hidden cursor-pointer" @click="router.push(`/admin/galleries/${gallery.id}`)">
 					<template #header><div class="cover-small"><GalleryCover :gallery="gallery" /></div></template>
-					<template #title>{{ gallery.name }}</template>
-					<template #subtitle>{{ gallery.clientName }}</template>
+					<template #title>{{ gallery.name || 'Untitled' }}</template>
+					<template #subtitle>{{ gallery.clientName || gallery.clientEmail }}</template>
 					
-
 					<template #content>
-						<div class="flex align-items-center gap-1">
-							<template v-if="gallery.date">
-								<i class="pi pi-calendar" />
-								{{ dayjs(gallery.date).format('MMM DD, YYYY') }}
-							</template>
+						<div class="flex align-items-center gap-3">
+							<div class="flex align-items-center gap-1" :style="{ color: visibilityOptions[gallery.visibility].color }">
+								<i :class="visibilityOptions[gallery.visibility].icon" />
+								{{ visibilityOptions[gallery.visibility].label }}
+							</div>
 
 							<div class="flex-grow-1"></div>
-							
-							<i class="pi pi-images" />
-							<span>{{ gallery.sections.reduce((t, s) => t + s._count.photos, 0) }}</span>
+
+
+							<div class="flex align-items-center gap-1">
+								<i class="pi pi-images" />
+								<span>{{ gallery.sections.reduce((t, s) => t + s._count.photos, 0) }}</span>
+							</div>
+
+
+							<div v-if="gallery.date" class="flex align-items-center gap-1">
+								<i class="pi pi-calendar" />
+								{{ dayjs(gallery.date).format('MMM DD, \'YY') }}
+							</div>
 						</div>
 					</template>
 								
@@ -79,8 +84,7 @@ async function createNewGallery() {
 }
 
 .cover-small {
-	/* width: 1000px;
-	aspect-ratio: 1.6; */
+	font-size: 2em;
 	zoom: .2;
 	height: 900px;
 	pointer-events: none;

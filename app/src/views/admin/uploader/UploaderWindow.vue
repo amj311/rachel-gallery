@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader.store';
+import Button from 'primevue/button';
 
 const uploaderStore = useUploaderStore();
 uploaderStore.init();
@@ -18,14 +19,15 @@ const bytesToGB = (bytes: number) => {
 		<div class="header">
 			<h3>{{ uploaderStore.headerText }}</h3>
 			<div class="flex-spacer" />
-			<div class="toggleView" @click="uploaderStore.toggleViewMode">
-				{{ uploaderStore.viewMode === 'modal' ? '⇲' : '⇱' }}
+			<div>
+				<Button :icon="uploaderStore.viewMode === 'modal' ? 'pi pi-window-minimize' : 'pi pi-window-maximize'" @click="uploaderStore.toggleViewMode" text  size="small" />
+				<Button v-if="uploaderStore.canClose" icon="pi pi-times" text @click="uploaderStore.close" size="small" />
 			</div>
-			<div v-if="uploaderStore.canClose" @click="uploaderStore.close">&times;</div>
 		</div>
 		<div class="progress"></div>
 		<div class="body">
 			<div class="drive-info">
+				<h3>1. Connect to Google Drive</h3>
 				<div v-if="!uploaderStore.isGoogleReady">
 					<button @click="uploaderStore.setupGoogle">Log in to Google Drive</button>
 				</div>
@@ -40,56 +42,68 @@ const bytesToGB = (bytes: number) => {
 					</div>
 				</div>
 			</div>
-			<div class="photo-grid">
-				<div v-for="photo in uploaderStore.photosToUpload" :key="photo.id"
-					class="photo-grid-item">
-					<div class="photo-frame">
-						<PhotoFrame :photo="photo" />
-					</div>
-					<div v-if="photo.uploadStatus !== 'uploading'" class="removePhoto" @click="uploaderStore.removePhoto(photo)">&times;</div>
-					<div class="filename">{{ photo.filename }}</div>
-					<div class="status" v-if="photo.uploadStatus">
-						<div class="status" v-if="photo.uploadStatus === 'complete'">
-							<i class="pi pi-check" style="color: green" />
+			<div>
+				<h3>2. Upload Photos</h3>
+				<div class="photo-grid">
+					<div v-for="photo in uploaderStore.photosToUpload" :key="photo.id"
+						class="photo-grid-item">
+						<div class="photo-frame">
+							<PhotoFrame :photo="photo" />
 						</div>
-						<div class="status retry" v-else-if="photo.uploadStatus === 'error'">
-							<i class="pi pi-exclamation-triangle" style="color: red" />
-							<i class="pi pi-replay" @click="uploaderStore.retryUploadPhoto(photo)" />
+						<div v-if="photo.uploadStatus !== 'uploading'" class="removePhoto" @click="uploaderStore.removePhoto(photo)">&times;</div>
+						<div class="filename">{{ photo.filename }}</div>
+						<div class="status" v-if="photo.uploadStatus">
+							<div class="status" v-if="photo.uploadStatus === 'complete'">
+								<i class="pi pi-check" style="color: green" />
+							</div>
+							<div class="status retry" v-else-if="photo.uploadStatus === 'error'">
+								<i class="pi pi-exclamation-triangle" style="color: red" />
+								<i class="pi pi-replay" @click="uploaderStore.retryUploadPhoto(photo)" />
+							</div>
+							<i v-else-if="photo.uploadStatus === 'uploading'" class="pi pi-spinner pi-spin" />
 						</div>
-						<i v-else-if="photo.uploadStatus === 'uploading'" class="pi pi-spinner pi-spin" />
 					</div>
 				</div>
 			</div>
+
+			<div v-if="uploaderStore.isGoogleReady">
+				<h3>3. Make Photos Public</h3>
+				<p>Open the <a :href="'https://drive.google.com/drive/folders/' + uploaderStore.googleDriveInfo.targetFolder.id" target="_blank">Drive folder</a>, select all photos, and and share publicly.</p>
+			</div>
+			
 		</div>
 	</div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 #uploaderWindow {
 	position: fixed;
-	border: 1px solid;
+	border: 1px solid #ddd;
 	background: #fff;
+	overflow: hidden;
+	transition: 200ms;
+	transform: translate(50%, 50%);
+	padding: 1px;
 }
 
 #uploaderWindow.modal {
 	bottom: 50%;
 	right: 50%;
-	transform: translate(50%, 50%);
-	border: 1px solid;
 	background: #fff;
-	width: 800px;
+	width: 720px;
 	max-width: 80vw;
 	max-height: 80vh;
-	overflow: hidden;
 	overflow-y: auto;
+    box-shadow: 0 5px 20px 3px #0005;
+    border-radius: .5em;
 }
 
 #uploaderWindow.drawer {
-	bottom: 0;
-	right: 2em;
-	border: 1px solid;
-	background: #fff;
+	bottom: calc(25px);
+	right: calc(2em + 150px);
 	width: 300px;
+    box-shadow: 0 2px 6px 0 #0005;
+	max-height: 50px;
 }
 
 .flex-spacer {
@@ -99,7 +113,8 @@ const bytesToGB = (bytes: number) => {
 .header {
 	display: flex;
 	gap: .5em;
-	padding: .5em;
+	margin: .5em;
+	margin-left: 1em;
 	align-items: center;
 }
 
@@ -109,32 +124,30 @@ const bytesToGB = (bytes: number) => {
 	line-height: 0em;
 }
 
-.drawer .body {
-	display: none;
-}
-
 .body {
-	padding: .5em;
+	margin: 1.5em;
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
 }
 
 .photo-grid {
-	margin-top: 10px;
-	/* display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	gap: 10px; */
+	padding-top: 10px;
+	padding-right: 10px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 	grid-gap: 1rem;
 	justify-items: center;
 	align-items: center;
+	max-height: 50vh;
+	overflow: hidden;
+	overflow-y: auto;
 }
 
 .photo-grid-item {
-	/* width: 100px;
-	height: 100px; */
 	position: relative;
-	max-width: 100px;
+	max-width: 120px;
+	padding: 10px;
 }
 
 .photo-grid-item:hover {
@@ -169,7 +182,7 @@ const bytesToGB = (bytes: number) => {
 .photo-frame {
 	width: 100px;
 	height: 100px;
-	padding: 10px;
+	margin-bottom: 10px;
 }
 
 .filename {
@@ -190,22 +203,30 @@ const bytesToGB = (bytes: number) => {
     display: flex;
     align-items: center;
     justify-content: center;
+
+	&.retry {
+		cursor: pointer;
+
+		.pi-replay {
+			display: none;
+		}
+		.pi-exclamation-triangle {
+			display: block;
+		}
+
+		&:hover {
+			.pi-replay {
+				display: block;
+			}
+			.pi-exclamation-triangle {
+				display: none;
+			}
+		}
+	}
 }
 
-.status.retry {
-	cursor: pointer;
+:deep(.pi-window-minimize), :deep(.pi-window-maximize) {
+    transform: rotate(-90deg);
 }
 
-.status.retry .fa-repeat {
-	display: none;
-}
-.status.retry:hover .fa-repeat {
-	display: block;
-}
-.status.retry .fa-exclamation {
-	display: block;
-}
-.status.retry:hover .fa-exclamation {
-	display: none;
-}
 </style>

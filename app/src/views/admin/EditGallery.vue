@@ -14,8 +14,11 @@ import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import GhostInput from '@/components/InlineInput.vue';
-import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
+import { visibilityOptions } from '@/utils/visibilityOptions';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -24,13 +27,6 @@ const coverStyles = [
 	'full',
 	'half',
 	'overlay',
-];
-
-const visibilityOptions = [
-	'draft',
-	'public',
-	'client',
-	'archived',
 ];
 
 const state = reactive({
@@ -43,7 +39,7 @@ const state = reactive({
 });
 
 onBeforeMount(async () => {
-	const { data } = await request.get('gallery/' + state.galleryId);
+	const { data } = await request.get('admin/gallery/' + state.galleryId);
 
 	if (!data.data) {
 		router.push('/admin/galleries');
@@ -74,7 +70,7 @@ watch(state, (newState) => {
 	oldGallery = JSON.stringify(newState.gallery);
 })
 
-const saveDebounceTime = 1500;
+const saveDebounceTime = 1000;
 let nextDebounce = 0;
 
 function updateGallery() {
@@ -164,13 +160,12 @@ function onDrop(event) {
 	event.target.classList.remove('drag-over');
 }
 
-async function deletePhoto(photo, skipConfirm = false) {
-	if (!skipConfirm) {
-		if (!confirm('Are you sure you want to delete this photo?')) return;
-	}
+async function deletePhoto(photo) {
+	if (!confirm('Are you sure you want to delete this photo?')) return;
 	if (!GoogleDriveService.hasValidToken) {
 		await GoogleDriveService.getToken();
 	}
+	// TODO check that photo is in activated drive
 	try {
 		await GoogleDriveService.deleteFile(photo.googleFileId);
 		await request.delete('admin/photo/' + photo.id);
@@ -189,8 +184,28 @@ async function deleteSection(section) {
 	if (!confirm('Are you sure you want to delete this section?')) {
 		return;
 	}
-	await Promise.all(section.photos.map(deletePhoto, true));
-	section.marked_for_deletion = true;
+	const res = await Promise.all(section.photos.map(async (p) => {
+		let success = true;
+		try {
+			await GoogleDriveService.deleteFile(p.googleFileId);
+			p.marked_for_deletion = true; // just to hide it from view
+		}
+		catch (error) {
+			console.error(error);
+			success = false;
+		}
+		return {
+			photo: p,
+			success,
+		}
+	}));
+	const failed = res.filter(r => !r.success);
+	if (!failed.length) {
+		section.marked_for_deletion = true; // will trigger delete on backend, which should cascade to photos
+	}
+	else {
+		// warn about failed deletion
+	}
 }
 
 async function addSection() {
@@ -206,21 +221,43 @@ function swapSections(aIdx, bIdx) {
 		section.order = idx
 	});
 }
+
+async function copyLink() {
+	await navigator.clipboard.writeText(window.location.origin + '/' + (state.gallery.slug || state.gallery.id));
+}
+
 </script>
 
 
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
-		<div class="flex align-items-center gap-3 mt-2 mb-4">
-			<RouterLink to="/admin/galleries" ><Button icon="pi pi-arrow-left" text /></RouterLink>
+		<div class="flex align-items-center gap-3 mb-4">
+			<RouterLink to="/admin/" ><Button icon="pi pi-arrow-left" text /></RouterLink>
 			<h1><GhostInput v-model="state.gallery.name" placeholder="Gallery name..." /></h1>
 			<span v-if="state.isSaving"><i class="pi pi-spinner pi-spin" /> Saving...</span>
 			<div class="flex-grow-1"></div>
-			<Dropdown v-model="state.gallery.visibility" :options="visibilityOptions" outline />
+			<div>
+				<RouterLink :to="'/' + (state.gallery.slug || state.gallery.id)"><Button icon="pi pi-eye" text v-tooltip.bottom="'Preview'" /></RouterLink>
+				<Button icon="pi pi-send" text v-tooltip.bottom="'Copy link'" @click="copyLink" />
+			</div>
+			<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
+				<template #value="{ value }">
+					<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[value].color }">
+						<i :class="visibilityOptions[value].icon" />
+						{{ visibilityOptions[value].label }}
+					</div>
+				</template>
+				<template #option="{ option }">
+					<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[option].color }">
+						<i :class="visibilityOptions[option].icon" />
+						{{ visibilityOptions[option].label }}
+					</div>
+				</template>
+			</Dropdown>
 		</div>
 
-		<div class="flex gap-5 my-3">
+		<div class="flex flex-wrap gap-5 my-3">
 			<div class="gallery-settings">
 				<TabView>
 					<TabPanel header="Details">
@@ -231,7 +268,10 @@ function swapSections(aIdx, bIdx) {
 							</div>
 							<label>Direct link</label>
 							<div>
-								<InputText v-model="state.gallery.slug" placeholder="link" />
+								<InputGroup>
+									<InputGroupAddon>/</InputGroupAddon>
+									<InputText v-model="state.gallery.slug" placeholder="link" />
+								</InputGroup>
 							</div>
 							<label>Client name</label>
 							<div>
@@ -298,64 +338,69 @@ function swapSections(aIdx, bIdx) {
 			</div>
 		</div>
 
+		<template v-for="(section, index) in state.gallery.sections" :key="section.id">
+			<div v-if="!section.marked_for_deletion" class="my-6 section"
+				:class="{ expanded: section.expanded }"
+			>
+				<div class="flex align-items-center py-2">
+					<h2>
+						<GhostInput v-model="section.name" placeholder="Section name..." />
+					</h2>
+					<div class="flex-grow-1"></div>
+					<Button v-if="index > 0" @click="swapSections(index, index - 1)" icon="pi pi-chevron-up" text />
+					<Button v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"
+						icon="pi pi-chevron-down" text />
+					<Button icon="pi pi-trash" text @click="deleteSection(section)" />
+				</div>
 
-		<div v-for="(section, index) in state.gallery.sections" :key="section.id" class="my-6 section"
-			:class="{ expanded: section.expanded }">
-			<hr />
-			<div class="flex align-items-center py-2">
-				<h2>
-					<GhostInput v-model="section.name" placeholder="Section name..." />
-				</h2>
-				<div class="flex-grow-1"></div>
-				<Button v-if="index > 0" @click="swapSections(index, index - 1)" icon="pi pi-chevron-up" text />
-				<Button v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"
-					icon="pi pi-chevron-down" text />
-				<Button icon="pi pi-trash" text @click="deleteSection(section)" />
-			</div>
+				<div v-if="section.photos.length">
+					<div class="photo-grid">
+						<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
+							<i class="pi pi-plus" />
+						</div>
 
-			<div v-if="section.photos.length">
-				<div class="photo-grid">
-					<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
+						<template v-for="photo in section.photos" :key="photo.id">
+							<div v-if="!photo.marked_for_deletion" class="photo-grid-item">
+								<div class="photo-frame">
+									<PhotoFrame :photo="photo" />
+								</div>
+								<div class="options">
+									<DropdownMenu
+										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
+										<i class="pi pi-ellipsis-v" style="font-size: 10px;" />
+									</DropdownMenu>
+								</div>
+								<div class="filename">{{ photo.filename }}</div>
+							</div>
+						</template>
+					</div>
+					<div v-if="!section.expanded && section.photos.length > 0" class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4" @click="section.expanded = true">
+						View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
+					</div>
+				</div>
+
+				<div v-else class="flex align-items-center gap-2 cursor-pointer add-photos" @click="openUploadToSection(section)">
 						<i class="pi pi-plus" />
-					</div>
-
-					<div v-for="photo in section.photos" :key="photo.id" class="photo-grid-item">
-						<div class="photo-frame">
-							<PhotoFrame :photo="photo" />
-						</div>
-						<div class="options">
-							<DropdownMenu
-								:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
-								<i class="pi pi-ellipsis-v" style="font-size: 10px;" />
-							</DropdownMenu>
-						</div>
-						<div class="filename">{{ photo.filename }}</div>
-					</div>
-				</div>
-				<div v-if="!section.expanded && section.photos.length > 0" class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4" @click="section.expanded = true">
-					View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
+						Add Photos
 				</div>
 			</div>
-
-			<div v-else class="flex align-items-center gap-2 cursor-pointer add-photos" @click="openUploadToSection(section)">
-					<i class="pi pi-plus" />
-					Add Photos
-			</div>
-		</div>
+		</template>
 
 		<br />
 		<div class="flex justify-content-center"><Button @click="addSection" outlined>&plus; Add Section</Button></div>
 
 
 
-
-
 		<div v-if="state.showUploadToSection" id="uploadModal" class="modal">
+			<div class="mb-3 flex align-items-center gap-2">
+				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
+				<div class="flex-grow-1"></div>
+				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
+				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small">Upload</Button>
+			</div>
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
 				<div class="drop-text">
 					<div>Drag and drop or <label for="fileSelect">select images</label></div>
-					<button @click="state.showUploadToSection = null">Cancel</button>
-					<button v-if="state.imagesToUpload.size" @click="sendToUploader">Upload</button>
 				</div>
 				<div class="photo-grid">
 					<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
@@ -467,8 +512,10 @@ function swapSections(aIdx, bIdx) {
 }
 
 .section {
+	border-top: 1px solid lightgrey;
+
 	.photo-grid {
-		height: 145px;
+		height: 155px;
 		overflow: hidden;
 	}
 
@@ -479,7 +526,7 @@ function swapSections(aIdx, bIdx) {
 
 .photo-grid {
 	padding-top: 10px;
-	padding-right: 10px;
+	padding-right: 20px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 	grid-gap: 1rem;
@@ -489,7 +536,8 @@ function swapSections(aIdx, bIdx) {
 
 .photo-grid-item {
 	position: relative;
-	max-width: 100px;
+	max-width: 120px;
+	padding: 10px;
 
 	&:hover {
 		background-color: #f5f5f5;
@@ -567,8 +615,10 @@ function swapSections(aIdx, bIdx) {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	border: 1px solid;
+	border: 1px solid #ddd;
 	background: #fff;
+    box-shadow: 0 5px 20px 3px #0005;
+    border-radius: .5em;
 	width: 800px;
 	max-width: 80vw;
 	max-height: 80vh;
@@ -580,7 +630,7 @@ function swapSections(aIdx, bIdx) {
 
 .drop-images {
 	width: 100%;
-	border: 2px dashed;
+	border: 2px dashed #aaa;
 	padding: 1em;
 }
 
@@ -596,7 +646,7 @@ function swapSections(aIdx, bIdx) {
 
 .drop-images .drop-text {
 	text-align: center;
-	padding: 50px;
+	padding: 30px 50px;
 }
 
 .drop-images .drop-text label {
@@ -609,7 +659,7 @@ function swapSections(aIdx, bIdx) {
 .photo-frame {
 	width: 100px;
 	height: 100px;
-	padding: 10px;
+	margin-bottom: 10px;
 }
 
 .filename {

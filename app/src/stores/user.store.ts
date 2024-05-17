@@ -8,6 +8,7 @@ export const useUserStore = defineStore('user', () => {
 	const loginError = ref<String>('');
 	const isLoggedIn = ref(false);
 	const currentUser = ref<any>();
+	const isLoading = ref(false);
 
 	const loadSessionData = async () => {
 		const authUser = AuthService.authUser;
@@ -15,10 +16,12 @@ export const useUserStore = defineStore('user', () => {
 			isLoggedIn.value = false;
 			currentUser.value = null;
 			hasLoadedSessionData.value = true;
+			isLoading.value = false;
 			return;
 		}
 		try {
 			hasLoadedSessionData.value = false;
+			isLoading.value = true;
 			isLoggedIn.value = Boolean(authUser);
 			if (!isLoggedIn.value) {
 				currentUser.value = null;
@@ -35,6 +38,7 @@ export const useUserStore = defineStore('user', () => {
 		}
 		finally {
 			hasLoadedSessionData.value = true;
+			isLoading.value = false;
 		}
 	};
 

@@ -6,12 +6,14 @@ import PhotoFrame from '@/components/PhotoFrame.vue';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
 import DeferredContent from 'primevue/deferredcontent';
+import LoginModal from '@/components/LoginModal.vue';
 
 const router = useRouter();
 
 const state = reactive({
 	isLoading: true,
 	galleryId: router.currentRoute.value.params.galleryId,
+	canView: false,
 	gallery: null,
 	showSlideshow: false,
 	firstSlideshowPhoto: null,
@@ -117,10 +119,13 @@ function computeImagePlacement() {
 onMounted(async () => {
 	const { data } = await request.get('gallery/' + state.galleryId);
 	state.gallery = data.data;
+	state.canView = data.canView;
 	state.isLoading = false;
 
-	setTimeout(() => computeImagePlacement(), 500);
-	window.addEventListener('resize', () => computeImagePlacement());
+	if (state.canView) {
+		setTimeout(() => computeImagePlacement(), 500);
+		window.addEventListener('resize', () => computeImagePlacement());
+	}
 });
 
 onBeforeUnmount(() => {
@@ -149,46 +154,71 @@ function openSlideshow(photo?) {
 			<GalleryCover :gallery="state.gallery" />
 		</div>
 
-		<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
-			<div class="section-header">{{ section.name }}</div>
-			<div class="photo-grid" :style="{ height: section.height + 'px' }">
-				<DeferredContent>
-					<template v-for="photo in section.photos" :key="photo.id">
-						<div v-if="photo.rect" class="photo-grid-item"
-							:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
-							<div class="photo-frame" @click="openSlideshow(photo)">
-								<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'" :watermark="true"
-									:fillMethod="'cover'" />
-							</div>
-							<div class="bottom-bar">
-								<div class="buttons">
-									<div class="button"><i class="pi pi-heart" /></div>
-									<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
+		<div v-if="!state.canView" class="login-guard">
+			<LoginModal message="Please sign in to view this gallery" />
+		</div>
+
+		<div v-else class="">
+			<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
+				<div class="section-header">{{ section.name }}</div>
+				<div class="photo-grid" :style="{ height: section.height + 'px' }">
+					<DeferredContent>
+						<template v-for="photo in section.photos" :key="photo.id">
+							<div v-if="photo.rect" class="photo-grid-item"
+								:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
+								<div class="photo-frame" @click="openSlideshow(photo)">
+									<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'"
+										:watermark="true" :fillMethod="'cover'" />
+								</div>
+								<div class="bottom-bar">
+									<div class="buttons">
+										<div class="button"><i class="pi pi-heart" /></div>
+										<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					</template>
-				</DeferredContent>
+						</template>
+					</DeferredContent>
+				</div>
 			</div>
+			<Slideshow v-if="state.showSlideshow" :photos="state.gallery.sections.flatMap(s => s.photos)"
+				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
 		</div>
-		<Slideshow v-if="state.showSlideshow" :photos="state.gallery.sections.flatMap(s => s.photos)"
-			:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
+
 	</div>
 </template>
 
 <style lang="scss">
-:root {
-	--swipe-delta: 0px;
+.login-guard {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff5;
+    backdrop-filter: blur(7px);
+
+	.modal {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: #fff;
+		border: 1px solid lightgrey;
+		outline: 10px solid #fff;
+		box-shadow: 0px 0px 9px 11px #0005;
+		padding: 2em;
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+		align-items: center;
+	}
 }
 
 #viewGallery {
 	/* make sure there is a scrollbar before the images load so they have the right width */
 	min-height: 101vh;
-	// temporary: remove page padding
-	margin: -32px;
-
-
 
 
 	.cover {
