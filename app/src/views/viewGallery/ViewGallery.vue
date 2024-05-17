@@ -300,8 +300,10 @@ function toggleFavorite(photo) {
 				color: white !important;
 				opacity: 0;
 				padding-top: 1em;
+				pointer-events: none;
 
 				.buttons {
+					pointer-events: all;
 					width: auto;
 					display: inline-flex;
 
