@@ -67,14 +67,13 @@ async function loadImage(src) {
 
 async function drawImage(source) {
 	const ctx = canvas.value!.getContext('2d')!;
-	ctx.clearRect(0, 0, state.canvasW, state.canvasH);
 	const img = await loadImage(source);
+	ctx.clearRect(0, 0, state.canvasW, state.canvasH);
 	ctx.drawImage(img, 0, 0, state.canvasW, state.canvasH);
 }
 
 async function drawWatermark() {
 	const ctx = waterCanvas.value!.getContext('2d')!;
-	ctx.clearRect(0, 0, state.canvasW, state.canvasH);
 	const wtr = new Image();
 	await new Promise((res) => {
 		wtr.addEventListener("load", res);
@@ -101,6 +100,7 @@ async function drawWatermark() {
 	const wtrOffH = state.canvasH - newWtrH - edgeMargin;
 
 	ctx.globalAlpha = 0.3;
+	ctx.clearRect(0, 0, state.canvasW, state.canvasH);
 	ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
 }
 
