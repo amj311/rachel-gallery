@@ -25,18 +25,12 @@ if (!userStore.hasLoadedSessionData) {
 
 <template>
 	<NavBar>
-		<div>ghj dghj</div>
+		<RouterLink to="/admin" >Galleries</RouterLink>
 	</NavBar>
 
 	<div class="px-4 pb-4"><RouterView /></div>
 </template>
 
 <style>
-#main {
-	background-color: white;
-}
 
-.about {
-	color: white;
-}
 </style>

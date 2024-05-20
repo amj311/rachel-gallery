@@ -18,7 +18,7 @@ const userStore = useUserStore();
 	</div>
 </template>
 
-<style scoped>
+<style lang="scss">
 .nav-bar {
 	position: sticky;
 	top: 0;
@@ -29,5 +29,14 @@ const userStore = useUserStore();
 	background-color: #fffd;
 	backdrop-filter: blur(10px);
 	padding: 1em;
+
+	a {
+		text-decoration: none;
+		color: #000 !important;
+
+		&.router-link-exact-active {
+			border-bottom: 1px solid;
+		}
+	}
 }
 </style>
