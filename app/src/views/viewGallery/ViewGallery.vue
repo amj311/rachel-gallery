@@ -90,7 +90,7 @@ async function loadGallery () {
 
 		if (code) localStorage.setItem('gallery/' + state.galleryIdOrSlug + '/code', code);
 
-		if (!state.didAdminWarn && isAdmin.value && ['draft', 'hidden'].includes(state.gallery.visibility)) {
+		if (!state.didAdminWarn && isAdmin.value && ['draft', 'hidden', 'archived'].includes(state.gallery.visibility)) {
 			toast.add({
 				severity: 'warn',
 				summary: 'This gallery is ' + state.gallery.visibility + '. Only admins can view it.',
