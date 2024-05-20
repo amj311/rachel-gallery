@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import DeferredContent from 'primevue/deferredcontent';
 
@@ -42,7 +42,7 @@ type ImageRect = {
 	isDouble: boolean
 }
 
-watch([wall, photos], () => {
+const computeTiles = (() => {
 	if (!wall.value) {
 		state.tiles = [];
 		state.height = 0;
@@ -123,6 +123,15 @@ watch([wall, photos], () => {
 		});
 	})
 	state.height = Math.max(cols[0]?.bottom || 0, cols[1]?.bottom || 0, cols[2]?.bottom || 0);
+});
+
+onMounted(() => {
+	window.addEventListener('resize', computeTiles);
+	computeTiles();
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('resize', computeTiles);
 });
 
 </script>

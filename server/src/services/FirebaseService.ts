@@ -18,7 +18,7 @@ admin.initializeApp(firebaseConfig);
 // Middleware to check if the request has a valid Firebase user session
 export const firebaseAuthMiddleware = async (request, reply) => {
     try {
-        const authToken = request.headers.authorization;
+        const authToken = request.headers.authorization || request.query.access_token;
 		if (!authToken) {
 			return;
 		}

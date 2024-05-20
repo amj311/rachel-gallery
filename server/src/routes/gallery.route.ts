@@ -1,5 +1,10 @@
 import { Gallery, User } from "@prisma/client";
 import { GalleryService } from "../services/GalleryService";
+import { prisma } from "../prisma/client";
+import { GoogleDriveService } from "../services/GoogleDriveService";
+import { Readable } from "stream";
+import sharp from "sharp";
+import JSZip from "jszip";
 
 export default (route, _, done) => {
 
@@ -92,5 +97,78 @@ export default (route, _, done) => {
 		}
 	})
 
-    done();
+
+	// for downloading photos
+	route.get('/:galleryId/download', async (request, reply) => {
+		console.log("DOING DOWNLOAD!!!")
+		const { galleryId } = request.params;
+		const { hiRes, photoIds } = request.query;
+		const ids = photoIds?.split(',') || [];
+
+		const gallery = await GalleryService.getGallerySimple(galleryId);
+
+		if (!gallery) {
+			return {
+				success: false,
+				message: 'Gallery not found'
+			}
+		}
+
+		if (!request.sessionUser?.isAdmin && gallery.clientEmail !== request.sessionUser?.email) {
+			return {
+				success: false,
+				message: 'You do not have permission to download this gallery'
+			}
+		}
+
+		if (ids.length) {
+			const photos = await prisma.photo.findMany({
+				where: {
+					id: { in: ids },
+				},
+			});
+
+			const buffers = await Promise.all(photos.map(async (photo) => {
+				const data = await GoogleDriveService.loadFile(photo?.googleFileId) as any;
+				const array = await data.arrayBuffer();
+
+				if (hiRes === 'true') {
+					return Buffer.from(array);
+				}
+				else {
+					return await sharp(array).resize({
+						width: 1200,
+						height: 1200,
+						fit: 'inside',
+					}).toBuffer();
+				}
+			}));
+
+			let finalBuffer: Buffer;
+			const isMultiple = buffers.length > 1;
+
+			if (isMultiple) {
+				const zip = new JSZip();
+				buffers.forEach((buffer, i) => {
+					zip.file(`${photos[i].filename}`, buffer);					
+				})
+				const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+				finalBuffer = buffer;
+			}
+			else {
+				finalBuffer = buffers[0];
+			}
+
+			reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery.name}.zip` : photos[0].filename));
+			reply.header('Content-Length', finalBuffer.length);
+			reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
+			return reply.send(finalBuffer);
+		}
+
+		return {
+			success: true,
+		}
+	})
+
+	done();
 }

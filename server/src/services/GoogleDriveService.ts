@@ -20,7 +20,6 @@ export const GoogleDriveService = {
 				['https://www.googleapis.com/auth/drive'],
 			);
 
-			console.log('jwtClient', jwtClient)
 			//authenticate request
 			await jwtClient.authorize();
 			this._token = jwtClient;
@@ -42,7 +41,6 @@ export const GoogleDriveService = {
 				fileId: googleFileId,
       			alt: 'media',
 			});
-			console.log(file);
 			return file.data;
 		}
 		catch(error) {

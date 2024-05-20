@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { reactive, onMounted, onBeforeUnmount, computed } from 'vue';
-import request from '@/services/request';
+import request, { apiUrl } from '@/services/request';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
 import LoginModal from '@/components/LoginModal.vue';
@@ -14,6 +14,8 @@ import ShareModal from '@/components/GalleryAccessModal.vue';
 import CodeInput from '@/components/CodeInput.vue';
 import watermarkImage from '@/assets/images/watermark.png'
 import { useToast } from 'primevue/usetoast';
+import { AuthService } from '@/services/authService';
+import DropdownMenu from '@/components/DropdownMenu.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -103,15 +105,22 @@ async function loadGallery () {
 	state.isLoading = false;
 }
 
-function downloadHighRes(photo) {
+async function downloadPhotos(photos, hiRes = false) {
+	if (!photos.length) return;
 	const link = document.createElement('a');
-	link.href = `https://drive.google.com/uc?export=download&id=${photo.googleFileId}`;
-	link.download = photo.filename;
+	const multiple = photos.length > 1;
+	const token = await AuthService.getToken();
+	// link.href = `https://drive.google.com/uc?export=download&id=${photo.googleFileId}`;
+	link.href = `${apiUrl}/gallery/${state.gallery.id}/download?photoIds=${photos.map(p => p.id).join(',')}&hiRes=${hiRes}&access_token=${token}`;
+	link.download = multiple ?  `${state.gallery.name}.zip` : photos[0].filename;
 	link.click();
+	link.remove();
 }
 
+const allPhotos = computed(() => state.gallery.sections.flatMap(s => s.photos));
+
 function openSlideshow(photo?) {
-	state.slideshowPhotos = state.gallery.sections.flatMap(s => s.photos);
+	state.slideshowPhotos = allPhotos.value;
 	state.firstSlideshowPhoto = photo;
 	state.showSlideshow = true;
 }
@@ -136,6 +145,19 @@ function scrollDown() {
 		const cover = document.getElementById('cover');
 		window.scrollTo(0, cover!.offsetTop + cover!.offsetHeight);
 	}
+}
+
+function downloadMenu(photos) {
+	return [
+		{
+			label: 'Download High-res',
+			command: () => downloadPhotos(photos, true)
+		},
+		{
+			label: 'Download Web-size',
+			command: () => downloadPhotos(photos)
+		}
+	]
 }
 
 </script>
@@ -166,12 +188,15 @@ function scrollDown() {
 
 					</div>
 					<div class="flex-grow-1"></div>
-					<div>
+					<div class="flex">
 						<Button icon="pi pi-heart" text @click="state.showFavoritesModal = true" v-tooltip.bottom="'Favorites'" />
-						<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
+						<div><Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
 							class="small-badge" />
+						</div>
 						<template v-if="isClient">
-							<Button icon="pi pi-download" text v-tooltip.bottom="'Download'" />
+							<DropdownMenu :model="downloadMenu(allPhotos)">
+								<Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" />
+							</DropdownMenu>
 							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text @click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
 						</template>
 					</div>
@@ -191,8 +216,9 @@ function scrollDown() {
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
-										</div>
+										<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
+											<div class="button"><i class="pi pi-download" /></div>
+										</DropdownMenu>
 									</div>
 								</div>
 							</div>
@@ -205,7 +231,7 @@ function scrollDown() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites</h3>
 					<div class="flex-grow-1"></div>
-					<Button icon="pi pi-download" text />
+					<Button icon="pi pi-download" text @click="downloadPhotos(favoritePhotos)" />
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
@@ -219,8 +245,9 @@ function scrollDown() {
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
-										</div>
+										<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
+											<div class="button"><i class="pi pi-download" /></div>
+										</DropdownMenu>
 									</div>
 								</div>
 							</div>
@@ -233,7 +260,9 @@ function scrollDown() {
 				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false">
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" @click="toggleFavorite(photo)" />
-					<Button text @click="downloadHighRes(photo)" icon="pi pi-download" />
+					<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
+						<Button text icon="pi pi-download" />
+					</DropdownMenu>
 				</template>
 			</Slideshow>
 
