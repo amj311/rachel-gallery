@@ -27,14 +27,25 @@ export const firebaseAuthMiddleware = async (request, reply) => {
         const decodedToken = await admin.auth().verifyIdToken(authToken);
         const uid = decodedToken.uid;
 
-        request.sessionUid = uid;
-		
-        // Attach the user ID to the request object
-		const user = await UserService.getUserByAuthId(uid);
-		if (user) {
-			request.sessionUser = user;
+        // Find existing user by auth id
+		let user = await UserService.getUserByAuthId(uid);
+
+		// Assume this is a new SSO login and create new user
+		if (!user) {
+			console.log(decodedToken);
+			const names = decodedToken.name.split(' ');
+			const userData = {
+				auth_id: uid,
+				email: decodedToken.email,
+				givenName: names.shift(),
+				familyName: names.pop() || '',
+				isAdmin: false,
+			};
+			user = await UserService.createUser(userData);
 		}
 
+        request.sessionUid = uid;
+		request.sessionUser = user;
     }
 	catch (error) {
         // Return an error response if the Firebase user session is not valid

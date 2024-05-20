@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, onBeforeMount, onBeforeUnmount, computed, ref } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
+import Button from 'primevue/button';
 
 const { photos, firstPhoto, onClose } = defineProps<{
 	photos: any[],
@@ -139,8 +140,13 @@ onBeforeUnmount(() => {
 <template>
 	<div id="Slideshow">
 		<div id="topBar">
-
-			<div class="button" @click="onClose"><i class="pi pi-times"></i></div>
+			<div class="flex-grow-1 flex justify-content-start"></div>
+			<div class="flex-grow-1 flex justify-content-center">
+				<slot :photo="activePhoto"></slot>
+			</div>
+			<div class="flex-grow-1 flex align-items-center justify-content-end">
+				<Button text @click="onClose" icon="pi pi-times" />
+			</div>
 		</div>
 		<div :class="{ 'photo-frame': true, [state.animationClass]: true }">
 			<div class="prev">
@@ -154,10 +160,10 @@ onBeforeUnmount(() => {
 			</div>
 		</div>
 		<div id="bottomBar">
-			<div class="button" @click="() => uiSwap(goToPrev)"><i class="pi pi-chevron-left"></i></div>
-			<div v-if="!isPlaying" class="button" @click="play"><i class="pi pi-play"></i></div>
-			<div v-if="isPlaying" class="button" @click="stop"><i class="pi pi-pause"></i></div>
-			<div class="button" @click="() => uiSwap(goToNext)"><i class="pi pi-chevron-right"></i></div>
+			<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" />
+			<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" />
+			<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" />
+			<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" />
 		</div>
 
 		<div style="display: none">
@@ -188,21 +194,17 @@ onBeforeUnmount(() => {
 
 	#topBar {
 		width: 100%;
-		display: flex;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
 		justify-content: flex-end;
-
-		.button {
-			width: 40px;
-			height: 40px;
-			font-size: 30px;
-			cursor: pointer;
-			text-align: center;
-		}
+		align-items: center;
+		padding: .5em;
 	}
 
 	#bottomBar {
 		display: flex;
 		justify-content: center;
+		padding: .5em;
 
 		.button {
 			width: 40px;

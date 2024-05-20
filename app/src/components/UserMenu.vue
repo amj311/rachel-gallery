@@ -59,7 +59,7 @@ const menu = computed(() => {
 
 <template>
 	<DropdownMenu :model="menu" :disabled="!isLoggedIn">
-		<Button icon="_" text class="gap-2" @click="() => { if (!isLoggedIn) state.showLoginModal = true }">
+		<Button text class="gap-2 px-2" @click="() => { if (!isLoggedIn) state.showLoginModal = true }">
 			<i class="pi pi-user" />
 			<div v-if="isLoggedIn">{{ userStore.currentUser?.givenName }}</div>
 		</Button>

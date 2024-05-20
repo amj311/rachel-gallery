@@ -93,21 +93,26 @@ export const GalleryService = {
 				coverPhotoId: galleryData.coverPhotoId,
 				coverSettings: galleryData.coverSettings || undefined,
 				visibility: galleryData.visibility,
+				shareMode: galleryData.shareMode,
+				shareCode: galleryData.shareCode,
+				clientCanShare: galleryData.clientCanShare,
+				shareEmails: galleryData.shareEmails || undefined,
+
 				sections: {
-					create: galleryData.sections.filter(s => !s.id).map(section => ({
+					create: galleryData.sections?.filter(s => !s.id).map(section => ({
 						data: {
 							name: section.name,
 							order: section.order,
 						}
 					})),
-					update: galleryData.sections.filter(s => s.id).map(section => ({
+					update: galleryData.sections?.filter(s => s.id).map(section => ({
 						where: { id: section.id },
 						data: {
 							name: section.name,
 							order: section.order,
 						}
 					})),
-					delete: galleryData.sections.filter(s => s.marked_for_deletion).map(section => ({
+					delete: galleryData.sections?.filter(s => s.marked_for_deletion).map(section => ({
 						id: section.id,
 					})),
 				},

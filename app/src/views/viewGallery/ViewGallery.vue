@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, onMounted, onBeforeUnmount, computed } from 'vue';
+import { reactive, onMounted, onBeforeUnmount, computed } from 'vue';
 import request from '@/services/request';
-import PhotoFrame from '@/components/PhotoFrame.vue';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
-import DeferredContent from 'primevue/deferredcontent';
 import LoginModal from '@/components/LoginModal.vue';
 import NavBar from '@/components/NavBar.vue';
 import Button from 'primevue/button';
 import { useUserStore } from '@/stores/user.store';
 import Badge from 'primevue/badge';
+import PhotoWall from '@/components/PhotoWall.vue';
+import ShareModal from '@/components/GalleryAccessModal.vue';
+import CodeInput from '@/components/CodeInput.vue';
+import watermarkImage from '@/assets/images/watermark.png'
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -18,131 +20,74 @@ const userStore = useUserStore();
 const state = reactive({
 	isLoading: true,
 	galleryIdOrSlug: router.currentRoute.value.params.galleryId,
-	canView: false,
+	viewAuth: {},
 	gallery: null,
+	providedCode: null,
 	showSlideshow: false,
+	slideshowPhotos: [],
 	firstSlideshowPhoto: null,
 	favoriteIds: new Set(),
+	showFavoritesModal: false,
+	showShareModal: false,
 });
 
+const isLoggedIn = computed(() => userStore.isLoggedIn);
+const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.clientEmail);
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
 
-const aspect_ratios = {
-	// wide
-	'3:2': 3 / 2,
-	'5:4': 5 / 4,
-	'16:9': 16 / 9,
-	// square
-	'1:1': 1,
-	// tall
-	'2:3': 2 / 3,
-	'4:5': 4 / 5,
-	'9:16': 9 / 16,
-}
-
-type ImageRect = {
-	width: number,
-	height: number
-	top: number,
-	bottom: number,
-	left: number,
-	trueRatio: number,
-	closestRatio: keyof typeof aspect_ratios,
-	isDouble: boolean
-}
-
-function computeImagePlacement() {
-	const fullWidth = document.querySelector('.section')!.clientWidth;
-	const numCols = 3;
-	const margin = Math.min(fullWidth / 30, 15);
-	const columnWidth = (fullWidth - (margin * (numCols - 1))) / numCols;
-	const lineMatchRange = margin;
-
-	for (const section of state.gallery.sections) {
-		let imagesSinceDouble = 30;
-
-		const cols: ImageRect[] = [];
-		section.photos.forEach((photo, i) => {
-			let targetCol;
-			// fill the first columns immediately
-			if (cols.length < 3) {
-				for (const idx of [0, 1, 2]) {
-					if (!cols[idx]) {
-						targetCol = idx;
-						break;
-					}
-				}
-			}
-			// choose the shortest column
-			if (targetCol === undefined) {
-				// in the case of equal heights, this should choose the first column
-				targetCol = cols.reduce((minIdx, colRect, i) => (colRect.bottom < cols[minIdx].bottom) ? i : minIdx, 0);
-			}
-
-			const rect = {
-				width: columnWidth,
-				trueRatio: photo.width / photo.height,
-				top: cols[targetCol] ? cols[targetCol].bottom + margin : 0,
-				left: (targetCol * columnWidth) + (margin * targetCol), // eg, third column is offset by 2 columns and 2 margins
-			} as ImageRect;
-			rect.closestRatio = (Object.keys(aspect_ratios).reduce((min, ratio) => Math.abs(aspect_ratios[ratio] - rect.trueRatio) < Math.abs(aspect_ratios[min] - rect.trueRatio) ? ratio : min)) as keyof typeof aspect_ratios;
-			photo.rect = rect;
-
-			// determine double-wide images
-			imagesSinceDouble += 1;
-
-			if (rect.trueRatio >= aspect_ratios['5:4'] && imagesSinceDouble > 4) {
-				if (targetCol === 0) {
-					rect.isDouble = cols[0]?.bottom === cols[1]?.bottom;
-				}
-				else if (targetCol === 1) {
-					rect.isDouble = cols[1]?.bottom === cols[2]?.bottom;
-				}
-			}
-
-			// At this point, assign the rect to its target column(s)
-			cols[targetCol] = rect;
-			if (rect.isDouble) {
-				imagesSinceDouble = 0;
-				cols[targetCol + 1] = rect;
-				rect.width = rect.width + columnWidth + margin;
-			}
-
-			// compute height after adjusting width for double
-			rect.height = rect.width / aspect_ratios[rect.closestRatio];
-			rect.bottom = rect.top + rect.height;
-
-			// if within certain range of neighbor, match bottom for more pretty lines
-			for (const colRect of cols) {
-				if (colRect !== rect && Math.abs(colRect.bottom - rect.bottom) < lineMatchRange) {
-					rect.height = colRect.bottom - rect.top;
-					rect.bottom = rect.top + rect.height; // update bottom
-				}
-			}
-		})
-		section.height = Math.max(cols[0]?.bottom, cols[1]?.bottom, cols[2]?.bottom);
+const canView = computed(() => {
+	if (isAdmin.value) {
+		return true;
 	}
-}
+	if (state.gallery?.visibility === 'public') {
+		return true;
+	}
+	if (state.gallery?.visibility === 'published') {
+		if (state.gallery?.shareMode === 'public') {
+			return true;
+		}
+		if (state.gallery?.shareMode === 'code' && state.viewAuth.hasCorrectCode) {
+			return true;
+		}
+		if (isLoggedIn.value) {
+			if (isClient.value) {
+				return true;
+			}
+			if (state.viewAuth.isAllowedEmail) {
+				return true;
+			}
+		}
+	}
+	return false;
+});
+const authMode = computed(() => {
+	if (state.gallery?.shareMode === 'code') {
+		return 'code';
+	}
+	else {
+		return 'login';
+	}
+});
 
-onMounted(async () => {
-	const { data } = await request.get('gallery/' + state.galleryIdOrSlug);
+onMounted(() => {
+	loadGallery();
+});
+
+async function loadGallery () {
+	state.isLoading = true;
+	const code = state.providedCode || localStorage.getItem('gallery/' + state.galleryIdOrSlug + '/code');
+	const { data } = await request.get('gallery/' + state.galleryIdOrSlug, { params: { code } });
+	if (data.success) {
+		localStorage.setItem('gallery/' + state.galleryIdOrSlug + '/code', code);
+	}
 	state.gallery = data.data;
-	state.canView = data.canView;
+	state.viewAuth = data.viewAuth;
+
+	state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
 	state.isLoading = false;
-
-	if (state.canView) {
-		setTimeout(() => computeImagePlacement(), 500);
-		window.addEventListener('resize', () => computeImagePlacement());
-
-		state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
-	}
-});
-
-onBeforeUnmount(() => {
-	window.removeEventListener('resize', () => computeImagePlacement());
-});
+}
 
 function downloadHighRes(photo) {
 	const link = document.createElement('a');
@@ -152,6 +97,12 @@ function downloadHighRes(photo) {
 }
 
 function openSlideshow(photo?) {
+	state.slideshowPhotos = state.gallery.sections.flatMap(s => s.photos);
+	state.firstSlideshowPhoto = photo;
+	state.showSlideshow = true;
+}
+function openFavoritesSlideshow(photo?) {
+	state.slideshowPhotos = favoritePhotos.value;
 	state.firstSlideshowPhoto = photo;
 	state.showSlideshow = true;
 }
@@ -165,18 +116,33 @@ function toggleFavorite(photo) {
 	localStorage.setItem(favoritesKey.value, JSON.stringify(Array.from(state.favoriteIds)));
 }
 
+
+function scrollDown() {
+	if (canView.value) {
+		const cover = document.getElementById('cover');
+		window.scrollTo(0, cover!.offsetTop + cover!.offsetHeight);
+	}
+}
+
 </script>
 
 
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else id="viewGallery">
-		<div class="cover">
+		<div id="cover" @click="scrollDown">
 			<GalleryCover :gallery="state.gallery" />
+			<div class="down-pointer"><i class="pi pi-chevron-down" /></div>
 		</div>
 
-		<div v-if="!state.canView" class="login-guard">
-			<LoginModal message="Please sign in to view this gallery" />
+		<div v-if="!canView" class="login-guard">
+			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
+			<div v-if="authMode === 'code'" class="code-modal modal">
+				<img :src="watermarkImage" width="100" />
+				<h3>Please enter the access code to view this gallery</h3>
+				<CodeInput v-model="state.providedCode" />
+				<Button label="Submit" @click="loadGallery" :loading="state.isLoading" class="gap-2" />
+			</div>
 		</div>
 
 		<div v-else>
@@ -187,10 +153,13 @@ function toggleFavorite(photo) {
 					</div>
 					<div class="flex-grow-1"></div>
 					<div>
-						<Button icon="pi pi-heart" text />
-						<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size" class="small-badge" />
-						<Button icon="pi pi-download" text />
-						<Button icon="pi pi-share-alt" text />
+						<Button icon="pi pi-heart" text @click="state.showFavoritesModal = true" v-tooltip.bottom="'Favorites'" />
+						<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
+							class="small-badge" />
+						<template v-if="isClient">
+							<Button icon="pi pi-download" text v-tooltip.bottom="'Download'" />
+							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text @click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
+						</template>
 					</div>
 				</div>
 			</NavBar>
@@ -198,31 +167,63 @@ function toggleFavorite(photo) {
 			<div class="m-4">
 				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
 					<div class="section-header">{{ section.name }}</div>
-					<div class="photo-grid" :style="{ height: section.height + 'px' }">
-						<DeferredContent>
-							<template v-for="photo in section.photos" :key="photo.id">
-								<div v-if="photo.rect" class="photo-grid-item"
-									:style="{ width: photo.rect.width + 'px', height: photo.rect.height + 'px', top: photo.rect.top + 'px', left: photo.rect.left + 'px' }">
-									<div class="photo-frame" @click="openSlideshow(photo)">
-										<PhotoFrame :photo="photo" :size="photo.rect.isDouble ? 'lg' : 'md'"
-											:watermark="true" :fillMethod="'cover'" />
-									</div>
-									<div class="bottom-bar">
-										<div class="buttons">
-											<div class="button" @click="toggleFavorite(photo)"><i :class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" /></div>
-											<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
-											</div>
+					<PhotoWall :photos="section.photos">
+						<template v-slot="{ photo }">
+							<div class="photo-overlay">
+								<div class="photo-trigger" @click="() => openSlideshow(photo)"></div>
+								<div class="bottom-bar">
+									<div class="buttons">
+										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
+											@click="toggleFavorite(photo)"><i
+												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
+										</div>
+										<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
 										</div>
 									</div>
 								</div>
-							</template>
-						</DeferredContent>
-					</div>
+							</div>
+						</template>
+					</PhotoWall>
 				</div>
 			</div>
-			
-			<Slideshow v-if="state.showSlideshow" :photos="state.gallery.sections.flatMap(s => s.photos)"
-				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false" />
+
+			<div class="favorites-modal modal" v-if="state.showFavoritesModal">
+				<div class="flex align-items-center ml-2">
+					<h3>Favorites</h3>
+					<div class="flex-grow-1"></div>
+					<Button icon="pi pi-download" text />
+					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
+				</div>
+				<div class="body">
+					<PhotoWall :photos="favoritePhotos">
+						<template v-slot="{ photo }">
+							<div class="photo-overlay">
+								<div class="photo-trigger" @click="() => openFavoritesSlideshow(photo)"></div>
+								<div class="bottom-bar">
+									<div class="buttons">
+										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
+											@click="toggleFavorite(photo)"><i
+												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
+										</div>
+										<div class="button" @click="downloadHighRes(photo)"><i class="pi pi-download" />
+										</div>
+									</div>
+								</div>
+							</div>
+						</template>
+					</PhotoWall>
+				</div>
+			</div>
+
+			<Slideshow v-if="state.showSlideshow" :photos="state.slideshowPhotos"
+				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false">
+				<template v-slot="{ photo }">
+					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" @click="toggleFavorite(photo)" />
+					<Button text @click="downloadHighRes(photo)" icon="pi pi-download" />
+				</template>
+			</Slideshow>
+
+			<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
 		</div>
 
 	</div>
@@ -230,23 +231,20 @@ function toggleFavorite(photo) {
 
 <style scoped lang="scss">
 .login-guard {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #fff5;
-    backdrop-filter: blur(7px);
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #fff5;
+	backdrop-filter: blur(7px);
 
-	.modal {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
+	.code-modal {
 		background: #fff;
 		border: 1px solid lightgrey;
 		outline: 10px solid #fff;
 		box-shadow: 0px 0px 9px 11px #0005;
+		border-radius: 0;
 		padding: 2em;
 		display: flex;
 		flex-direction: column;
@@ -256,21 +254,43 @@ function toggleFavorite(photo) {
 }
 
 .small-badge {
-    position: absolute;
-    transform: translate(-25px, 0px);
-    zoom: .6;
-    font-size: 1em;
+	position: absolute;
+	transform: translate(-25px, 0px);
+	zoom: .6;
+	font-size: 1em;
 }
 
 #viewGallery {
-	/* make sure there is a scrollbar before the images load so they have the right width */
-	min-height: 101vh;
-
-
-	.cover {
+	#cover {
 		width: 100%;
 		height: 100vh;
 		position: relative;
+		overflow: hidden;
+		cursor: pointer;
+
+		.down-pointer {
+			position: absolute;
+			left: 50%;
+			color: #fff;
+			background: #0005;
+			border-radius: 50%;
+			height: 3em;
+			width: 3em;
+			transform: translateX(-50%);
+			line-height: 3.4em;
+			text-align: center;
+			animation: rise 1s ease 2s forwards;
+
+			@keyframes rise {
+				0% {
+					bottom: -100px;
+				}
+
+				100% {
+					bottom: 20px;
+				}
+			}
+		}
 	}
 
 	.section-header {
@@ -279,60 +299,85 @@ function toggleFavorite(photo) {
 		text-align: center;
 	}
 
-	.photo-grid {
-		margin-top: 10px;
-		position: relative;
 
-		.photo-grid-item {
-			position: absolute;
+	.photo-overlay {
+		width: 100%;
+		height: 100%;
+		position: absolute;
 
-			.photo-frame {
-				width: 100%;
-				height: 100%;
-				cursor: pointer;
+		.photo-trigger {
+			width: 100%;
+			height: 100%;
+			cursor: pointer;
 			}
 
-			.bottom-bar {
-				position: absolute;
-				bottom: 0;
-				width: 100%;
-				background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 2em);
-				color: white !important;
-				opacity: 0;
-				padding-top: 1em;
-				pointer-events: none;
+		.bottom-bar {
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+			color: white !important;
+			padding-top: 1em;
+			pointer-events: none;
+			box-shadow: none;
 
-				.buttons {
-					pointer-events: all;
-					width: auto;
+			.buttons {
+				pointer-events: all;
+				width: auto;
+				display: inline-flex;
+
+				.button {
+					opacity: 0;
+					width: 40px;
+					height: 40px;
+					font-size: 20px;
 					display: inline-flex;
+					justify-content: center;
+					align-items: center;
+					cursor: pointer;
 
-					.button {
-						width: 40px;
-						height: 40px;
+					i {
 						font-size: 20px;
-						display: inline-flex;
-						justify-content: center;
-						align-items: center;
-						cursor: pointer;
 					}
 
-					&:hover .button {
-						opacity: .5;
+					&.heart-fixed {
+						opacity: 1;
+						filter: drop-shadow(0px 0px 2px #0008);
+					}
+				}
 
-						&:hover {
-							opacity: 1;
-						}
+				&:hover .button {
+					opacity: .7;
+
+					&:hover {
+						opacity: 1;
 					}
 				}
 			}
-
-			&:hover .bottom-bar {
-				opacity: 1;
-				transition: 500ms;
-			}
 		}
+
+		&:hover .bottom-bar {
+			box-shadow: inset 0 -2em 1em rgba(0, 0, 0, 0.3);
+			transition: 500ms;
+		}
+
+		&:hover .bottom-bar .buttons:not(:hover) .button {
+			opacity: 1;
+			transition: opacity 300ms;
+		}
+
 	}
 
+	.favorites-modal {
+		padding: .5em;
+		width: 800px;
+		max-width: 80vw;
+
+		.body {
+			margin: .5em;
+			max-height: 70vh;
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+	}
 }
 </style>

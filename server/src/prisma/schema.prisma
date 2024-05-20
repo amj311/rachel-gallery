@@ -11,12 +11,12 @@ datasource db {
 }
 
 model User {
-    id         String  @id @default(uuid())
+    id         String   @id @default(uuid())
     auth_id    String
-    email      String  @unique
+    email      String   @unique
     givenName  String
     familyName String
-    isAdmin    Boolean @default(false)
+    isAdmin    Boolean? @default(false)
 }
 
 // model Portfolio {
@@ -24,17 +24,21 @@ model User {
 // }
 
 model Gallery {
-    id            String    @id //@default(uuid())
-    clientName    String?
-    clientEmail   String?
-    name          String?
-    slug          String?
-    date          DateTime?
-    isPublished   Boolean   @default(false)
-    coverPhoto    Photo?    @relation(fields: [coverPhotoId], references: [id])
-    coverStyle    String?
-    coverSettings Json?
-    visibility    String    @default("draft")
+    id             String    @id //@default(uuid())
+    clientName     String?
+    clientEmail    String?
+    name           String?
+    slug           String?
+    date           DateTime?
+    isPublished    Boolean   @default(false)
+    coverPhoto     Photo?    @relation(fields: [coverPhotoId], references: [id])
+    coverStyle     String?
+    coverSettings  Json?
+    visibility     String    @default("draft")
+    shareMode      String?
+    shareCode      String?
+    shareEmails    String[]
+    clientCanShare Boolean   @default(false)
 
     sections     GallerySection[]
     coverPhotoId String?          @unique
@@ -52,7 +56,6 @@ model GallerySection {
 model Photo {
     id               String          @id @default(uuid())
     filename         String
-    blob             Bytes
     googleFileId     String
     googleOwnerEmail String
     width            Int

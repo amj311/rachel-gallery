@@ -19,6 +19,7 @@ import TabPanel from 'primevue/tabpanel';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import { visibilityOptions } from '@/utils/visibilityOptions';
+import ShareModal from '@/components/GalleryAccessModal.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -36,6 +37,7 @@ const state = reactive({
 	gallery: null,
 	showUploadToSection: null,
 	imagesToUpload: new Set(),
+	showShareModal: false,
 });
 
 onBeforeMount(async () => {
@@ -240,6 +242,7 @@ async function copyLink() {
 			<div>
 				<RouterLink :to="'/' + (state.gallery.slug || state.gallery.id)"><Button icon="pi pi-eye" text v-tooltip.bottom="'Preview'" /></RouterLink>
 				<Button icon="pi pi-send" text v-tooltip.bottom="'Copy link'" @click="copyLink" />
+				<Button icon="pi pi-user-plus" text v-tooltip.bottom="'Manage Access'" @click="state.showShareModal = true" />
 			</div>
 			<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
 				<template #value="{ value }">
@@ -416,6 +419,8 @@ async function copyLink() {
 			</label>
 			<input type="file" id="fileSelect" hidden multiple :onchange="(event) => handleFiles(event.target.files)">
 		</div>
+
+		<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
 	</div>
 </template>
 
@@ -611,14 +616,6 @@ async function copyLink() {
 
 
 #uploadModal {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	border: 1px solid #ddd;
-	background: #fff;
-    box-shadow: 0 5px 20px 3px #0005;
-    border-radius: .5em;
 	width: 800px;
 	max-width: 80vw;
 	max-height: 80vh;

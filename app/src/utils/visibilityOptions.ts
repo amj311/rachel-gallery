@@ -3,17 +3,17 @@ export const visibilityOptions = {
 		label: 'Draft',
 		icon: 'pi pi-pencil',
 	},
-	client: {
-		label: 'Client Only',
-		icon: 'pi pi-user',
+	published: {
+		label: 'Published',
+		icon: 'pi pi-globe',
 	},
 	public: {
 		label: 'Public',
 		icon: 'pi pi-eye',
 	},
-	private: {
-		label: 'Private',
-		icon: 'pi pi-lock',
+	hidden: {
+		label: 'Hidden',
+		icon: 'pi pi-eye-slash',
 	},
 	archived: {
 		label: 'Archived',

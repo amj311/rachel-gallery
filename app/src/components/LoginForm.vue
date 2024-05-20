@@ -8,6 +8,8 @@ import Button from 'primevue/button';
 const userStore = useUserStore();
 
 const state = reactive({
+	givenName: '',
+	familyName: '',
 	email: '',
 	password: '',
 	showPassword: false,

@@ -10,6 +10,7 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
 import BadgeDirective from 'primevue/badgedirective';
+import ToastService from 'primevue/toastservice';
 
 import App from './App.vue'
 import router from './router/router'
@@ -18,6 +19,7 @@ const app = createApp(App);
 app.use(PrimeVue);
 app.directive('badge', BadgeDirective);
 app.directive('tooltip', Tooltip);
+app.use(ToastService);
 app.use(createPinia())
 app.use(router)
 

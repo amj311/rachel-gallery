@@ -8,6 +8,7 @@ export const useUserStore = defineStore('user', () => {
 	const loginError = ref<String>('');
 	const isLoggedIn = ref(false);
 	const currentUser = ref<any>();
+	const session = ref<any>();
 	const isLoading = ref(false);
 
 	const loadSessionData = async () => {
@@ -29,6 +30,7 @@ export const useUserStore = defineStore('user', () => {
 			}
 			const { data } = await request.get('user/session');
 			currentUser.value = data.data;
+			session.value = data;
 			loginError.value = '';
 		}
 		catch (e) {
@@ -66,6 +68,7 @@ export const useUserStore = defineStore('user', () => {
 		isLoggedIn,
 		loginError,
 		currentUser,
+		session,
 		createUser,
 		loadSessionData
 	};
