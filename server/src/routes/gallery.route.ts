@@ -15,11 +15,7 @@ export default (route, _, done) => {
 			isAllowedEmail: false,
 		};
 
-		if (!loadData) {
-			gallery = await GalleryService.getGallerySimple(galleryIdOrSlug);
-		}
-		if (loadData) {
-		};
+		gallery = await GalleryService.getGallerySimple(galleryIdOrSlug);
 
 		if (gallery.visibility === 'public') {
 			loadData = true;

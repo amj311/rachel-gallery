@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { reactive, defineProps, computed } from 'vue';
-import watermarkImage from '@/assets/images/watermark.png'
-import LoginForm from '@/components/LoginForm.vue';
+import { reactive, computed } from 'vue';
 import Button from 'primevue/button';
 import { useUserStore } from '@/stores/user.store';
 import RadioButton from 'primevue/radiobutton';

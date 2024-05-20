@@ -13,9 +13,11 @@ import PhotoWall from '@/components/PhotoWall.vue';
 import ShareModal from '@/components/GalleryAccessModal.vue';
 import CodeInput from '@/components/CodeInput.vue';
 import watermarkImage from '@/assets/images/watermark.png'
+import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();
 const userStore = useUserStore();
+const toast = useToast();
 
 const state = reactive({
 	isLoading: true,
@@ -29,6 +31,7 @@ const state = reactive({
 	favoriteIds: new Set(),
 	showFavoritesModal: false,
 	showShareModal: false,
+	didAdminWarn: false
 });
 
 const isLoggedIn = computed(() => userStore.isLoggedIn);
@@ -79,13 +82,24 @@ async function loadGallery () {
 	state.isLoading = true;
 	const code = state.providedCode || localStorage.getItem('gallery/' + state.galleryIdOrSlug + '/code');
 	const { data } = await request.get('gallery/' + state.galleryIdOrSlug, { params: { code } });
-	if (data.success) {
-		localStorage.setItem('gallery/' + state.galleryIdOrSlug + '/code', code);
-	}
 	state.gallery = data.data;
 	state.viewAuth = data.viewAuth;
+	
+	if (data.success) {
+		state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
 
-	state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
+		if (code) localStorage.setItem('gallery/' + state.galleryIdOrSlug + '/code', code);
+
+		if (!state.didAdminWarn && isAdmin.value && ['draft', 'hidden'].includes(state.gallery.visibility)) {
+			toast.add({
+				severity: 'warn',
+				summary: 'This gallery is ' + state.gallery.visibility + '. Only admins can view it.',
+				life: 3000,
+			})
+			state.didAdminWarn = true;
+		}
+	}
+
 	state.isLoading = false;
 }
 
