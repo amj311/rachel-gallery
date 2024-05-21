@@ -18,6 +18,7 @@ import { AuthService } from '@/services/authService';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import Checkbox from 'primevue/checkbox';
 import LoadSplash from '@/components/LoadSplash.vue';
+import ProgressBar from 'primevue/progressbar';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -37,6 +38,8 @@ const state = reactive({
 	showShareModal: false,
 	didAdminWarn: false,
 	selectedIds: new Set(),
+	pendingDownload: null as any,
+	pendingDownloadInterval: 0,
 });
 
 const isLoggedIn = computed(() => userStore.isLoggedIn);
@@ -148,29 +151,62 @@ function scrollDown() {
 	}
 }
 
-function downloadMenu(photos) {
+function downloadMenu(photos, cb?) {
 	return [
 		{
 			label: 'Download High-res',
-			command: () => downloadPhotos(photos, true)
+			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
 		},
 		{
 			label: 'Download Web-size',
-			command: () => downloadPhotos(photos)
+			command: () => { startDownloadPhotos(photos); cb?.call(); }
 		}
 	]
 }
 
-async function downloadPhotos(photos, hiRes = false) {
+async function startDownloadPhotos(photos, hiRes = false) {
+	if (state.pendingDownload) {
+		toast.add({
+			severity: 'warn',
+			summary: 'Wait for previous download to finish',
+			life: 3000,
+		})
+		return;
+	}
 	if (!photos.length) return;
+	const { data } = await request.post(`${apiUrl}/gallery/${state.gallery.id}/download`, {
+		photoIds: photos.map(p => p.id),
+		hiRes: hiRes,
+	});
+	if (data.data.progress.status === 'finished') {
+		loadDownloadLink(data.data.jobId);
+	}
+	else {
+		state.pendingDownload = data.data;
+		state.pendingDownloadInterval = setInterval(updateDownloadProgress, 1000);
+	}
+}
+
+async function updateDownloadProgress() {
+	if (state.pendingDownload) {
+		const { data } = await request.get(`${apiUrl}/gallery/${state.gallery.id}/download-status/${state.pendingDownload.jobId}`);
+		state.pendingDownload = data.data;
+
+		if (data.data.progress.status === 'finished') {
+			clearInterval(state.pendingDownloadInterval);
+		}
+	}
+}
+
+async function loadDownloadLink(jobId) {
 	const link = document.createElement('a');
-	const multiple = photos.length > 1;
 	const token = await AuthService.getToken();
-	// link.href = `https://drive.google.com/uc?export=download&id=${photo.googleFileId}`;
-	link.href = `${apiUrl}/gallery/${state.gallery.id}/download?photoIds=${photos.map(p => p.id).join(',')}&hiRes=${hiRes}&access_token=${token}`;
-	link.download = multiple ? `${state.gallery.name}.zip` : photos[0].filename;
-	await link.click();
+	link.href = `${apiUrl}/gallery/${state.gallery.id}/download/${jobId}?access_token=${token}`;
+	link.download = state.gallery!.name;
+	link.click();
 	link.remove();
+
+	state.pendingDownload = null;
 }
 
 </script>
@@ -251,7 +287,7 @@ async function downloadPhotos(photos, hiRes = false) {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites</h3>
 					<div class="flex-grow-1"></div>
-					<Button icon="pi pi-download" text @click="downloadPhotos(favoritePhotos)" />
+					<Button icon="pi pi-download" text @click="startDownloadPhotos(favoritePhotos)" />
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
@@ -276,14 +312,32 @@ async function downloadPhotos(photos, hiRes = false) {
 				</div>
 			</div>
 
-			<div class="selection-bar modal" v-if="state.selectedIds.size > 0">
+			<div class="selection-bar modal low-right-modal" v-if="state.selectedIds.size > 0">
 				<div class="flex align-items-center gap-2">
 					<i :class="state.selectedIds.size === 1 ? 'pi pi-image' : 'pi pi-images'" />
 					<div>{{ state.selectedIds.size }} photo{{ state.selectedIds.size === 1 ? '' : 's' }} selected</div>
 				</div>
 				<div class="flex-grow-1"></div>
-				<DropdownMenu :model="downloadMenu(selectedPhotos)"><Button icon="pi pi-download" text /></DropdownMenu>
+				<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button icon="pi pi-download" text /></DropdownMenu>
 				<Button icon="pi pi-times" text @click="state.selectedIds.clear()" />
+			</div>
+
+
+			<div class="pending-download modal low-right-modal flex align-items-center gap-3" v-if="state.pendingDownload">
+				<template v-if="state.pendingDownload.progress.status === 'processing'">
+					<div>Preparing download...</div>
+					<div class="flex-grow-1"><ProgressBar :value="state.pendingDownload.progress.readyPhotos / state.pendingDownload.progress.totalPhotos * 100">{{  }}</ProgressBar></div>
+				</template>
+
+				<template v-if="state.pendingDownload.progress.status === 'finished'">
+					<i class="pi pi-check" />
+					<div>Download ready!</div>
+					<div class="flex-grow-1" />
+					<div>
+						<Button icon="pi pi-download" text @click="() => loadDownloadLink(state.pendingDownload.jobId)" />
+						<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
+					</div>
+				</template>
 			</div>
 
 			<Slideshow v-if="state.showSlideshow" :photos="state.slideshowPhotos"
@@ -482,7 +536,7 @@ async function downloadPhotos(photos, hiRes = false) {
 	}
 }
 
-.selection-bar.modal {
+.low-right-modal.modal {
     bottom: 10px;
     top: auto;
     left: auto;

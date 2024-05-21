@@ -5,6 +5,7 @@ import { GoogleDriveService } from "../services/GoogleDriveService";
 import { Readable } from "stream";
 import sharp from "sharp";
 import JSZip from "jszip";
+import { DownloadService } from "../services/DownloadService";
 
 export default (route, _, done) => {
 
@@ -98,12 +99,10 @@ export default (route, _, done) => {
 	})
 
 
-	// for downloading photos
-	route.get('/:galleryId/download', async (request, reply) => {
-		console.log("DOING DOWNLOAD!!!")
+	// Begin a download job. Returns a job id for tracking
+	route.post('/:galleryId/download', async (request, reply) => {
 		const { galleryId } = request.params;
-		const { hiRes, photoIds } = request.query;
-		const ids = photoIds?.split(',') || [];
+		const { hiRes, photoIds } = request.body;
 
 		const gallery = await GalleryService.getGallerySimple(galleryId);
 
@@ -121,53 +120,90 @@ export default (route, _, done) => {
 			}
 		}
 
-		if (ids.length) {
-			const photos = await prisma.photo.findMany({
-				where: {
-					id: { in: ids },
-				},
-			});
-
-			const buffers = await Promise.all(photos.map(async (photo) => {
-				const data = await GoogleDriveService.loadFile(photo?.googleFileId) as any;
-				const array = await data.arrayBuffer();
-
-				if (hiRes === 'true') {
-					return Buffer.from(array);
-				}
-				else {
-					return await sharp(array).resize({
-						width: 1200,
-						height: 1200,
-						fit: 'inside',
-					}).toBuffer();
-				}
-			}));
-
-			let finalBuffer: Buffer;
-			const isMultiple = buffers.length > 1;
-
-			if (isMultiple) {
-				const zip = new JSZip();
-				buffers.forEach((buffer, i) => {
-					zip.file(`${photos[i].filename}`, buffer);					
-				})
-				const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
-				finalBuffer = buffer;
+		if (!photoIds.length) {
+			return {
+				success: false,
+				message: 'No photos selected'
 			}
-			else {
-				finalBuffer = buffers[0];
-			}
+		}
 
-			reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery.name}.zip` : photos[0].filename));
-			reply.header('Content-Length', finalBuffer.length);
-			reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
-			return reply.send(finalBuffer);
+		const photos = await prisma.photo.findMany({
+			where: {
+				id: { in: photoIds },
+			},
+		});
+
+		const job = DownloadService.createDownload(galleryId, photoIds, hiRes);
+		job.start();
+
+		if (photoIds.length === 1) {
+			await job.watchForFinish();
 		}
 
 		return {
 			success: true,
+			data: {
+				jobId: job.id,
+				progress: job.progress,
+			}
 		}
+
+		// reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery.name}.zip` : photos[0].filename));
+		// reply.header('Content-Length', finalBuffer.length);
+		// reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
+		// return reply.send(finalBuffer);
+	})
+
+
+	route.get('/:galleryId/download-status/:jobId', async (request, reply) => {
+		const { jobId } = request.params;
+
+		const job = DownloadService.getDownload(jobId);
+		if (!job) {
+			return {
+				success: false,
+				message: 'Job not found'
+			}
+		}
+		return {
+			success: true,
+			data: {
+				jobId: job.id,
+				progress: job.progress,
+			}
+		}
+	})
+
+
+	route.get('/:galleryId/download/:jobId', async (request, reply) => {
+		const { galleryId, jobId } = request.params;
+
+		const gallery = await GalleryService.getGallerySimple(galleryId);
+
+		const job = DownloadService.getDownload(jobId);
+		if (!job) {
+			return {
+				success: false,
+				message: 'Job not found'
+			}
+		}
+
+		if (job.progress.status !== 'finished') {
+			return {
+				success: false,
+				message: 'Job not ready'
+			}
+		}
+
+		DownloadService.removeDownload(jobId);
+
+		const isMultiple = job.progress.readyPhotos > 1;
+		let finalBuffer = isMultiple ? (await job.getZip()) : job.photos[0].buffer;
+
+		reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery!.name}.zip` : job.photos[0].photo.filename));
+		reply.header('Content-Length', finalBuffer.length);
+		reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
+		return reply.send(finalBuffer);
 	})
 
 	done();

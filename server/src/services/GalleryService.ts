@@ -157,16 +157,4 @@ export const GalleryService = {
 			}
 		})
 	},
-
-
-	async downloadPhoto(id: string, hiRes = false) {
-		const photo = await prisma.photo.findUnique({
-			where: {
-				id,
-			},
-		});
-
-		const data = await GoogleDriveService.loadFile(photo?.googleFileId);
-		console.log(data);
-	}
 };
