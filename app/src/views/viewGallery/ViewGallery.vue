@@ -16,6 +16,8 @@ import watermarkImage from '@/assets/images/watermark.png'
 import { useToast } from 'primevue/usetoast';
 import { AuthService } from '@/services/authService';
 import DropdownMenu from '@/components/DropdownMenu.vue';
+import Checkbox from 'primevue/checkbox';
+import PhotoFrame from '@/components/PhotoFrame.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -33,7 +35,8 @@ const state = reactive({
 	favoriteIds: new Set(),
 	showFavoritesModal: false,
 	showShareModal: false,
-	didAdminWarn: false
+	didAdminWarn: false,
+	selectedIds: new Set(),
 });
 
 const isLoggedIn = computed(() => userStore.isLoggedIn);
@@ -80,13 +83,13 @@ onMounted(() => {
 	loadGallery();
 });
 
-async function loadGallery () {
+async function loadGallery() {
 	state.isLoading = true;
 	const code = state.providedCode || localStorage.getItem('gallery/' + state.galleryIdOrSlug + '/code');
 	const { data } = await request.get('gallery/' + state.galleryIdOrSlug, { params: { code } });
 	state.gallery = data.data;
 	state.viewAuth = data.viewAuth;
-	
+
 	if (data.success) {
 		state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
 
@@ -103,18 +106,6 @@ async function loadGallery () {
 	}
 
 	state.isLoading = false;
-}
-
-async function downloadPhotos(photos, hiRes = false) {
-	if (!photos.length) return;
-	const link = document.createElement('a');
-	const multiple = photos.length > 1;
-	const token = await AuthService.getToken();
-	// link.href = `https://drive.google.com/uc?export=download&id=${photo.googleFileId}`;
-	link.href = `${apiUrl}/gallery/${state.gallery.id}/download?photoIds=${photos.map(p => p.id).join(',')}&hiRes=${hiRes}&access_token=${token}`;
-	link.download = multiple ?  `${state.gallery.name}.zip` : photos[0].filename;
-	link.click();
-	link.remove();
 }
 
 const allPhotos = computed(() => state.gallery.sections.flatMap(s => s.photos));
@@ -139,6 +130,16 @@ function toggleFavorite(photo) {
 	localStorage.setItem(favoritesKey.value, JSON.stringify(Array.from(state.favoriteIds)));
 }
 
+function toggleSelected(photo) {
+	if (state.selectedIds.has(photo.id)) {
+		state.selectedIds.delete(photo.id);
+	} else {
+		state.selectedIds.add(photo.id);
+	}
+}
+
+const selectedPhotos = computed(() => Array.from(state.selectedIds).map(id => allPhotos.value.find(p => p.id === id)));
+
 
 function scrollDown() {
 	if (canView.value) {
@@ -158,6 +159,18 @@ function downloadMenu(photos) {
 			command: () => downloadPhotos(photos)
 		}
 	]
+}
+
+async function downloadPhotos(photos, hiRes = false) {
+	if (!photos.length) return;
+	const link = document.createElement('a');
+	const multiple = photos.length > 1;
+	const token = await AuthService.getToken();
+	// link.href = `https://drive.google.com/uc?export=download&id=${photo.googleFileId}`;
+	link.href = `${apiUrl}/gallery/${state.gallery.id}/download?photoIds=${photos.map(p => p.id).join(',')}&hiRes=${hiRes}&access_token=${token}`;
+	link.download = multiple ? `${state.gallery.name}.zip` : photos[0].filename;
+	await link.click();
+	link.remove();
 }
 
 </script>
@@ -189,15 +202,18 @@ function downloadMenu(photos) {
 					</div>
 					<div class="flex-grow-1"></div>
 					<div class="flex">
-						<Button icon="pi pi-heart" text @click="state.showFavoritesModal = true" v-tooltip.bottom="'Favorites'" />
-						<div><Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
-							class="small-badge" />
+						<Button icon="pi pi-heart" text @click="state.showFavoritesModal = true"
+							v-tooltip.bottom="'Favorites'" />
+						<div>
+							<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
+								class="small-badge" />
 						</div>
 						<template v-if="isClient">
 							<DropdownMenu :model="downloadMenu(allPhotos)">
 								<Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" />
 							</DropdownMenu>
-							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text @click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
+							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text
+								@click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
 						</template>
 					</div>
 				</div>
@@ -208,8 +224,12 @@ function downloadMenu(photos) {
 					<div class="section-header">{{ section.name }}</div>
 					<PhotoWall :photos="section.photos">
 						<template v-slot="{ photo }">
-							<div class="photo-overlay">
+							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
 								<div class="photo-trigger" @click="() => openSlideshow(photo)"></div>
+								<div v-if="isClient" class="selector">
+									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
+										@click="() => toggleSelected(photo)" binary variant="outlined" />
+								</div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -256,10 +276,21 @@ function downloadMenu(photos) {
 				</div>
 			</div>
 
+			<div class="selection-bar modal" v-if="state.selectedIds.size > 0">
+				<div class="flex align-items-center gap-2">
+					<i :class="state.selectedIds.size === 1 ? 'pi pi-image' : 'pi pi-images'" />
+					<div>{{ state.selectedIds.size }} photo{{ state.selectedIds.size === 1 ? '' : 's' }} selected</div>
+				</div>
+				<div class="flex-grow-1"></div>
+				<DropdownMenu :model="downloadMenu(selectedPhotos)"><Button icon="pi pi-download" text /></DropdownMenu>
+				<Button icon="pi pi-times" text @click="state.selectedIds.clear()" />
+			</div>
+
 			<Slideshow v-if="state.showSlideshow" :photos="state.slideshowPhotos"
 				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false">
 				<template v-slot="{ photo }">
-					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" @click="toggleFavorite(photo)" />
+					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
+						@click="toggleFavorite(photo)" />
 					<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
 						<Button text icon="pi pi-download" />
 					</DropdownMenu>
@@ -348,11 +379,34 @@ function downloadMenu(photos) {
 		height: 100%;
 		position: absolute;
 
+		&.selected {
+			border: 8px solid #fff;
+			box-shadow: 0 2px 5px #0005;
+			transition: 300ms;
+
+			.selector {
+				background: #fff;
+				margin: -8px 0 0 -3px;
+				opacity: 1;
+				transition: 300ms;
+			}
+		}
+
+
+		.selector {
+			position: absolute;
+			top: 0;
+			left: 0;
+			padding: 5px;
+			margin: 0 0 0 5px;
+			opacity: 0;
+		}
+
 		.photo-trigger {
 			width: 100%;
 			height: 100%;
 			cursor: pointer;
-			}
+		}
 
 		.bottom-bar {
 			position: absolute;
@@ -398,6 +452,10 @@ function downloadMenu(photos) {
 			}
 		}
 
+		&:hover .selector {
+			opacity: 1;
+		}
+
 		&:hover .bottom-bar {
 			box-shadow: inset 0 -2em 1em rgba(0, 0, 0, 0.3);
 			transition: 500ms;
@@ -422,5 +480,17 @@ function downloadMenu(photos) {
 			overflow-x: hidden;
 		}
 	}
+}
+
+.selection-bar.modal {
+    bottom: 10px;
+    top: auto;
+    left: auto;
+    right: 10px;
+    transform: none;
+    width: 300px;
+    display: flex;
+    align-items: center;
+    padding: .5em 1em;
 }
 </style>

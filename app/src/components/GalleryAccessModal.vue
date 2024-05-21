@@ -121,7 +121,7 @@ async function save() {
 
 		<div class="modal-body">
 			<div v-if="isAdmin" class="my-3 ml-3 flex align-items-center">
-				<Checkbox v-model="state.settings.clientCanShare" binary id="clientCanShare" />
+				<Checkbox v-model="state.settings.clientCanShare" binary inputId="clientCanShare" />
 				<label for="clientCanShare" class="ml-2">Allow client to share this gallery</label>
 			</div>
 			<Button class="w-full gap-2" text @click="state.settings.shareMode = 'invite'">
