@@ -120,15 +120,18 @@ export default (route, _, done) => {
 			}
 		}
 		
-		const file = await GalleryService.downloadPhoto(photoId) as any;
+		let file = await GalleryService.downloadPhoto(photoId) as any;
+		let arrayBuffer = await file.arrayBuffer();
+		file = null;
 
-		const arrayBuffer = await file.arrayBuffer();
 		let imageBuffer;
 		if (hiRes === 'true') {
 			imageBuffer = Buffer.from(arrayBuffer);
+			arrayBuffer = null;
 		}
 		else {
 			const sharpImg = sharp(arrayBuffer);
+			arrayBuffer = null;
 			imageBuffer = await sharpImg.resize({
 				width: 1200,
 				height: 1200,
