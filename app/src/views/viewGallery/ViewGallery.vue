@@ -322,7 +322,7 @@ async function loadDownloadLink() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites</h3>
 					<div class="flex-grow-1"></div>
-					<Button icon="pi pi-download" text @click="startDownloadPhotos(favoritePhotos)" />
+					<DropdownMenu v-if="isClient" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download" text /></DropdownMenu>
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
