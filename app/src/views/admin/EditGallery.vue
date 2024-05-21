@@ -234,15 +234,19 @@ async function copyLink() {
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
-		<div class="flex align-items-center gap-3 mb-4">
-			<RouterLink to="/admin/" ><Button icon="pi pi-arrow-left" text /></RouterLink>
-			<h1><GhostInput v-model="state.gallery.name" placeholder="Gallery name..." /></h1>
+		<div class="flex align-items-center flex-wrap gap-3 mb-4">
+			<RouterLink to="/admin/"><Button icon="pi pi-arrow-left" text /></RouterLink>
+			<h1>
+				<GhostInput v-model="state.gallery.name" placeholder="Gallery name..." />
+			</h1>
 			<span v-if="state.isSaving"><i class="pi pi-spinner pi-spin" /> Saving...</span>
 			<div class="flex-grow-1"></div>
 			<div>
-				<RouterLink :to="'/' + (state.gallery.slug || state.gallery.id)"><Button icon="pi pi-eye" text v-tooltip.bottom="'Preview'" /></RouterLink>
+				<RouterLink :to="'/' + (state.gallery.slug || state.gallery.id)"><Button icon="pi pi-eye" text
+						v-tooltip.bottom="'Preview'" /></RouterLink>
 				<Button icon="pi pi-send" text v-tooltip.bottom="'Copy link'" @click="copyLink" />
-				<Button icon="pi pi-user-plus" text v-tooltip.bottom="'Manage Access'" @click="state.showShareModal = true" />
+				<Button icon="pi pi-user-plus" text v-tooltip.bottom="'Manage Access'"
+					@click="state.showShareModal = true" />
 			</div>
 			<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
 				<template #value="{ value }">
@@ -293,7 +297,8 @@ async function copyLink() {
 						<div v-else>
 							<div>Style</div>
 							<div class="cover-style-options">
-								<div v-for="style in coverStyles" :key="style" @click="() => state.gallery.coverStyle = style"
+								<div v-for="style in coverStyles" :key="style"
+									@click="() => state.gallery.coverStyle = style"
 									:classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
 									<div class="cover-small">
 										<GalleryCover :gallery="state.gallery" :style="style" />
@@ -342,9 +347,7 @@ async function copyLink() {
 		</div>
 
 		<template v-for="(section, index) in state.gallery.sections" :key="section.id">
-			<div v-if="!section.marked_for_deletion" class="my-6 section"
-				:class="{ expanded: section.expanded }"
-			>
+			<div v-if="!section.marked_for_deletion" class="my-6 section" :class="{ expanded: section.expanded }">
 				<div class="flex align-items-center py-2">
 					<h2>
 						<GhostInput v-model="section.name" placeholder="Section name..." />
@@ -377,14 +380,17 @@ async function copyLink() {
 							</div>
 						</template>
 					</div>
-					<div v-if="!section.expanded && section.photos.length > 0" class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4" @click="section.expanded = true">
+					<div v-if="!section.expanded && section.photos.length > 0"
+						class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4"
+						@click="section.expanded = true">
 						View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
 					</div>
 				</div>
 
-				<div v-else class="flex align-items-center gap-2 cursor-pointer add-photos" @click="openUploadToSection(section)">
-						<i class="pi pi-plus" />
-						Add Photos
+				<div v-else class="flex align-items-center gap-2 cursor-pointer add-photos"
+					@click="openUploadToSection(section)">
+					<i class="pi pi-plus" />
+					Add Photos
 				</div>
 			</div>
 		</template>
@@ -426,8 +432,8 @@ async function copyLink() {
 
 <style scoped>
 .gallery-settings {
-    width: calc(100% - 700px);
-    min-width: 360px;
+	width: calc(100% - 700px);
+	min-width: 360px;
 }
 
 .settings-grid {
@@ -467,54 +473,75 @@ async function copyLink() {
 }
 
 .cover-previews {
-    position: relative;
-    padding: 0 30px 17px 0;
-}
-
-.cover-preview-wrapper {
-	border-radius: 10px;
-	padding: 15px;
 	position: relative;
-	display: inline-block;
-    border: 1px solid #8a8a8a;
-    background: #fff;
-    box-shadow: 0px 3px 10px #0005;
+	padding: 0 30px 17px 0;
 
-	&.mobile {
-		padding: 10px;
-		padding-top: 16px;
-		padding-bottom: 16px;
-		position: absolute;
-        top: 117px;
-        left: 490px;
+	.cover-preview-wrapper {
+		border-radius: 10px;
+		padding: 15px;
+		position: relative;
+		display: inline-block;
+		border: 1px solid #8a8a8a;
+		background: #fff;
+		box-shadow: 0px 3px 10px #0005;
 
-		.faux-button {
+		&.mobile {
+			padding: 10px;
+			padding-top: 16px;
+			padding-bottom: 16px;
 			position: absolute;
-			top: 6px;
-			left: 50%;
-			transform: translateX(-50%);
-			border: 2px solid grey;
-			border-radius: 2px;
-			width: 15px;
+			top: 117px;
+			left: 490px;
+
+			@media screen and (max-width: 1150px) {
+				position: static;
+			}
+
+			.faux-button {
+				position: absolute;
+				top: 6px;
+				left: 50%;
+				transform: translateX(-50%);
+				border: 2px solid grey;
+				border-radius: 2px;
+				width: 15px;
+			}
+		}
+
+		.cover-preview {
+			position: relative;
+			pointer-events: none;
+			user-select: none;
+			border: 1px solid grey;
+		}
+
+		&.desktop .cover-preview {
+			width: 1200px;
+			aspect-ratio: 1.6;
+			zoom: .5;
+
+			@media screen and (max-width: 1150px) {
+				zoom: .35;
+			}
+		}
+
+		&.mobile .cover-preview {
+			width: 375px;
+			aspect-ratio: .56;
+			zoom: .4;
 		}
 	}
 
-	.cover-preview {
-		position: relative;
-		width: 1200px;
-		aspect-ratio: 1.6;
-		zoom: .5;
-		pointer-events: none;
-		user-select: none;
-		border: 1px solid grey;
-	}
-
-	&.mobile .cover-preview {
-		width: 375px;
-		aspect-ratio: .56;
-		zoom: .4;
+	@media screen and (max-width: 1150px) {
+		padding: 0;
+		position: static;
+		display: flex;
+		align-items: start;
+		flex-wrap: wrap;
+		gap: 1em;
 	}
 }
+
 
 .section {
 	border-top: 1px solid lightgrey;
