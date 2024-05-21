@@ -39,7 +39,7 @@ function generateCode() {
 }
 
 async function copyLink() {
-	await navigator.clipboard.writeText(window.location.origin + '/' + (gallery.value!.slug || gallery.value!.id));
+	await navigator.clipboard.writeText(window.location.origin + '/#/' + (gallery.value!.slug || gallery.value!.id));
 	toast.add({
 		severity: 'success',
 		summary: `Copied link to clipboard`,
