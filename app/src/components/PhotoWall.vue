@@ -125,6 +125,10 @@ const computeTiles = (() => {
 	state.height = Math.max(cols[0]?.bottom || 0, cols[1]?.bottom || 0, cols[2]?.bottom || 0);
 });
 
+watch(photos, () => {
+	computeTiles();
+});
+
 onMounted(() => {
 	window.addEventListener('resize', computeTiles);
 	computeTiles();
