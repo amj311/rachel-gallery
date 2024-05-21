@@ -1,7 +1,7 @@
 {
 	"scripts": {
 		"dev": "nodemon src/index.ts",
-		"build": "npm install; cd src && prisma generate; tsc",
+		"build": "yarn --ignore-engines; cd src && prisma generate; tsc",
 		"serve": "cd src && prisma generate; cd ..; node build/index.js"
 	},
 	"dependencies": {
