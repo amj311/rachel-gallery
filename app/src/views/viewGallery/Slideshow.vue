@@ -227,11 +227,11 @@ onBeforeUnmount(() => {
 		}
 
 		.prev {
-			transform: translateX(calc(-100vw + var(--swipe-delta)));
+			transform: translateX(calc(-110vw + var(--swipe-delta)));
 		}
 
 		.next {
-			transform: translateX(calc(100vw + var(--swipe-delta)));
+			transform: translateX(calc(110vw + var(--swipe-delta)));
 		}
 
 		.active {
@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
 			}
 
 			.active {
-				transform: translateX(-100vw);
+				transform: translateX(-110vw);
 				opacity: 0;
 				transition: 500ms ease;
 			}
@@ -258,7 +258,7 @@ onBeforeUnmount(() => {
 			}
 
 			.active {
-				transform: translateX(100vw);
+				transform: translateX(110vw);
 				opacity: 0;
 				transition: 500ms ease;
 			}
