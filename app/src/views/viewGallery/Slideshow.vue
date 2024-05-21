@@ -71,7 +71,7 @@ function resetAfterSwap() {
 
 function play() {
 	// This can be a timeout instead of an interval because goToNext calls play again
-	state.playingTimer = setTimeout(goToNext, 5000);
+	state.playingTimer = setTimeout(goToNext, 5000) as any;
 }
 function stop() {
 	clearTimeout(state.playingTimer);

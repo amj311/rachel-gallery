@@ -17,9 +17,10 @@ if (!windowWithCache.photoCache) {
 const { photo, size = 'xs', watermark, fillMethod, position, showLoading } = defineProps<{
 	photo: {
 		id: string,
-		googleFileId: string,
+		googleFileId?: string,
 		width: number,
 		height: number,
+		dataUrl?: string
 	},
 	fillMethod?: 'cover' | 'contain',
 	position?: string,

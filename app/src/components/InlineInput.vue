@@ -22,7 +22,7 @@ const stopEditing = () => {
 
 <template>
 	<div class="ghost-input" :class="{ editing: isEditing }">
-		<span class="input" contenteditable @focus="startEditing" @blur="stopEditing" @input="text = $event.target.innerText" ref="input" @keydown.enter="stopEditing" :placeholder="text.length === 0 ? $attrs.placeholder || 'Enter text...' : ''">{{ firstText }}</span>
+		<span class="input" contenteditable @focus="startEditing" @blur="stopEditing" @input="text = ($event.target as any)?.innerText || ''" ref="input" @keydown.enter="stopEditing" :placeholder="text?.length === 0 ? $attrs.placeholder as string || 'Enter text...' : ''">{{ firstText }}</span>
 		<Button class="icon" icon="pi pi-pencil" text @click="startEditing" />
 	</div>
 </template>

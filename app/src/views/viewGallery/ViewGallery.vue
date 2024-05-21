@@ -17,7 +17,6 @@ import { useToast } from 'primevue/usetoast';
 import { AuthService } from '@/services/authService';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import Checkbox from 'primevue/checkbox';
-import PhotoFrame from '@/components/PhotoFrame.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -26,8 +25,8 @@ const toast = useToast();
 const state = reactive({
 	isLoading: true,
 	galleryIdOrSlug: router.currentRoute.value.params.galleryId,
-	viewAuth: {},
-	gallery: null,
+	viewAuth: {} as any,
+	gallery: null as any,
 	providedCode: null,
 	showSlideshow: false,
 	slideshowPhotos: [],

@@ -2,7 +2,7 @@
 import InputText from 'primevue/inputtext';
 import { computed, onMounted, ref } from 'vue';
 
-const code = defineModel<string>();
+const code = defineModel<string | null>();
 const input = ref<HTMLInputElement>();
 
 const CODE_LENGTH = 6;

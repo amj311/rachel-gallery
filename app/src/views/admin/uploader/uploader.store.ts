@@ -10,13 +10,13 @@ export const useUploaderStore = defineStore('uploader', {
 		viewMode: 'modal',
 
 		isGoogleReady: false,
-		googleDriveInfo: {},
+		googleDriveInfo: {} as any,
 		isUploading: false,
-		photosToUpload: [],
+		photosToUpload: [] as any[],
 	}),
 	getters: {
 		canClose(state) {
-			return state.uploadQueue.length === 0 && !this.isUploading;
+			return (state as any).uploadQueue.length === 0 && !this.isUploading;
 		},
 		finishedPhotos(state) {
 			return state.photosToUpload.filter((photo) => photo.uploadStatus === 'complete');
@@ -32,12 +32,12 @@ export const useUploaderStore = defineStore('uploader', {
 		},
 		headerText(state) {
 			if (state.isUploading) {
-				return `Uploading... ${this.finishedPhotos.length}/${state.photosToUpload.length}`;
+				return `Uploading... ${(this as any).finishedPhotos.length}/${state.photosToUpload.length}`;
 			}
-			if (state.errorPhotos.length > 0) {
+			if ((state as any).errorPhotos.length > 0) {
 				return 'Upload failed';
 			}
-			if (state.photosToUpload.length > 0 && this.uploadQueue.length === 0) {
+			if (state.photosToUpload.length > 0 && (this as any).uploadQueue.length === 0) {
 				return 'Upload complete!';
 			}
 			return 'Upload Photos';
@@ -99,7 +99,7 @@ export const useUploaderStore = defineStore('uploader', {
 				return;
 			}
 			// get next not-started photo
-			const photo = this.uploadQueue.find((photo) => !photo.uploadStatus);
+			const photo = (this as any).uploadQueue.find((photo) => !photo.uploadStatus);
 			if (!photo) {
 				return;
 			}
@@ -157,7 +157,7 @@ export const useUploaderStore = defineStore('uploader', {
 			this.viewMode = this.viewMode === 'modal' ? 'drawer' : 'modal';
 		},
 		close() {
-			if (this.errorPhotos.length > 0) {
+			if ((this as any).errorPhotos.length > 0) {
 				if(!confirm("Some photos failed to upload. Do you want to discard them?")) return;
 			}
 			this.photosToUpload.forEach((photo)	=> URL.revokeObjectURL(photo.dataUrl)); // free memory

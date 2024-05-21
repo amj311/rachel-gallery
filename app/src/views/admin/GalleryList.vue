@@ -12,7 +12,7 @@ const router = useRouter();
 
 const state = reactive({
 	isLoading: true,
-	galleries: [],
+	galleries: [] as any[],
 });
 
 onBeforeMount(async () => {

@@ -34,9 +34,9 @@ const state = reactive({
 	isSaving: false,
 	skipAutoSave: false,
 	galleryId: router.currentRoute.value.params.galleryId,
-	gallery: null,
-	showUploadToSection: null,
-	imagesToUpload: new Set(),
+	gallery: null as any,
+	showUploadToSection: null as any,
+	imagesToUpload: new Set<any>(),
 	showShareModal: false,
 });
 
@@ -83,7 +83,7 @@ function updateGallery() {
 	nextDebounce = setTimeout(async () => {
 		const { data } = await request.put('admin/gallery/' + state.galleryId, state.gallery);
 		state.isSaving = false;
-	}, saveDebounceTime);
+	}, saveDebounceTime) as any;
 }
 
 function assignCoverPhoto(photo) {
@@ -118,7 +118,7 @@ function processImageFile(file) {
 		type: file.type,
 		gallerySectionId: state.showUploadToSection!.id,
 		onUploadComplete: onImageUploadComplete,
-	};
+	} as any;
 
 	var url = URL.createObjectURL(photo.blob);
 	photo.dataUrl = url;
@@ -138,7 +138,7 @@ function removeFileFromUpload(file) {
 }
 
 function sendToUploader() {
-	uploaderStore.uploadImages(state.imagesToUpload);
+	uploaderStore.uploadImages(state.imagesToUpload as any);
 	state.imagesToUpload.clear();
 	state.showUploadToSection = null;
 }
@@ -408,7 +408,7 @@ async function copyLink() {
 				<div class="photo-grid">
 					<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
 						<div class="photo-frame">
-							<PhotoFrame :photo="photo" size="xs" fillMethod="contain" />
+							<PhotoFrame :photo="photo as any" size="xs" fillMethod="contain" />
 						</div>
 						<div class="removePhoto" @click="removeFileFromUpload(photo)">&times;</div>
 						<div class="filename">{{ photo.filename }}</div>

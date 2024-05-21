@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader.store';
 import Button from 'primevue/button';
@@ -6,7 +6,7 @@ import Button from 'primevue/button';
 const uploaderStore = useUploaderStore();
 uploaderStore.init();
 
-const bytesToGB = (bytes: number) => {
+const bytesToGB = (bytes) => {
 	let gigaBytes = bytes / 1024 / 1024 / 1024;
 	return gigaBytes.toFixed(gigaBytes % 1 === 0 ? 0 : 1);
 }

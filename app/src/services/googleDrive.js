@@ -1,7 +1,8 @@
-import axios from "axios";
+ import axios from "axios";
 
 // 'google' provided from script tag in index.html
 const uploadFolderName = '__rachel_gallery_photos__';
+
 
 export const GoogleDriveService = {
 	googleClient: null,
@@ -9,7 +10,7 @@ export const GoogleDriveService = {
 	onToken: null,
 
 	initClient() {
-		this.googleClient = google.accounts.oauth2.initTokenClient({
+		this.googleClient = (google).accounts.oauth2.initTokenClient({
 			client_id: '611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com',
 			scope: 'https://www.googleapis.com/auth/drive',
 			callback: (tokenResponse) => {
@@ -40,7 +41,7 @@ export const GoogleDriveService = {
 		return new Promise((res) => {
 			this.onToken = res;
 			this.driveInfo = null;
-			this.googleClient!.requestAccessToken();
+			this.googleClient.requestAccessToken();
 		});
 	},
 
