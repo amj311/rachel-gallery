@@ -128,11 +128,13 @@ export default (route, _, done) => {
 			imageBuffer = Buffer.from(arrayBuffer);
 		}
 		else {
-			imageBuffer = await sharp(arrayBuffer).resize({
+			const sharpImg = sharp(arrayBuffer);
+			imageBuffer = await sharpImg.resize({
 				width: 1200,
 				height: 1200,
 				fit: 'inside',
 			}).toBuffer();
+			sharpImg.destroy();
 		}
 
 		return {
