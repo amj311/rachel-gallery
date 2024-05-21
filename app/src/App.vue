@@ -9,24 +9,14 @@ import { ref } from 'vue';
 import LoadSplash from './components/LoadSplash.vue';
 
 const userStore = useUserStore();
-
-const loadingMessages = [
-	'Loading...',
-	'Almost there...',
-	'Just a sec...',
-];
-
-const activeMessageIdx = ref(0);
-const activeMessage = computed(() => loadingMessages[activeMessageIdx.value]);
-
-const messageInterval = setInterval(() => {
-	activeMessageIdx.value = (activeMessageIdx.value + 1) % loadingMessages.length;
-}, 10000);
-
 const sessionInterval = setInterval(userStore.loadSessionData, 60000);
 
+const waitingForAuth = ref(true);
+setTimeout(() => {
+	waitingForAuth.value = false;
+}, 1000); // wait for 1 second before showing the app
+
 onBeforeUnmount(() => {
-	clearInterval(messageInterval);
 	clearInterval(sessionInterval);
 });
 
@@ -34,7 +24,7 @@ onBeforeUnmount(() => {
 
 
 <template>
-	<LoadSplash v-if="!userStore.hasLoadedSessionData" />
+	<LoadSplash v-if="waitingForAuth || !userStore.hasLoadedSessionData" />
 	<div v-else>
 		<RouterView />
 		<Toast></Toast>

@@ -108,7 +108,7 @@ async function loadGallery() {
 	state.isLoading = false;
 }
 
-const allPhotos = computed(() => state.gallery.sections.flatMap(s => s.photos));
+const allPhotos = computed(() => state.gallery?.sections?.flatMap(s => s.photos));
 
 function openSlideshow(photo?) {
 	state.slideshowPhotos = allPhotos.value;
@@ -226,10 +226,6 @@ async function downloadPhotos(photos, hiRes = false) {
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
 								<div class="photo-trigger" @click="() => openSlideshow(photo)"></div>
-								<div v-if="isClient" class="selector">
-									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
-										@click="() => toggleSelected(photo)" binary variant="outlined" />
-								</div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -240,6 +236,10 @@ async function downloadPhotos(photos, hiRes = false) {
 											<div class="button"><i class="pi pi-download" /></div>
 										</DropdownMenu>
 									</div>
+								</div>
+								<div v-if="isClient" class="selector">
+									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
+										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
 							</div>
 						</template>
