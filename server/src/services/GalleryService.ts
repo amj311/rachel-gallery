@@ -150,6 +150,17 @@ export const GalleryService = {
 		});
 	},
 
+
+	async downloadPhoto(id: string) {
+		const photo = await prisma.photo.findUnique({
+			where: {
+				id,
+			},
+		});
+
+		return await GoogleDriveService.loadFile(photo?.googleFileId);
+	},
+
 	async deletePhoto(id: string) {
 		await prisma.photo.delete({
 			where: {

@@ -4,7 +4,7 @@
 const uploadFolderName = '__rachel_gallery_photos__';
 
 
-export const GoogleDriveService = {
+export const GoogleUploadService = {
 	googleClient: null,
 	driveInfo: null,
 	onToken: null,

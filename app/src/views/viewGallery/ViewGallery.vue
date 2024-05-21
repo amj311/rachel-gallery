@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onMounted, onBeforeUnmount, computed } from 'vue';
+import { reactive, onMounted, computed } from 'vue';
 import request, { apiUrl } from '@/services/request';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
@@ -19,6 +19,8 @@ import DropdownMenu from '@/components/DropdownMenu.vue';
 import Checkbox from 'primevue/checkbox';
 import LoadSplash from '@/components/LoadSplash.vue';
 import ProgressBar from 'primevue/progressbar';
+import { Buffer } from 'buffer';
+import JSZip from 'jszip';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -38,8 +40,13 @@ const state = reactive({
 	showShareModal: false,
 	didAdminWarn: false,
 	selectedIds: new Set(),
-	pendingDownload: null as any,
-	pendingDownloadInterval: 0,
+	pendingDownload: null as {
+		status: 'processing' | 'finished' | 'error',
+		photosToDownload: any[],
+		hiRes: boolean,
+		readyPhotos: { photo, buffer }[],
+		error?: string,
+	} | null,
 });
 
 const isLoggedIn = computed(() => userStore.isLoggedIn);
@@ -174,37 +181,65 @@ async function startDownloadPhotos(photos, hiRes = false) {
 		return;
 	}
 	if (!photos.length) return;
-	const { data } = await request.post(`${apiUrl}/gallery/${state.gallery.id}/download`, {
-		photoIds: photos.map(p => p.id),
-		hiRes: hiRes,
-	});
-	if (data.data.progress.status === 'finished') {
-		loadDownloadLink(data.data.jobId);
-	}
-	else {
-		state.pendingDownload = data.data;
-		state.pendingDownloadInterval = setInterval(updateDownloadProgress, 1000) as any;
-	}
-}
 
-async function updateDownloadProgress() {
-	if (state.pendingDownload) {
-		const { data } = await request.get(`${apiUrl}/gallery/${state.gallery.id}/download-status/${state.pendingDownload.jobId}`);
-		state.pendingDownload = data.data;
+	state.pendingDownload = {
+		status: 'processing',
+		photosToDownload: photos,
+		readyPhotos: [],
+		hiRes,
+	};
 
-		if (data.data.progress.status === 'finished') {
-			clearInterval(state.pendingDownloadInterval);
+	try {
+		// have to do these one at a time to not crash server
+		for (const photo of photos) {
+			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo/' + photo.id + '?hiRes=' + hiRes);
+			state.pendingDownload.readyPhotos.push({photo, buffer: Buffer.from(data.data)});
+		}
+
+		state.pendingDownload.status = 'finished';
+
+		if (state.pendingDownload.readyPhotos.length === 1) {
+			loadDownloadLink();
 		}
 	}
+	catch (e: any) {
+		state.pendingDownload.error = e.message;
+		state.pendingDownload.status = 'error';
+	}
 }
 
-async function loadDownloadLink(jobId) {
+function restartDownload() {
+	if (!state.pendingDownload) return;
+	const download = state.pendingDownload;
+	state.pendingDownload = null;
+	startDownloadPhotos(download.photosToDownload, download.hiRes);
+}
+
+
+async function loadDownloadLink() {
+	if (state.pendingDownload?.status !== 'finished') return;
+
+	const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
+	let finalBlob;
+
+	if (isMultiple) {
+		const zip = new JSZip();
+		state.pendingDownload.readyPhotos.forEach(({photo, buffer}, i) => {
+			zip.file(`${photo.filename}`, buffer);
+		})
+		const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+		finalBlob = new Blob([zipBuffer], {'type': 'application/zip'});
+	} else {
+		finalBlob = new Blob([Buffer.from(state.pendingDownload?.readyPhotos[0].buffer)], {'type': 'image/jpeg'});
+	}
+
+	var url = URL.createObjectURL(finalBlob);
 	const link = document.createElement('a');
-	const token = await AuthService.getToken();
-	link.href = `${apiUrl}/gallery/${state.gallery.id}/download/${jobId}?access_token=${token}`;
-	link.download = state.gallery!.name;
+	link.href = url;
+	link.download = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename,
 	link.click();
 	link.remove();
+	URL.revokeObjectURL(url);
 
 	state.pendingDownload = null;
 }
@@ -322,21 +357,30 @@ async function loadDownloadLink(jobId) {
 				<Button icon="pi pi-times" text @click="state.selectedIds.clear()" />
 			</div>
 
-
 			<div class="pending-download modal low-right-modal flex align-items-center gap-3" v-if="state.pendingDownload">
-				<template v-if="state.pendingDownload.progress.status === 'processing'">
-					<div>Preparing download...</div>
-					<div class="flex-grow-1"><ProgressBar :value="state.pendingDownload.progress.readyPhotos / state.pendingDownload.progress.totalPhotos * 100">{{  }}</ProgressBar></div>
-				</template>
-
-				<template v-if="state.pendingDownload.progress.status === 'finished'">
+				<template v-if="state.pendingDownload.status === 'finished'">
 					<i class="pi pi-check" />
 					<div>Download ready!</div>
 					<div class="flex-grow-1" />
 					<div>
-						<Button icon="pi pi-download" text @click="() => loadDownloadLink(state.pendingDownload.jobId)" />
+						<Button icon="pi pi-download" text @click="loadDownloadLink" />
 						<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
 					</div>
+				</template>
+				
+				<template v-else-if="state.pendingDownload.status === 'error'">
+					<i class="pi pi-exclamation-triangle" />
+					<div>Download failed</div>
+					<div class="flex-grow-1"></div>
+					<div>
+						<Button icon="pi pi-replay" text @click="restartDownload" />
+						<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
+					</div>
+				</template>
+
+				<template v-else>
+					<div>Preparing download...</div>
+					<div class="flex-grow-1"><ProgressBar :value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)">{{}}</ProgressBar></div>
 				</template>
 			</div>
 

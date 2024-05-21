@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import request from '@/services/request';
-import { GoogleDriveService } from '@/services/googleDrive';
+import { GoogleUploadService } from '@/services/googleUploadService';
 
 // let google;
 
@@ -45,18 +45,18 @@ export const useUploaderStore = defineStore('uploader', {
 	},
 	actions: {
 		init() {
-			if (GoogleDriveService.hasValidToken) {
+			if (GoogleUploadService.hasValidToken) {
 				this.setupGoogle();
 				return;
 			}
 		},
 		async setupGoogle() {
-			const token = await GoogleDriveService.getToken();
+			const token = await GoogleUploadService.getToken();
 			if (token) {
-				this.googleDriveInfo = await GoogleDriveService.getDriveInfo();
+				this.googleDriveInfo = await GoogleUploadService.getDriveInfo();
 				if (!this.googleDriveInfo.targetFolder) {
-					await GoogleDriveService.createTargetFolder();
-					this.googleDriveInfo = await GoogleDriveService.driveInfo;
+					await GoogleUploadService.createTargetFolder();
+					this.googleDriveInfo = await GoogleUploadService.driveInfo;
 				}
 				this.checkGoogleStatus();
 				this.startUploadLoop()
@@ -71,12 +71,12 @@ export const useUploaderStore = defineStore('uploader', {
 		},
 
 		checkGoogleStatus() {
-			if (!GoogleDriveService.hasValidToken) {
+			if (!GoogleUploadService.hasValidToken) {
 				this.googleDriveInfo = {};
 				this.isGoogleReady = false;
 				return;
 			}
-			if (this.googleDriveInfo.targetFolder && GoogleDriveService.hasValidToken) {
+			if (this.googleDriveInfo.targetFolder && GoogleUploadService.hasValidToken) {
 				this.isGoogleReady = true;
 			}
 		},
@@ -110,7 +110,7 @@ export const useUploaderStore = defineStore('uploader', {
 				// upload to google
 				photo.uploadStatus = "uploading";
 				await new Promise(resolve => setTimeout(resolve, 5000));
-				const googleRes = await GoogleDriveService.uploadImage(photo);
+				const googleRes = await GoogleUploadService.uploadImage(photo);
 				photo.googleFileId = googleRes.id;
 				photo.googleOwnerEmail = this.googleDriveInfo.owner.email;
 	
@@ -121,7 +121,7 @@ export const useUploaderStore = defineStore('uploader', {
 				}
 				catch (error) {
 					console.log("deleting from drive.....")
-					await GoogleDriveService.deleteFile(googleRes.id);
+					await GoogleUploadService.deleteFile(googleRes.id);
 					throw error;
 				}
 	

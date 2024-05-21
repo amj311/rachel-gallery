@@ -4,7 +4,7 @@ import { reactive, onBeforeMount, watch } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
-import { GoogleDriveService } from '@/services/googleDrive';
+import { GoogleUploadService } from '@/services/googleUploadService';
 import GalleryCover from '@/components/GalleryCover.vue';
 import Calendar from 'primevue/calendar';
 import FocalPointInput from '@/components/FocalPointInput.vue';
@@ -164,18 +164,18 @@ function onDrop(event) {
 
 async function deletePhoto(photo) {
 	if (!confirm('Are you sure you want to delete this photo?')) return;
-	if (!GoogleDriveService.hasValidToken) {
-		await GoogleDriveService.getToken();
+	if (!GoogleUploadService.hasValidToken) {
+		await GoogleUploadService.getToken();
 	}
 	// TODO check that photo is in activated drive
 	try {
-		await GoogleDriveService.deleteFile(photo.googleFileId);
+		await GoogleUploadService.deleteFile(photo.googleFileId);
 		await request.delete('admin/photo/' + photo.id);
 	}
 	catch (error) {
 		console.error(error);
 		console.log("Failed to delete photo. Will try to restore it in Google Drive.");
-		await GoogleDriveService.restoreFile(photo.googleFileId);
+		await GoogleUploadService.restoreFile(photo.googleFileId);
 		return;
 	}
 	const deleteFromSection = state.gallery.sections.find(s => s.id === photo.gallerySectionId);
@@ -189,7 +189,7 @@ async function deleteSection(section) {
 	const res = await Promise.all(section.photos.map(async (p) => {
 		let success = true;
 		try {
-			await GoogleDriveService.deleteFile(p.googleFileId);
+			await GoogleUploadService.deleteFile(p.googleFileId);
 			p.marked_for_deletion = true; // just to hide it from view
 		}
 		catch (error) {

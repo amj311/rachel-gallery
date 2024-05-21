@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { reactive, defineProps } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
 import LoginForm from '@/components/LoginForm.vue';
-
-const router = useRouter();
 
 const { message, closeable = false } = defineProps<{
 	message?: string,

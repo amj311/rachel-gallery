@@ -99,13 +99,13 @@ export default (route, _, done) => {
 	})
 
 
-	// Begin a download job. Returns a job id for tracking
-	route.post('/:galleryId/download', async (request, reply) => {
-		const { galleryId } = request.params;
-		const { hiRes, photoIds } = request.body;
+	// load image data for zipping on frontend
+	// Minimizes memory usage on server
+	route.get('/:galleryId/photo/:photoId', async (request, reply) => {
+		const { galleryId, photoId } = request.params;
+		const { hiRes } = request.query;
 
 		const gallery = await GalleryService.getGallerySimple(galleryId);
-
 		if (!gallery) {
 			return {
 				success: false,
@@ -119,92 +119,129 @@ export default (route, _, done) => {
 				message: 'You do not have permission to download this gallery'
 			}
 		}
+		
+		const file = await GalleryService.downloadPhoto(photoId) as any;
 
-		if (!photoIds.length) {
-			return {
-				success: false,
-				message: 'No photos selected'
-			}
+		const arrayBuffer = await file.arrayBuffer();
+		let imageBuffer;
+		if (hiRes === 'true') {
+			imageBuffer = Buffer.from(arrayBuffer);
 		}
-
-		const photos = await prisma.photo.findMany({
-			where: {
-				id: { in: photoIds },
-			},
-		});
-
-		const job = DownloadService.createDownload(galleryId, photoIds, hiRes);
-		job.start();
-
-		if (photoIds.length === 1) {
-			await job.watchForFinish();
+		else {
+			imageBuffer = await sharp(arrayBuffer).resize({
+				width: 1200,
+				height: 1200,
+				fit: 'inside',
+			}).toBuffer();
 		}
 
 		return {
 			success: true,
-			data: {
-				jobId: job.id,
-				progress: job.progress,
-			}
-		}
-
-		// reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery.name}.zip` : photos[0].filename));
-		// reply.header('Content-Length', finalBuffer.length);
-		// reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
-		// return reply.send(finalBuffer);
-	})
-
-
-	route.get('/:galleryId/download-status/:jobId', async (request, reply) => {
-		const { jobId } = request.params;
-
-		const job = DownloadService.getDownload(jobId);
-		if (!job) {
-			return {
-				success: false,
-				message: 'Job not found'
-			}
-		}
-		return {
-			success: true,
-			data: {
-				jobId: job.id,
-				progress: job.progress,
-			}
+			data: imageBuffer
 		}
 	})
 
+	// // Begin a download job. Returns a job id for tracking
+	// route.post('/:galleryId/download', async (request, reply) => {
+	// 	const { galleryId } = request.params;
+	// 	const { hiRes, photoIds } = request.body;
 
-	route.get('/:galleryId/download/:jobId', async (request, reply) => {
-		const { galleryId, jobId } = request.params;
+	// 	const gallery = await GalleryService.getGallerySimple(galleryId);
 
-		const gallery = await GalleryService.getGallerySimple(galleryId);
+	// 	if (!gallery) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'Gallery not found'
+	// 		}
+	// 	}
 
-		const job = DownloadService.getDownload(jobId);
-		if (!job) {
-			return {
-				success: false,
-				message: 'Job not found'
-			}
-		}
+	// 	if (!request.sessionUser?.isAdmin && gallery.clientEmail !== request.sessionUser?.email) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'You do not have permission to download this gallery'
+	// 		}
+	// 	}
 
-		if (job.progress.status !== 'finished') {
-			return {
-				success: false,
-				message: 'Job not ready'
-			}
-		}
+	// 	if (!photoIds.length) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'No photos selected'
+	// 		}
+	// 	}
 
-		DownloadService.removeDownload(jobId);
+	// 	const photos = await prisma.photo.findMany({
+	// 		where: {
+	// 			id: { in: photoIds },
+	// 		},
+	// 	});
 
-		const isMultiple = job.progress.readyPhotos > 1;
-		let finalBuffer = isMultiple ? (await job.getZip()) : job.photos[0].buffer;
+	// 	const job = DownloadService.createDownload(galleryId, photoIds, hiRes);
+	// 	job.start();
 
-		reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery!.name}.zip` : job.photos[0].photo.filename));
-		reply.header('Content-Length', finalBuffer.length);
-		reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
-		return reply.send(finalBuffer);
-	})
+	// 	if (photoIds.length === 1) {
+	// 		await job.watchForFinish();
+	// 	}
+
+	// 	return {
+	// 		success: true,
+	// 		data: {
+	// 			jobId: job.id,
+	// 			progress: job.progress,
+	// 		}
+	// 	}
+	// })
+
+
+	// route.get('/:galleryId/download-status/:jobId', async (request, reply) => {
+	// 	const { jobId } = request.params;
+
+	// 	const job = DownloadService.getDownload(jobId);
+	// 	if (!job) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'Job not found'
+	// 		}
+	// 	}
+	// 	return {
+	// 		success: true,
+	// 		data: {
+	// 			jobId: job.id,
+	// 			progress: job.progress,
+	// 		}
+	// 	}
+	// })
+
+
+	// route.get('/:galleryId/download/:jobId', async (request, reply) => {
+	// 	const { galleryId, jobId } = request.params;
+
+	// 	const gallery = await GalleryService.getGallerySimple(galleryId);
+
+	// 	const job = DownloadService.getDownload(jobId);
+	// 	if (!job) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'Job not found'
+	// 		}
+	// 	}
+
+	// 	if (job.progress.status !== 'finished') {
+	// 		return {
+	// 			success: false,
+	// 			message: 'Job not ready'
+	// 		}
+	// 	}
+
+	// 	DownloadService.removeDownload(jobId);
+
+	// 	const isMultiple = job.progress.readyPhotos > 1;
+	// 	let finalBuffer = isMultiple ? (await job.getZip()) : job.photos[0].buffer;
+
+	// 	reply.header('Content-Disposition', 'attachment; filename=' + (isMultiple ? `${gallery!.name}.zip` : job.photos[0].photo.filename));
+	// 	reply.header('Content-Length', finalBuffer.length);
+	// 	reply.type(isMultiple ? 'application/zip' : 'image/jpeg');
+	// 	return reply.send(finalBuffer);
+	// })
 
 	done();
 }
