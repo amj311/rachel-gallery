@@ -21,7 +21,6 @@ export const useUserStore = defineStore('user', () => {
 			return;
 		}
 		try {
-			hasLoadedSessionData.value = false;
 			isLoading.value = true;
 			isLoggedIn.value = Boolean(authUser);
 			if (!isLoggedIn.value) {
@@ -32,14 +31,17 @@ export const useUserStore = defineStore('user', () => {
 			currentUser.value = data.data;
 			session.value = data;
 			loginError.value = '';
+			hasLoadedSessionData.value = true;
 		}
 		catch (e) {
 			console.log('ERROR LOADING AUTH USER')
 			console.log(e);
 			loginError.value = 'Failed to load user';
+			hasLoadedSessionData.value = false;
+			isLoggedIn.value = false;
+			currentUser.value = null;
 		}
 		finally {
-			hasLoadedSessionData.value = true;
 			isLoading.value = false;
 		}
 	};

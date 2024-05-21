@@ -6,6 +6,7 @@ import watermarkImage from '@/assets/images/watermark.png'
 import { computed, onMounted } from 'vue';
 import { onBeforeUnmount } from 'vue';
 import { ref } from 'vue';
+import LoadSplash from './components/LoadSplash.vue';
 
 const userStore = useUserStore();
 
@@ -18,42 +19,45 @@ const loadingMessages = [
 const activeMessageIdx = ref(0);
 const activeMessage = computed(() => loadingMessages[activeMessageIdx.value]);
 
-const interval = setInterval(() => {
+const messageInterval = setInterval(() => {
 	activeMessageIdx.value = (activeMessageIdx.value + 1) % loadingMessages.length;
 }, 10000);
 
+const sessionInterval = setInterval(userStore.loadSessionData, 60000);
+
 onBeforeUnmount(() => {
-	clearInterval(interval);
+	clearInterval(messageInterval);
+	clearInterval(sessionInterval);
 });
 
 </script>
 
 
 <template>
-	<div v-if="!userStore.hasLoadedSessionData" class="splash">
-		<img :src="watermarkImage" width="200" />
-		<div class="flex gap-2 align-items-center my-3">
-			<i class="pi pi-spin pi-spinner" font-size="3rem"></i>
-			<h2>{{ activeMessage }}</h2>
-		</div>
+	<LoadSplash v-if="!userStore.hasLoadedSessionData" />
+	<div v-else>
+		<RouterView />
+		<Toast></Toast>
+		<footer class="flex align-items-top flex-wrap justify-content-center gap-8 p-8">
+			<img :src="watermarkImage" width="100" />
+			<div class="flex-grow-1 flex flex-column gap-3 text-center">
+				<div>Photos by Rachel Florence Photo</div>
+				<div class="flex align-items-center justify-content-center gap-2"><i class="pi pi-instagram"></i> <a href="https://www.instagram.com/r.florencephoto/" target="_blank">@r.florencephoto</a></div>
+				<div><i class="fa fa-copyright"></i> {{ new Date().getFullYear() }} All Rights Reserved</div>
+			</div>
+		</footer>
 	</div>
-	<RouterView v-else />
-	<Toast></Toast>
 </template>
 
 
 <style scoped>
-.splash {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: #fff5;
-	backdrop-filter: blur(7px);
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
+footer {
+	background: #ece6de;
+
+	a {
+		color: inherit !important;
+		text-decoration: none;
+		font-weight: bold;
+	}
 }
 </style>

@@ -17,6 +17,7 @@ import { useToast } from 'primevue/usetoast';
 import { AuthService } from '@/services/authService';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import Checkbox from 'primevue/checkbox';
+import LoadSplash from '@/components/LoadSplash.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -176,7 +177,7 @@ async function downloadPhotos(photos, hiRes = false) {
 
 
 <template>
-	<div v-if="!state.gallery">Loading...</div>
+	<LoadSplash v-if="!state.gallery" />
 	<div v-else id="viewGallery">
 		<div id="cover" @click="scrollDown">
 			<GalleryCover :gallery="state.gallery" />
