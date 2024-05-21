@@ -183,7 +183,7 @@ async function startDownloadPhotos(photos, hiRes = false) {
 	}
 	else {
 		state.pendingDownload = data.data;
-		state.pendingDownloadInterval = setInterval(updateDownloadProgress, 1000);
+		state.pendingDownloadInterval = setInterval(updateDownloadProgress, 1000) as any;
 	}
 }
 
