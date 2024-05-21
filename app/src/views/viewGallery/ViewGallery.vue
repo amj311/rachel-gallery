@@ -424,8 +424,8 @@ async function downloadPhotos(photos, hiRes = false) {
 
 				.button {
 					opacity: 0;
-					width: 40px;
-					height: 40px;
+					width: 2.5rem;
+					height: 2.5rem;
 					font-size: 20px;
 					display: inline-flex;
 					justify-content: center;
@@ -433,7 +433,7 @@ async function downloadPhotos(photos, hiRes = false) {
 					cursor: pointer;
 
 					i {
-						font-size: 20px;
+						font-size: 1.2rem;
 					}
 
 					&.heart-fixed {
