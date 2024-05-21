@@ -225,7 +225,7 @@ function swapSections(aIdx, bIdx) {
 }
 
 async function copyLink() {
-	await navigator.clipboard.writeText(window.location.origin + '/#/' + (state.gallery.slug || state.gallery.id));
+	await navigator.clipboard.writeText(window.location.origin + '/' + (state.gallery.slug || state.gallery.id));
 }
 
 </script>
