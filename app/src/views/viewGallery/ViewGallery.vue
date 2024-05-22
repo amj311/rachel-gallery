@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { reactive, onMounted, computed } from 'vue';
-import request, { apiUrl } from '@/services/request';
+import request from '@/services/request';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
 import LoginModal from '@/components/LoginModal.vue';
@@ -14,14 +14,12 @@ import ShareModal from '@/components/GalleryAccessModal.vue';
 import CodeInput from '@/components/CodeInput.vue';
 import watermarkImage from '@/assets/images/watermark.png'
 import { useToast } from 'primevue/usetoast';
-import { AuthService } from '@/services/authService';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import Checkbox from 'primevue/checkbox';
 import LoadSplash from '@/components/LoadSplash.vue';
 import ProgressBar from 'primevue/progressbar';
 import { Buffer } from 'buffer';
 import JSZip from 'jszip';
-import sharp from 'sharp';
 
 const router = useRouter();
 const userStore = useUserStore();
