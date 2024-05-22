@@ -20,6 +20,7 @@ import LoadSplash from '@/components/LoadSplash.vue';
 import ProgressBar from 'primevue/progressbar';
 import { Buffer } from 'buffer';
 import JSZip from 'jszip';
+import { ref } from 'vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -81,14 +82,8 @@ const canView = computed(() => {
 	}
 	return false;
 });
-const authMode = computed(() => {
-	if (state.gallery?.shareMode === 'code') {
-		return 'code';
-	}
-	else {
-		return 'login';
-	}
-});
+
+const authMode = ref('login');
 
 onMounted(() => {
 	loadGallery();
@@ -113,6 +108,11 @@ async function loadGallery() {
 				life: 3000,
 			})
 			state.didAdminWarn = true;
+		}
+
+
+		if (state.gallery?.shareMode === 'code') {
+			authMode.value = 'code';
 		}
 	}
 
@@ -221,7 +221,7 @@ async function startDownloadPhotos(photos, hiRes = false) {
 
 				blob = await new Promise((resolve) => canvas.toBlob(resolve as any, 'image/jpeg'));
 			}
-			state.pendingDownload.readyPhotos.push({photo, blob});
+			state.pendingDownload.readyPhotos.push({ photo, blob });
 		}
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
@@ -229,11 +229,11 @@ async function startDownloadPhotos(photos, hiRes = false) {
 
 		if (isMultiple) {
 			const zip = new JSZip();
-			state.pendingDownload.readyPhotos.forEach(({photo, blob}) => {
+			state.pendingDownload.readyPhotos.forEach(({ photo, blob }) => {
 				zip.file(`${photo.filename}`, blob, { compression: 'DEFLATE' });
 			})
 			const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-			finalBlob = new Blob([zipBuffer], {'type': 'application/zip'});
+			finalBlob = new Blob([zipBuffer], { 'type': 'application/zip' });
 		} else {
 			finalBlob = state.pendingDownload?.readyPhotos[0].blob;
 		}
@@ -268,7 +268,7 @@ async function loadDownloadLink() {
 	const link = document.createElement('a');
 	link.href = url;
 	link.download = state.pendingDownload.downloadName!,
-	link.click();
+		link.click();
 	link.remove();
 	URL.revokeObjectURL(url);
 
@@ -283,20 +283,21 @@ async function loadDownloadLink() {
 	<div v-else id="viewGallery">
 		<div id="cover" @click="scrollDown">
 			<GalleryCover :gallery="state.gallery" />
-			<div class="down-pointer"><i class="pi pi-chevron-down" /></div>
-		</div>
+			<div v-if="canView" class="down-pointer"><i class="pi pi-chevron-down" /></div>
 
-		<div v-if="!canView" class="login-guard">
-			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
-			<div v-if="authMode === 'code'" class="code-modal modal">
-				<img :src="watermarkImage" width="100" />
-				<h3>Please enter the access code to view this gallery</h3>
-				<CodeInput v-model="state.providedCode" />
-				<Button label="Submit" @click="loadGallery" :loading="state.isLoading" class="gap-2" />
+			<div v-if="!canView" class="login-guard">
+				<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
+				<div v-if="authMode === 'code'" class="code-modal modal">
+					<img :src="watermarkImage" width="100" />
+					<h3>Please enter the access code to view this gallery</h3>
+					<CodeInput v-model="state.providedCode" />
+					<Button label="Submit" @click="loadGallery" :loading="state.isLoading" class="gap-2" />
+					<div>Need to <a @click="authMode = 'login'" class="underline">sign in</a>?</div>
+				</div>
 			</div>
 		</div>
 
-		<div v-else>
+		<div v-if="canView">
 			<NavBar>
 				<div class="flex align-items-center">
 					<div>
@@ -353,7 +354,9 @@ async function loadDownloadLink() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites</h3>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu v-if="isClient" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download" text /></DropdownMenu>
+					<DropdownMenu v-if="isClient" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download"
+							text />
+					</DropdownMenu>
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
@@ -384,11 +387,13 @@ async function loadDownloadLink() {
 					<div>{{ state.selectedIds.size }} photo{{ state.selectedIds.size === 1 ? '' : 's' }} selected</div>
 				</div>
 				<div class="flex-grow-1"></div>
-				<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button icon="pi pi-download" text /></DropdownMenu>
+				<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button
+						icon="pi pi-download" text /></DropdownMenu>
 				<Button icon="pi pi-times" text @click="state.selectedIds.clear()" />
 			</div>
 
-			<div class="pending-download modal low-right-modal flex align-items-center gap-3" v-if="state.pendingDownload">
+			<div class="pending-download modal low-right-modal flex align-items-center gap-3"
+				v-if="state.pendingDownload">
 				<template v-if="state.pendingDownload.status === 'finished'">
 					<i class="pi pi-check" />
 					<div>Download ready!</div>
@@ -398,7 +403,7 @@ async function loadDownloadLink() {
 						<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
 					</div>
 				</template>
-				
+
 				<template v-else-if="state.pendingDownload.status === 'error'">
 					<i class="pi pi-exclamation-triangle" />
 					<div>Download failed</div>
@@ -411,7 +416,11 @@ async function loadDownloadLink() {
 
 				<template v-else>
 					<div>Preparing download...</div>
-					<div class="flex-grow-1"><ProgressBar :value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)">{{}}</ProgressBar></div>
+					<div class="flex-grow-1">
+						<ProgressBar
+							:value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)">
+							{{}}</ProgressBar>
+					</div>
 				</template>
 			</div>
 
@@ -433,29 +442,6 @@ async function loadDownloadLink() {
 </template>
 
 <style scoped lang="scss">
-.login-guard {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: #fff5;
-	backdrop-filter: blur(7px);
-
-	.code-modal {
-		background: #fff;
-		border: 1px solid lightgrey;
-		outline: 10px solid #fff;
-		box-shadow: 0px 0px 9px 11px #0005;
-		border-radius: 0;
-		padding: 2em;
-		display: flex;
-		flex-direction: column;
-		gap: 1em;
-		align-items: center;
-	}
-}
-
 .small-badge {
 	position: absolute;
 	transform: translate(-25px, 0px);
@@ -492,6 +478,30 @@ async function loadDownloadLink() {
 				100% {
 					bottom: 20px;
 				}
+			}
+		}
+
+		.login-guard {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: #fff5;
+			backdrop-filter: blur(7px);
+			cursor: auto;
+
+			.code-modal {
+				background: #fff;
+				border: 1px solid lightgrey;
+				outline: 10px solid #fff;
+				box-shadow: 0px 0px 9px 11px #0005;
+				border-radius: 0;
+				padding: 2em;
+				display: flex;
+				flex-direction: column;
+				gap: 1em;
+				align-items: center;
 			}
 		}
 	}
@@ -612,14 +622,14 @@ async function loadDownloadLink() {
 }
 
 .low-right-modal.modal {
-    bottom: 10px;
-    top: auto;
-    left: auto;
-    right: 10px;
-    transform: none;
-    width: 300px;
-    display: flex;
-    align-items: center;
-    padding: .5em 1em;
+	bottom: 10px;
+	top: auto;
+	left: auto;
+	right: 10px;
+	transform: none;
+	width: 300px;
+	display: flex;
+	align-items: center;
+	padding: .5em 1em;
 }
 </style>
