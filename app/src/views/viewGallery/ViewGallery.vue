@@ -21,6 +21,7 @@ import LoadSplash from '@/components/LoadSplash.vue';
 import ProgressBar from 'primevue/progressbar';
 import { Buffer } from 'buffer';
 import JSZip from 'jszip';
+import sharp from 'sharp';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -44,7 +45,9 @@ const state = reactive({
 		status: 'processing' | 'finished' | 'error',
 		photosToDownload: any[],
 		hiRes: boolean,
-		readyPhotos: { photo, buffer }[],
+		readyPhotos: { photo, blob }[],
+		finalBlob?: Blob,
+		downloadName?: string,
 		error?: string,
 	} | null,
 });
@@ -192,10 +195,53 @@ async function startDownloadPhotos(photos, hiRes = false) {
 	try {
 		// have to do these one at a time to not crash server
 		for (const photo of photos) {
-			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo/' + photo.id + '?hiRes=' + hiRes);
-			state.pendingDownload.readyPhotos.push({photo, buffer: Buffer.from(data.data)});
+			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo/' + photo.id);
+			const buffer = Buffer.from(data.data);
+			let blob;
+			if (hiRes) blob = new Blob([buffer], { type: 'image/jpeg' });
+			if (!hiRes) {
+				const img = new Image();
+				img.src = `data:image/jpeg;base64,${buffer.toString('base64')}`
+				await new Promise((res) => img.onload = res);
+
+				let height;
+				let width;
+				if (img.width < img.height) {
+					height = 1200;
+					width = height * (img.width / img.height);
+				}
+				else {
+					width = 1200;
+					height = width * (img.height / img.width);
+				}
+
+				const canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+				const ctx = canvas.getContext('2d');
+				ctx!.drawImage(img, 0, 0, width, height);
+
+				blob = await new Promise((resolve) => canvas.toBlob(resolve as any, 'image/jpeg'));
+			}
+			state.pendingDownload.readyPhotos.push({photo, blob});
 		}
 
+		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
+		let finalBlob;
+
+		if (isMultiple) {
+			const zip = new JSZip();
+			state.pendingDownload.readyPhotos.forEach(({photo, blob}) => {
+				zip.file(`${photo.filename}`, blob, { compression: 'DEFLATE' });
+			})
+			const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+			finalBlob = new Blob([zipBuffer], {'type': 'application/zip'});
+		} else {
+			finalBlob = state.pendingDownload?.readyPhotos[0].blob;
+		}
+
+		state.pendingDownload.downloadName = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename;
+		state.pendingDownload.finalBlob = finalBlob;
 		state.pendingDownload.status = 'finished';
 
 		if (state.pendingDownload.readyPhotos.length === 1) {
@@ -203,6 +249,7 @@ async function startDownloadPhotos(photos, hiRes = false) {
 		}
 	}
 	catch (e: any) {
+		console.error(e);
 		state.pendingDownload.error = e.message;
 		state.pendingDownload.status = 'error';
 	}
@@ -217,26 +264,12 @@ function restartDownload() {
 
 
 async function loadDownloadLink() {
-	if (state.pendingDownload?.status !== 'finished') return;
+	if (state.pendingDownload?.status !== 'finished' || !state.pendingDownload?.finalBlob) return;
 
-	const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
-	let finalBlob;
-
-	if (isMultiple) {
-		const zip = new JSZip();
-		state.pendingDownload.readyPhotos.forEach(({photo, buffer}, i) => {
-			zip.file(`${photo.filename}`, buffer);
-		})
-		const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-		finalBlob = new Blob([zipBuffer], {'type': 'application/zip'});
-	} else {
-		finalBlob = new Blob([Buffer.from(state.pendingDownload?.readyPhotos[0].buffer)], {'type': 'image/jpeg'});
-	}
-
-	var url = URL.createObjectURL(finalBlob);
+	var url = URL.createObjectURL(state.pendingDownload?.finalBlob);
 	const link = document.createElement('a');
 	link.href = url;
-	link.download = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename,
+	link.download = state.pendingDownload.downloadName!,
 	link.click();
 	link.remove();
 	URL.revokeObjectURL(url);

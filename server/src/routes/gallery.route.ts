@@ -103,7 +103,6 @@ export default (route, _, done) => {
 	// Minimizes memory usage on server
 	route.get('/:galleryId/photo/:photoId', async (request, reply) => {
 		const { galleryId, photoId } = request.params;
-		const { hiRes } = request.query;
 
 		const gallery = await GalleryService.getGallerySimple(galleryId);
 		if (!gallery) {
@@ -122,27 +121,10 @@ export default (route, _, done) => {
 		
 		let file = await GalleryService.downloadPhoto(photoId) as any;
 		let arrayBuffer = await file.arrayBuffer();
-		file = null;
-
-		let imageBuffer;
-		if (hiRes === 'true') {
-			imageBuffer = Buffer.from(arrayBuffer);
-			arrayBuffer = null;
-		}
-		else {
-			const sharpImg = sharp(arrayBuffer);
-			arrayBuffer = null;
-			imageBuffer = await sharpImg.resize({
-				width: 1200,
-				height: 1200,
-				fit: 'inside',
-			}).toBuffer();
-			sharpImg.destroy();
-		}
 
 		return {
 			success: true,
-			data: imageBuffer
+			data: Buffer.from(arrayBuffer),
 		}
 	})
 
