@@ -3,12 +3,12 @@ import Menu from 'primevue/menu';
 import { ref } from 'vue';
 
 const menu = ref<InstanceType<typeof Menu>>();
-const { disabled } = defineProps<{
+const props = defineProps<{
 	disabled?: boolean
 }>();
 
 function openMenu(event) {
-	if (!disabled) menu.value?.toggle(event);
+	if (!props.disabled) menu.value?.toggle(event);
 }
 
 </script>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onMounted, computed } from 'vue';
+import { reactive, onMounted, computed, watch } from 'vue';
 import request from '@/services/request';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
@@ -52,6 +52,7 @@ const state = reactive({
 	} | null,
 });
 
+const isMobile = computed(() => useAppStore().isMobile);
 const isLoggedIn = computed(() => userStore.isLoggedIn);
 const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.clientEmail);
@@ -89,6 +90,12 @@ const authMode = ref('login');
 onMounted(() => {
 	loadGallery();
 });
+
+watch(canView, () => {
+	if (canView.value && !state.gallery?.sections) {
+		loadGallery();
+	}
+})
 
 async function loadGallery() {
 	state.isLoading = true;
@@ -163,11 +170,11 @@ function scrollDown() {
 function downloadMenu(photos, cb?) {
 	return [
 		{
-			label: 'Download High-res',
+			label: 'High-res',
 			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
 		},
 		{
-			label: 'Download Web-size',
+			label: 'Web-size',
 			command: () => { startDownloadPhotos(photos); cb?.call(); }
 		}
 	]
@@ -281,7 +288,7 @@ async function loadDownloadLink() {
 
 <template>
 	<LoadSplash v-if="!state.gallery" />
-	<div v-else id="viewGallery">
+	<div v-else id="viewGallery" :class="{ isMobile }">
 		<div id="cover" @click="scrollDown">
 			<GalleryCover :gallery="state.gallery" />
 			<div v-if="canView" class="down-pointer"><i class="pi pi-chevron-down" /></div>
@@ -323,13 +330,13 @@ async function loadDownloadLink() {
 				</div>
 			</NavBar>
 
-			<div class="m-4">
+			<div class="sections-wrapper">
 				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
 					<div class="section-header">{{ section.name }}</div>
 					<PhotoWall :photos="section.photos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
-								<div class="photo-trigger" @click="() => openSlideshow(photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -345,6 +352,7 @@ async function loadDownloadLink() {
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
+								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openSlideshow(photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -353,7 +361,7 @@ async function loadDownloadLink() {
 
 			<div class="favorites-modal modal" v-if="state.showFavoritesModal">
 				<div class="flex align-items-center ml-2">
-					<h3>Favorites</h3>
+					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
 					<div class="flex-grow-1"></div>
 					<DropdownMenu v-if="isClient" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download"
 							text />
@@ -364,7 +372,7 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
-								<div class="photo-trigger" @click="() => openFavoritesSlideshow(photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openFavoritesSlideshow(photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -376,6 +384,7 @@ async function loadDownloadLink() {
 										</DropdownMenu>
 									</div>
 								</div>
+								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openFavoritesSlideshow(photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -507,6 +516,11 @@ async function loadDownloadLink() {
 		}
 	}
 
+	.sections-wrapper {
+		padding: 0 3em;
+		margin-bottom: 3em;
+	}
+
 	.section-header {
 		font-size: 2em;
 		margin: 3em 0 2em;
@@ -542,6 +556,30 @@ async function loadDownloadLink() {
 			opacity: 0;
 		}
 
+
+		.button {
+			width: 2.5rem;
+			height: 2.5rem;
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			cursor: pointer;
+		}
+
+		.slideshow-trigger {
+			position: absolute;
+			top: 0;
+			right: 0;
+			background: #0006;
+			color: #fff;
+			opacity: 0;
+		}
+
+		&:hover .slideshow-trigger {
+			opacity: 1;
+			transition: 300ms;
+		}
+
 		.photo-trigger {
 			width: 100%;
 			height: 100%;
@@ -564,13 +602,6 @@ async function loadDownloadLink() {
 
 				.button {
 					opacity: 0;
-					width: 2.5rem;
-					height: 2.5rem;
-					font-size: 20px;
-					display: inline-flex;
-					justify-content: center;
-					align-items: center;
-					cursor: pointer;
 
 					i {
 						font-size: 1.2rem;
@@ -632,5 +663,11 @@ async function loadDownloadLink() {
 	display: flex;
 	align-items: center;
 	padding: .5em 1em;
+}
+
+#viewGallery.isMobile {
+	.sections-wrapper {
+		padding: 0 5px;
+	}
 }
 </style>

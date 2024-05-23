@@ -58,26 +58,36 @@ const menu = computed(() => {
 
 
 <template>
-	<DropdownMenu :model="menu" :disabled="!isLoggedIn">
-		<Button text class="gap-2 px-2" @click="() => { if (!isLoggedIn) state.showLoginModal = true }">
+		<Button v-if="!isLoggedIn" text class="gap-2 px-2" @click="() => { if (!isLoggedIn) state.showLoginModal = true }">
 			<i class="pi pi-user" />
-			<div v-if="isLoggedIn">{{ userStore.currentUser?.givenName }}</div>
 		</Button>
-		<template #start>
-			<div class="flex flex-column align-items-center p-2">
-				<div>{{userStore.currentUser?.givenName}} {{userStore.currentUser?.familyName}}</div>
-				<small>{{userStore.currentUser?.email}}</small>
-			</div>
-		</template>
-	</DropdownMenu>
+
+		<DropdownMenu v-else :model="menu">
+			<div class="initial">{{ userStore.currentUser?.givenName[0] }}{{ userStore.currentUser?.familyName[0] }}</div>
+
+			<template #start>
+				<div class="flex flex-column align-items-center p-2">
+					<div>{{userStore.currentUser?.givenName}} {{userStore.currentUser?.familyName}}</div>
+					<small>{{userStore.currentUser?.email}}</small>
+				</div>
+			</template>
+		</DropdownMenu>
 
 	<LoginModal v-if="state.showLoginModal" :closeable="true" @close="() => state.showLoginModal = false" />
 </template>
 
 
 <style scoped>
-.login {
+.initial {
+	/* font-size: 1.5em; */
+	width: 2.2em;
+	height: 2.2em;
 	text-align: center;
-	padding-top: 5em;
+	line-height: 2em;
+	border-radius: 50%;
+	border: 1px solid #ddd;
+	/* background: var(--primary-color); */
+	/* color: white; */
+	cursor: pointer;
 }
 </style>

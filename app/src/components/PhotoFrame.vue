@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
 
 
@@ -39,8 +39,6 @@ const sizeWidths = {
 
 // Cap resolution with screen size to reduce strain on small devices
 const usingSize = Math.min(sizeWidths[size], Math.max(window.innerWidth, window.innerHeight) * 2);
-
-const canvasId = 'canvas_' + Date.now() + Math.random();
 
 const state = reactive({
 	canvasW: usingSize,
@@ -133,15 +131,13 @@ async function initPhoto() {
 	}
 }
 
-watch(photo, initPhoto);
 onMounted(initPhoto);
-
 </script>
 
 <template>
 	<div class="photoframe">
-		<canvas :id="canvasId" ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
-		<canvas :id="canvasId+'wtr'" ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
+		<canvas ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
+		<canvas ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<i v-if="showLoading && state.isLoadingHiRes" class="loader pi pi-spinner pi-spin" />
 	</div>
 </template>

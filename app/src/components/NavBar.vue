@@ -10,7 +10,7 @@ const userStore = useUserStore();
 
 <template>
 	<div class="nav-bar">
-		<h2>r.florence.photo</h2>
+		<div class="logo">RACHEL FLORENCE<br/>PHOTO</div>
 		<div class="flex-grow-1">
 			<slot></slot>
 		</div>
@@ -29,6 +29,13 @@ const userStore = useUserStore();
 	background-color: #fffd;
 	backdrop-filter: blur(10px);
 	padding: 1em;
+
+	.logo {
+		font-family: serif;
+		line-height: 1.2;
+		font-size: .8rem;
+		letter-spacing: 2px;
+	}
 
 	a {
 		text-decoration: none;

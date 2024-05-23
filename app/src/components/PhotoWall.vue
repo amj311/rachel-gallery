@@ -56,7 +56,7 @@ const computeTiles = (() => {
 
 	const fullWidth = wall.value!.clientWidth;
 	const numCols = isMobile.value ? 2 : 3;
-	const margin = isMobile.value ? 5 : fullWidth / 30;
+	const margin = isMobile.value ? 5 : 15;
 	const columnWidth = (fullWidth - (margin * (numCols - 1))) / numCols;
 	const lineMatchRange = margin;
 
@@ -67,9 +67,7 @@ const computeTiles = (() => {
 		let targetCol;
 		// fill the first columns immediately
 		if (cols.length < numCols) {
-			console.log(cols, numCols, Array(numCols).fill(0));
 			for (const idx in Array(numCols).fill(0)) {
-				console.log(idx, cols[idx]);
 				if (!cols[idx]) {
 					targetCol = idx;
 					break;
