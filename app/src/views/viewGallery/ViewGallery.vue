@@ -292,16 +292,16 @@ async function loadDownloadLink() {
 		<div id="cover" @click="scrollDown">
 			<GalleryCover :gallery="state.gallery" />
 			<div v-if="canView" class="down-pointer"><i class="pi pi-chevron-down" /></div>
-
-			<div v-if="!canView" class="login-guard">
-				<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
-				<div v-if="authMode === 'code'" class="code-modal modal">
-					<img :src="watermarkImage" width="100" />
-					<h3>Please enter the access code to view this gallery</h3>
-					<CodeInput v-model="state.providedCode" />
-					<Button label="Submit" @click="loadGallery" :loading="state.isLoading" class="gap-2" />
-					<div>Need to <a @click="authMode = 'login'" class="underline">sign in</a>?</div>
-				</div>
+		</div>
+		
+		<div v-if="!canView" class="login-guard">
+			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
+			<div v-if="authMode === 'code'" class="code-modal modal">
+				<img :src="watermarkImage" width="100" />
+				<h3>Please enter the access code to view this gallery</h3>
+				<CodeInput v-model="state.providedCode" />
+				<Button label="Submit" @click="loadGallery" :loading="state.isLoading" class="gap-2" />
+				<div>Need to <a @click="authMode = 'login'" class="underline">sign in</a>?</div>
 			</div>
 		</div>
 
@@ -459,6 +459,31 @@ async function loadDownloadLink() {
 	font-size: 1em;
 }
 
+
+.login-guard {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #fff5;
+	backdrop-filter: blur(7px);
+	cursor: auto;
+
+	.code-modal {
+		background: #fff;
+		border: 1px solid lightgrey;
+		outline: 10px solid #fff;
+		box-shadow: 0px 0px 9px 11px #0005;
+		border-radius: 0;
+		padding: 2em;
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+		align-items: center;
+	}
+}
+
 #viewGallery {
 	#cover {
 		width: 100%;
@@ -490,30 +515,10 @@ async function loadDownloadLink() {
 				}
 			}
 		}
+	}
 
-		.login-guard {
-			position: absolute;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background: #fff5;
-			backdrop-filter: blur(7px);
-			cursor: auto;
-
-			.code-modal {
-				background: #fff;
-				border: 1px solid lightgrey;
-				outline: 10px solid #fff;
-				box-shadow: 0px 0px 9px 11px #0005;
-				border-radius: 0;
-				padding: 2em;
-				display: flex;
-				flex-direction: column;
-				gap: 1em;
-				align-items: center;
-			}
-		}
+	&.isMobile #cover {
+		height: calc(100vh - 60px);
 	}
 
 	.sections-wrapper {
@@ -522,9 +527,12 @@ async function loadDownloadLink() {
 	}
 
 	.section-header {
-		font-size: 2em;
-		margin: 3em 0 2em;
+		font-size: 1.5rem;
+		margin: 5rem 0 3em;
 		text-align: center;
+		text-transform: uppercase;
+		font-family: "serif";
+		letter-spacing: 4px;
 	}
 
 
@@ -570,7 +578,7 @@ async function loadDownloadLink() {
 			position: absolute;
 			top: 0;
 			right: 0;
-			background: #0006;
+			background: #0005;
 			color: #fff;
 			opacity: 0;
 		}
@@ -628,7 +636,7 @@ async function loadDownloadLink() {
 		}
 
 		&:hover .bottom-bar {
-			box-shadow: inset 0 -2em 1em rgba(0, 0, 0, 0.3);
+			box-shadow: inset 0 -2em 1em #0000004d;
 			transition: 500ms;
 		}
 

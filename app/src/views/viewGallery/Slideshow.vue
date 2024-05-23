@@ -140,11 +140,11 @@ onBeforeUnmount(() => {
 <template>
 	<div id="Slideshow">
 		<div id="topBar">
-			<div class="flex-grow-1 flex justify-content-start"></div>
-			<div class="flex-grow-1 flex justify-content-center">
-				<slot :photo="activePhoto"></slot>
-			</div>
-			<div class="flex-grow-1 flex align-items-center justify-content-end">
+			<div class="flex justify-content-start"></div>
+			<div class="flex justify-content-center"></div>
+			<div class="flex align-items-center justify-content-end">
+				<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" />
+				<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" />
 				<Button text @click="onClose" icon="pi pi-times" />
 			</div>
 		</div>
@@ -161,8 +161,7 @@ onBeforeUnmount(() => {
 		</div>
 		<div id="bottomBar">
 			<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" />
-			<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" />
-			<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" />
+			<div class="flex align-items-center"><slot :photo="activePhoto"></slot></div>
 			<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" />
 		</div>
 
@@ -205,14 +204,7 @@ onBeforeUnmount(() => {
 		display: flex;
 		justify-content: center;
 		padding: .5em;
-
-		.button {
-			width: 40px;
-			height: 40px;
-			font-size: 20px;
-			cursor: pointer;
-			text-align: center;
-		}
+		gap: 1em;
 	}
 
 	.photo-frame {
