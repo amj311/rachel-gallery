@@ -201,34 +201,19 @@ async function startDownloadPhotos(photos, hiRes = false) {
 	try {
 		// have to do these one at a time to not crash server
 		for (const photo of photos) {
-			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo/' + photo.id);
-			const buffer = Buffer.from(data.data);
-			let blob;
-			if (hiRes) blob = new Blob([buffer], { type: 'image/jpeg' });
+			let width = photo.width;
 			if (!hiRes) {
-				const img = new Image();
-				img.src = `data:image/jpeg;base64,${buffer.toString('base64')}`
-				await new Promise((res) => img.onload = res);
-
-				let height;
-				let width;
-				if (img.width < img.height) {
-					height = 1200;
-					width = height * (img.width / img.height);
+				if (photo.width < photo.height) {
+					width = 1200 * (photo.width / photo.height);
 				}
 				else {
 					width = 1200;
-					height = width * (img.height / img.width);
 				}
-
-				const canvas = document.createElement('canvas');
-				canvas.width = width;
-				canvas.height = height;
-				const ctx = canvas.getContext('2d');
-				ctx!.drawImage(img, 0, 0, width, height);
-
-				blob = await new Promise((resolve) => canvas.toBlob(resolve as any, 'image/jpeg'));
 			}
+
+			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
+
+			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
 		}
 

@@ -6,6 +6,7 @@ import { Readable } from "stream";
 import sharp from "sharp";
 import JSZip from "jszip";
 import { DownloadService } from "../services/DownloadService";
+import axios from "axios";
 
 export default (route, _, done) => {
 
@@ -99,32 +100,54 @@ export default (route, _, done) => {
 	})
 
 
-	// load image data for zipping on frontend
-	// Minimizes memory usage on server
-	route.get('/:galleryId/photo/:photoId', async (request, reply) => {
-		const { galleryId, photoId } = request.params;
+	// // load image data for zipping on frontend
+	// // Minimizes memory usage on server
+	// route.get('/:galleryId/photo/:photoId', async (request, reply) => {
+	// 	const { galleryId, photoId } = request.params;
 
-		const gallery = await GalleryService.getGallerySimple(galleryId);
-		if (!gallery) {
-			return {
-				success: false,
-				message: 'Gallery not found'
-			}
-		}
+	// 	const gallery = await GalleryService.getGallerySimple(galleryId);
+	// 	if (!gallery) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'Gallery not found'
+	// 		}
+	// 	}
 
-		if (!request.sessionUser?.isAdmin && gallery.clientEmail !== request.sessionUser?.email) {
-			return {
-				success: false,
-				message: 'You do not have permission to download this gallery'
-			}
-		}
+	// 	if (!request.sessionUser?.isAdmin && gallery.clientEmail !== request.sessionUser?.email) {
+	// 		return {
+	// 			success: false,
+	// 			message: 'You do not have permission to download this gallery'
+	// 		}
+	// 	}
 		
-		let file = await GalleryService.downloadPhoto(photoId) as any;
-		let arrayBuffer = await file.arrayBuffer();
+	// 	let file = await GalleryService.downloadPhoto(photoId) as any;
+	// 	let arrayBuffer = await file.arrayBuffer();
 
+
+	// 	// console.log(arrayBuffer.length);
+	// 	// console.log(arrayBuffer.slice(0, 10));
+
+	// 	const stringFile = new TextDecoder().decode(arrayBuffer);
+	// 	// console.log(stringFile.substring(0, 50));
+	// 	// console.log(stringFile.length);
+
+
+	// 	const newarrayBuffer = new TextEncoder().encode(stringFile); // is this exact inverse of decode???
+	// 	// console.log(newarrayBuffer);
+
+	// 	return {
+	// 		success: true,
+	// 		data: Buffer.from(arrayBuffer),
+	// 	}
+	// })
+
+
+	route.get('/:galleryId/photo-google/:googleFileId/:width', async (request, reply) => {
+		const { googleFileId, width } = request.params;
+		const response = await axios.get(`https://drive.google.com/thumbnail?id=${googleFileId}&sz=w${width}`,  { responseType: 'arraybuffer' })
 		return {
 			success: true,
-			data: Buffer.from(arrayBuffer),
+			data: response.data,
 		}
 	})
 
