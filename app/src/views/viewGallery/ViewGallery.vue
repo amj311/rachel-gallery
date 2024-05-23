@@ -21,6 +21,7 @@ import ProgressBar from 'primevue/progressbar';
 import { Buffer } from 'buffer';
 import JSZip from 'jszip';
 import { ref } from 'vue';
+import { useAppStore } from '@/stores/app.store';
 
 const router = useRouter();
 const userStore = useUserStore();

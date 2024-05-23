@@ -7,7 +7,9 @@ import { computed, onMounted } from 'vue';
 import { onBeforeUnmount } from 'vue';
 import { ref } from 'vue';
 import LoadSplash from './components/LoadSplash.vue';
+import { useAppStore } from './stores/app.store';
 
+const appStore = useAppStore();
 const userStore = useUserStore();
 const sessionInterval = setInterval(userStore.loadSessionData, 60000);
 
@@ -19,6 +21,7 @@ setTimeout(() => {
 onBeforeUnmount(() => {
 	clearInterval(sessionInterval);
 });
+
 
 </script>
 

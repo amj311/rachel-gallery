@@ -2,6 +2,9 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import DeferredContent from 'primevue/deferredcontent';
+import { useAppStore } from '@/stores/app.store';
+
+const isMobile = computed(() => useAppStore().isMobile);
 
 const wall = ref<HTMLDivElement>();
 const props = defineProps<{
@@ -52,8 +55,8 @@ const computeTiles = (() => {
 	state.tiles = [];
 
 	const fullWidth = wall.value!.clientWidth;
-	const numCols = 3;
-	const margin = Math.min(fullWidth / 30, 15);
+	const numCols = isMobile.value ? 2 : 3;
+	const margin = isMobile.value ? 5 : fullWidth / 30;
 	const columnWidth = (fullWidth - (margin * (numCols - 1))) / numCols;
 	const lineMatchRange = margin;
 
@@ -63,8 +66,10 @@ const computeTiles = (() => {
 	photos.value.forEach((photo) => {
 		let targetCol;
 		// fill the first columns immediately
-		if (cols.length < 3) {
-			for (const idx of [0, 1, 2]) {
+		if (cols.length < numCols) {
+			console.log(cols, numCols, Array(numCols).fill(0));
+			for (const idx in Array(numCols).fill(0)) {
+				console.log(idx, cols[idx]);
 				if (!cols[idx]) {
 					targetCol = idx;
 					break;
@@ -122,7 +127,7 @@ const computeTiles = (() => {
 			rect,
 		});
 	})
-	state.height = Math.max(cols[0]?.bottom || 0, cols[1]?.bottom || 0, cols[2]?.bottom || 0);
+	state.height = Math.max(...(cols.map(col => col?.bottom || 0)));
 });
 
 watch(photos, () => {
