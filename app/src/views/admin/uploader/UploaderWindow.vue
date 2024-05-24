@@ -4,6 +4,7 @@ import { useUploaderStore } from './uploader.store';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import { computed } from 'vue';
+import Message from 'primevue/message';
 
 const uploaderStore = useUploaderStore();
 uploaderStore.init();
@@ -34,7 +35,7 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 		<div class="body">
 			<div class="drive-info">
 				<h3>1. Connect to Google Drive</h3>
-				<div class="p-2">
+				<div class="m-2">
 					<template v-if="!uploaderStore.isGoogleReady">
 						<Button outlined @click="uploaderStore.setupGoogle" class="gap-2" size="small"><i class="pi pi-google" />Log in to Google Drive</button>
 					</template>
@@ -49,9 +50,14 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 						</div>
 					</template>
 				</div>
+				<Message v-if="!uploaderStore.folderIsPublic" :closable="false" severity="warn">&nbsp;&nbsp;Please make <a :href="'https://drive.google.com/drive/folders/' + uploaderStore.googleDriveInfo.targetFolder.id" target="_blank">this folder</a> public!</Message>
 			</div>
 			<div>
-				<h3>2. Upload Photos</h3>
+				<div class="flex align-items-center">
+					<h3>2. Upload Photos</h3>
+					<div class="flex-grow-1"></div>
+					<Button v-if="uploaderStore.uploadQueue.length" @click="uploaderStore.startUploadLoop" :loading="uploaderStore.isLoading" size="small" class="gap-2" icon="pi pi-upload" :label="uploaderStore.isLoading ? 'Uploading' : 'Upload'" />
+				</div>
 				<div class="photo-grid">
 					<div v-for="photo in uploaderStore.photosToUpload" :key="photo.id"
 						class="photo-grid-item">
@@ -73,12 +79,12 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 					</div>
 				</div>
 			</div>
-
+<!-- 
 			<div v-if="uploaderStore.isGoogleReady">
 				<h3>3. Make Photos Public</h3>
 				<p>Open the <a :href="'https://drive.google.com/drive/folders/' + uploaderStore.googleDriveInfo.targetFolder.id" target="_blank">Drive folder</a>, select all photos, and and share publicly.</p>
 			</div>
-			
+			 -->
 		</div>
 	</div>
 </template>
@@ -143,7 +149,7 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 	padding-top: 10px;
 	padding-right: 10px;
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
 	grid-gap: 1rem;
 	justify-items: center;
 	align-items: center;
@@ -154,8 +160,8 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 
 .photo-grid-item {
 	position: relative;
-	max-width: 120px;
-	padding: 10px;
+	max-width: 6rem;
+	padding: .5rem;
 }
 
 .photo-grid-item:hover {
@@ -188,13 +194,13 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 }
 
 .photo-frame {
-	width: 100px;
-	height: 100px;
-	margin-bottom: 10px;
+	width: 5rem;
+	height: 5rem;
+	margin-bottom: .5rem;
 }
 
 .filename {
-	font-size: 10px;
+	font-size: .7em;
 	line-break: anywhere;
 	text-align: center;
 }

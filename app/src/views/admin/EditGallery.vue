@@ -596,7 +596,7 @@ async function copyLink() {
 
 .photo-grid-item {
 	position: relative;
-	/* max-width: 120px; */
+	max-width: 6rem;
 	padding: .5rem;
 
 	&:hover {
@@ -660,7 +660,8 @@ async function copyLink() {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding: 1.5rem;
+	height: 5rem;
+	width: 5rem;
 
 	&:hover {
 		color: gray;
@@ -671,6 +672,17 @@ async function copyLink() {
 	}
 }
 
+.photo-frame {
+	width: 5rem;
+	height: 5rem;
+	margin-bottom: .5rem;
+}
+
+.filename {
+	font-size: .7em;
+	line-break: anywhere;
+	text-align: center;
+}
 
 #uploadModal {
 	width: 800px;
@@ -710,15 +722,4 @@ async function copyLink() {
 }
 
 
-.photo-frame {
-	width: 6rem;
-	height: 6rem;
-	margin-bottom: .5rem;
-}
-
-.filename {
-	font-size: .7em;
-	line-break: anywhere;
-	text-align: center;
-}
 </style>

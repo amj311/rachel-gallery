@@ -60,6 +60,12 @@ export const GoogleUploadService = {
 			storage: drive.storageQuota,
 			targetFolder: folderSearch?.files?.[0],
 		};
+		if (this.driveInfo.targetFolder) {
+			const { data: folderPermission } = await axios.get(`https://www.googleapis.com/drive/v3/files/${this.driveInfo.targetFolder.id}/permissions`, {
+				params: { access_token: this.token.access_token},
+			});
+			this.driveInfo.targetFolder.permissions = folderPermission.permissions;
+		}
 		return this.driveInfo;
 	},
 

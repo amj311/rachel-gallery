@@ -41,7 +41,10 @@ export const useUploaderStore = defineStore('uploader', {
 				return 'Upload complete!';
 			}
 			return 'Upload Photos';
-		}
+		},
+		folderIsPublic(state) {
+			return state.googleDriveInfo.targetFolder?.permissions?.some((p) => p.type === 'anyone');
+		},
 	},
 	actions: {
 		init() {
@@ -53,13 +56,17 @@ export const useUploaderStore = defineStore('uploader', {
 		async setupGoogle() {
 			const token = await GoogleUploadService.getToken();
 			if (token) {
-				this.googleDriveInfo = await GoogleUploadService.getDriveInfo();
+				await this.loadDriveInfo();
 				if (!this.googleDriveInfo.targetFolder) {
 					await GoogleUploadService.createTargetFolder();
 					this.googleDriveInfo = await GoogleUploadService.driveInfo;
 				}
 				this.checkGoogleStatus();
 			}
+		},
+
+		async loadDriveInfo() {
+			this.googleDriveInfo = await GoogleUploadService.getDriveInfo();
 		},
 
 		async resetGoogle() {
@@ -134,6 +141,9 @@ export const useUploaderStore = defineStore('uploader', {
 				// wrap up and continue
 				photo.uploadStatus = "complete";
 				photo.onUploadComplete?.call(null, photo);
+
+				// Load drive info for updated usage
+				this.loadDriveInfo();
 
 				// free memory after time for google image to load
 				setTimeout(() => URL.revokeObjectURL(photo.dataUrl), 3000);
