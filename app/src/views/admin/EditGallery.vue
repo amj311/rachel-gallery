@@ -560,16 +560,16 @@ async function copyLink() {
 	padding-top: 10px;
 	padding-right: 20px;
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-	grid-gap: 1rem;
+	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+	grid-gap: 15px;
 	justify-items: center;
 	align-items: center;
 }
 
 .photo-grid-item {
 	position: relative;
-	max-width: 120px;
-	padding: 10px;
+	/* max-width: 120px; */
+	padding: .5rem;
 
 	&:hover {
 		background-color: #f5f5f5;
@@ -630,14 +630,14 @@ async function copyLink() {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding: 30px;
+	padding: 1.5rem;
 
 	&:hover {
 		color: gray;
 	}
 
 	i {
-		font-size: 30px;
+		font-size: 1.5rem;
 	}
 }
 
@@ -681,13 +681,13 @@ async function copyLink() {
 
 
 .photo-frame {
-	width: 100px;
-	height: 100px;
-	margin-bottom: 10px;
+	width: 6rem;
+	height: 6rem;
+	margin-bottom: .5rem;
 }
 
 .filename {
-	font-size: 10px;
+	font-size: .7em;
 	line-break: anywhere;
 	text-align: center;
 }
