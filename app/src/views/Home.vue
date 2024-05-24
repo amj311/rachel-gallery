@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import NavBar from '@/components/NavBar.vue';
 import UserMenu from '@/components/UserMenu.vue';
 import { useUserStore } from '@/stores/user.store';
 import { computed } from 'vue';
@@ -14,12 +15,7 @@ const isAdmin = computed(() => {
 
 <template>
 	<div>
-		<div class="nav-bar">
-			<h2>r.florence.photo</h2>
-			<RouterLink to="/admin" v-if="isAdmin">Admin</RouterLink>
-			<div class="flex-grow-1"></div>
-			<UserMenu />
-		</div>
+		<NavBar />
 
 		<div class="px-4 pb-4"><RouterView /></div>
 	</div>
