@@ -98,6 +98,7 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 	transition: 200ms;
 	transform: translate(50%, 50%);
 	padding: 1px;
+	z-index: 10;
 }
 
 #uploaderWindow.modal-view {
