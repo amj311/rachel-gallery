@@ -104,6 +104,17 @@ const router = createRouter({
 	scrollBehavior: () => ({ top: 0 }),
 });
 
+router.beforeEach(async (to, from, next) => {
+	if (!useUserStore().hasLoadedSessionData) {
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+		await useUserStore().loadSessionData();
+	}
+	while (!useUserStore().hasLoadedSessionData) {
+		await new Promise((resolve) => setTimeout(resolve, 500));
+	}
+	next();
+})
+
 // const authRedirectGuard = async (checkAuth, to, from, next) => {
 // 	console.log("doing auth guard");
 // 	// make sure auth has a chance to load
