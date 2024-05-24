@@ -118,10 +118,11 @@ async function loadGallery() {
 			state.didAdminWarn = true;
 		}
 
-
 		if (state.gallery?.shareMode === 'code') {
 			authMode.value = 'code';
 		}
+
+		useAppStore().setTitle(state.gallery.name);
 	}
 
 	state.isLoading = false;

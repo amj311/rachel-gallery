@@ -22,7 +22,6 @@ onBeforeUnmount(() => {
 	clearInterval(sessionInterval);
 });
 
-
 </script>
 
 
