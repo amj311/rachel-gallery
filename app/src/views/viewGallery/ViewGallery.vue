@@ -424,9 +424,9 @@ async function loadDownloadLink() {
 				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false">
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
-						@click="toggleFavorite(photo)" />
+						@click="toggleFavorite(photo)" size="large" />
 					<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
-						<Button text icon="pi pi-download" />
+						<Button text icon="pi pi-download" size="large" />
 					</DropdownMenu>
 				</template>
 			</Slideshow>

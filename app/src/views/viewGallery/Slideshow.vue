@@ -143,9 +143,9 @@ onBeforeUnmount(() => {
 			<div class="flex justify-content-start"></div>
 			<div class="flex justify-content-center"></div>
 			<div class="flex align-items-center justify-content-end">
-				<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" />
-				<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" />
-				<Button text @click="onClose" icon="pi pi-times" />
+				<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" size="large" />
+				<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" size="large" />
+				<Button text @click="onClose" icon="pi pi-times" size="large" />
 			</div>
 		</div>
 		<div :class="{ 'photo-frame': true, [state.animationClass]: true }">
@@ -160,9 +160,9 @@ onBeforeUnmount(() => {
 			</div>
 		</div>
 		<div id="bottomBar">
-			<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" />
+			<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" size="large" />
 			<div class="flex align-items-center"><slot :photo="activePhoto"></slot></div>
-			<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" />
+			<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" size="large" />
 		</div>
 
 		<div style="display: none">
