@@ -249,34 +249,39 @@ async function copyLink() {
 <template>
 	<div v-if="!state.gallery">Loading...</div>
 	<div v-else>
-		<div class="flex align-items-center flex-wrap gap-3 mb-4">
-			<RouterLink to="/admin/"><Button icon="pi pi-arrow-left" text /></RouterLink>
-			<h1>
-				<GhostInput v-model="state.gallery.name" placeholder="Gallery name..." />
-			</h1>
-			<span v-if="state.isSaving"><i class="pi pi-spinner pi-spin" /> Saving...</span>
-			<div class="flex-grow-1"></div>
-			<div>
-				<RouterLink :to="'/' + (state.gallery.slug || state.gallery.id)"><Button icon="pi pi-eye" text
-						v-tooltip.bottom="'Preview'" /></RouterLink>
-				<Button icon="pi pi-send" text v-tooltip.bottom="'Copy link'" @click="copyLink" />
-				<Button icon="pi pi-user-plus" text v-tooltip.bottom="'Manage Access'"
-					@click="state.showShareModal = true" />
+		<div class="flex align-items-center flex-wrap gap-3 mb-4 mt-3">
+			<div class="flex align-items-center flex-wrap gap-2">
+				<RouterLink to="/admin/"><Button icon="pi pi-arrow-left" text /></RouterLink>
+				<h2>
+					<GhostInput v-model="state.gallery.name" placeholder="Gallery name..." />
+				</h2>
+				<span v-if="state.isSaving"><i class="pi pi-spinner pi-spin" /> Saving...</span>
 			</div>
-			<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
-				<template #value="{ value }">
-					<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[value].color }">
-						<i :class="visibilityOptions[value].icon" />
-						{{ visibilityOptions[value].label }}
-					</div>
-				</template>
-				<template #option="{ option }">
-					<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[option].color }">
-						<i :class="visibilityOptions[option].icon" />
-						{{ visibilityOptions[option].label }}
-					</div>
-				</template>
-			</Dropdown>
+			<div class="flex-grow-1"></div>
+			<div class="flex align-items-center flex-wrap gap-2">
+				<div>
+					<RouterLink :to="'/' + (state.gallery.slug || state.gallery.id)"><Button icon="pi pi-eye" text
+							v-tooltip.bottom="'Preview'" /></RouterLink>
+					<Button icon="pi pi-send" text v-tooltip.bottom="'Copy link'" @click="copyLink" />
+					<Button icon="pi pi-user-plus" text v-tooltip.bottom="'Manage Access'"
+						@click="state.showShareModal = true" />
+				</div>
+				<div class="flex-grow-1"></div>
+				<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
+					<template #value="{ value }">
+						<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[value].color }">
+							<i :class="visibilityOptions[value].icon" />
+							{{ visibilityOptions[value].label }}
+						</div>
+					</template>
+					<template #option="{ option }">
+						<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[option].color }">
+							<i :class="visibilityOptions[option].icon" />
+							{{ visibilityOptions[option].label }}
+						</div>
+					</template>
+				</Dropdown>
+			</div>
 		</div>
 
 		<div class="flex flex-wrap gap-5 my-3">
@@ -364,9 +369,9 @@ async function copyLink() {
 		<template v-for="(section, index) in state.gallery.sections" :key="section.id">
 			<div v-if="!section.marked_for_deletion" class="my-6 section" :class="{ expanded: section.expanded }">
 				<div class="flex align-items-center py-2">
-					<h2>
+					<h3>
 						<GhostInput v-model="section.name" placeholder="Section name..." />
-					</h2>
+					</h3>
 					<div class="flex-grow-1"></div>
 					<Button v-if="index > 0" @click="swapSections(index, index - 1)" icon="pi pi-chevron-up" text />
 					<Button v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"
