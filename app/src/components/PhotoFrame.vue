@@ -105,30 +105,24 @@ async function drawWatermark() {
 
 async function initPhoto() {
 	const isGooglePhoto = Boolean(photo.googleFileId);
-	const needsInitialLoad = isGooglePhoto && usingSize >= sizeWidths['lg'];
-
-	if (needsInitialLoad) {
-		state.isLoadingHiRes = true;
-	}
-
-	const firstImageSize = needsInitialLoad ? sizeWidths['sm'] : usingSize;
-	const imageSrc = (isGooglePhoto ?
-		`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${firstImageSize}` :
-		photo.dataUrl
-	);
-
+	const needsInitialLoad = isGooglePhoto && usingSize > sizeWidths['sm'];
 
 	if (watermark) {
 		drawWatermark();
 	}
-	
-	await drawImage(imageSrc);
 
 	if (needsInitialLoad) {
-		// await new Promise((res) => setTimeout(res, 1000));
-		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`);
-		state.isLoadingHiRes = false;
+		state.isLoadingHiRes = true;
+		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['xs']}`);
+		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['sm']}`);
 	}
+	
+	await drawImage(isGooglePhoto ?
+		`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`
+		:
+		photo.dataUrl
+	);
+	state.isLoadingHiRes = false;
 }
 
 onMounted(initPhoto);
@@ -136,9 +130,10 @@ onMounted(initPhoto);
 
 <template>
 	<div class="photoframe">
+		<i class="loader pi pi-spinner pi-spin" />
 		<canvas ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
 		<canvas ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
-		<i v-if="showLoading && state.isLoadingHiRes" class="loader pi pi-spinner pi-spin" />
+		<i v-if="showLoading && state.isLoadingHiRes" class="loader top pi pi-spinner pi-spin" />
 	</div>
 </template>
 
@@ -162,7 +157,11 @@ onMounted(initPhoto);
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	font-size: 2rem;
-	color: white;
+	font-size: 1rem;
+	color: #555;
+
+	&.top {
+		color: white;
+	}
 }
 </style>
