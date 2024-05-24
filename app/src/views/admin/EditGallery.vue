@@ -435,13 +435,15 @@ async function copyLink() {
 				<label for="fileSelect"><div class="drop-text">
 					<div>Drag and drop or <a>select images</a></div>
 				</div></label>
-				<div class="photo-grid">
-					<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
-						<div class="photo-frame">
-							<PhotoFrame :photo="photo as any" size="xs" fillMethod="contain" />
+				<div class="grid-wrapper">
+					<div class="photo-grid">
+						<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
+							<div class="photo-frame">
+								<PhotoFrame :photo="photo as any" size="xs" fillMethod="contain" />
+							</div>
+							<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div>
+							<div class="filename">{{ photo.filename }}</div>
 						</div>
-						<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div>
-						<div class="filename">{{ photo.filename }}</div>
 					</div>
 				</div>
 			</div>
@@ -661,7 +663,7 @@ async function copyLink() {
 	justify-content: center;
 	align-items: center;
 	height: 5rem;
-	width: 5rem;
+	min-width: 5rem;
 
 	&:hover {
 		color: gray;
@@ -687,11 +689,14 @@ async function copyLink() {
 #uploadModal {
 	width: 800px;
 	max-width: 80vw;
-	max-height: 80vh;
-	overflow: hidden;
-	overflow-y: auto;
 	padding: 1em;
 	z-index: 2;
+
+	.grid-wrapper {
+		max-height: 50vh;
+		overflow: hidden;
+		overflow-y: auto;
+	}
 }
 
 .drop-images {

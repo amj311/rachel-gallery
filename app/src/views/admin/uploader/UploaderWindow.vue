@@ -53,7 +53,7 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 				<Message v-if="!uploaderStore.folderIsPublic" :closable="false" severity="warn">&nbsp;&nbsp;Please make <a :href="'https://drive.google.com/drive/folders/' + uploaderStore.googleDriveInfo.targetFolder.id" target="_blank">this folder</a> public!</Message>
 			</div>
 			<div>
-				<div class="flex align-items-center">
+				<div class="flex align-items-center mb-3">
 					<h3>2. Upload Photos</h3>
 					<div class="flex-grow-1"></div>
 					<Button v-if="uploaderStore.uploadQueue.length" @click="uploaderStore.startUploadLoop" :loading="uploaderStore.isLoading" size="small" class="gap-2" icon="pi pi-upload" :label="uploaderStore.isLoading ? 'Uploading' : 'Upload'" />
