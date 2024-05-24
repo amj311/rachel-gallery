@@ -33,5 +33,18 @@ html {
 	body {
 		font-size: 13px;
 	}
-	
+}
+
+
+
+/* PRIME VUE OVERRIDES */
+.p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon.p-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: .3em;
+}
+
+.pi {
+	font-size: inherit;
+	line-height: inherit;
 }

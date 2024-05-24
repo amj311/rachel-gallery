@@ -20,9 +20,11 @@ import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import { visibilityOptions } from '@/utils/visibilityOptions';
 import ShareModal from '@/components/GalleryAccessModal.vue';
+import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
+const toast = useToast();
 
 const coverStyles = [
 	'full',
@@ -32,6 +34,7 @@ const coverStyles = [
 
 const state = reactive({
 	isSaving: false,
+	lastSaved: null as Date | null,
 	skipAutoSave: false,
 	galleryId: router.currentRoute.value.params.galleryId,
 	gallery: null as any,
@@ -88,6 +91,7 @@ function updateGallery() {
 		
 		await request.put('admin/gallery/' + state.galleryId, state.gallery);
 		state.isSaving = false;
+		state.lastSaved = new Date();
 	}, saveDebounceTime) as any;
 }
 
@@ -241,6 +245,7 @@ function swapSections(aIdx, bIdx) {
 
 async function copyLink() {
 	await navigator.clipboard.writeText(window.location.origin + '/' + (state.gallery.slug || state.gallery.id));
+	toast.add({ severity: 'success', summary: 'Copied link', life: 3000 });
 }
 
 </script>
@@ -255,7 +260,8 @@ async function copyLink() {
 				<h2>
 					<GhostInput v-model="state.gallery.name" placeholder="Gallery name..." />
 				</h2>
-				<span v-if="state.isSaving"><i class="pi pi-spinner pi-spin" /> Saving...</span>
+				<div v-if="state.isSaving" class="flex align-items-center gap-2"><i class="pi pi-spinner pi-spin" /> Saving...</div>
+				<small v-else-if="state.lastSaved"> All changes saved</small>
 			</div>
 			<div class="flex-grow-1"></div>
 			<div class="flex align-items-center flex-wrap gap-2">
@@ -393,7 +399,7 @@ async function copyLink() {
 								<div class="options">
 									<DropdownMenu
 										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
-										<i class="pi pi-ellipsis-v" style="font-size: .7em;" />
+										<i class="pi pi-ellipsis-v" />
 									</DropdownMenu>
 								</div>
 								<div class="filename">{{ photo.filename }}</div>
@@ -428,15 +434,15 @@ async function copyLink() {
 				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small" :loading="state.isProcessingFiles">Upload</Button>
 			</div>
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
-				<div class="drop-text">
-					<div>Drag and drop or <label for="fileSelect">select images</label></div>
-				</div>
+				<label for="fileSelect"><div class="drop-text">
+					<div>Drag and drop or <a>select images</a></div>
+				</div></label>
 				<div class="photo-grid">
 					<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
 						<div class="photo-frame">
 							<PhotoFrame :photo="photo as any" size="xs" fillMethod="contain" />
 						</div>
-						<div class="removePhoto" @click="removeFileFromUpload(photo)">&times;</div>
+						<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div>
 						<div class="filename">{{ photo.filename }}</div>
 					</div>
 				</div>
@@ -604,9 +610,10 @@ async function copyLink() {
 		top: 0;
 		right: 0;
 		z-index: 1;
-		width: 1.5em;
-		height: 1.5em;
-		line-height: 1.3em;
+        width: 1.5rem;
+        height: 1.5rem;
+        line-height: 1.5rem;
+        font-size: .7rem;
 		transform: translate(25%, -25%);
 		justify-content: center;
 		border-radius: 50%;
@@ -630,9 +637,10 @@ async function copyLink() {
 		top: 0;
 		right: 0;
 		z-index: 1;
-		width: 1.5em;
-		height: 1.5em;
-		line-height: 1.3em;
+        width: 1.5rem;
+        height: 1.5rem;
+        line-height: 1.5rem;
+        font-size: .7rem;
 		transform: translate(25%, -25%);
 		justify-content: center;
 		border-radius: 50%;
@@ -695,12 +703,12 @@ async function copyLink() {
 .drop-images .drop-text {
 	text-align: center;
 	padding: 30px 50px;
+	cursor: pointer;
 }
 
-.drop-images .drop-text label {
+.drop-images .drop-text a {
 	color: blue;
 	font-weight: bold;
-	cursor: pointer;
 }
 
 

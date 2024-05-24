@@ -1,9 +1,10 @@
-import 'primeflex/primeflex.css';
-import './assets/main.css'
 import './services/requestInterceptor'
 
+import 'primeflex/primeflex.css';
 import 'primevue/resources/themes/aura-light-noir/theme.css'
 import 'primeicons/primeicons.css'
+
+import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
