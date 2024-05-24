@@ -322,7 +322,7 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="section.photos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
-								<div class="photo-trigger" @click="isMobile ? null : () => openSlideshow(photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -358,7 +358,7 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
-								<div class="photo-trigger" @click="isMobile ? null : () => openFavoritesSlideshow(photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openFavoritesSlideshow(photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
