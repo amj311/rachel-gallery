@@ -43,6 +43,13 @@ export const GoogleUploadService = {
 		});
 	},
 
+	reset() {
+		localStorage.removeItem('googleDriveToken');
+		this.driveInfo = null;
+		this.onToken = null;
+		this.googleClient = null;
+	},
+
 	async getDriveInfo() {
 		if (this.driveInfo) return this.driveInfo;
 		const { data: owner } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + this.token.access_token);

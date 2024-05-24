@@ -155,9 +155,7 @@ function removeFileFromUpload(file) {
 }
 
 function sendToUploader() {
-	console.log("sendToUploader", state.imagesToUpload);
-	console.log(uploaderStore);
-	uploaderStore.uploadImages(Array.from(state.imagesToUpload as any));
+	uploaderStore.queueImages(Array.from(state.imagesToUpload as any));
 	state.imagesToUpload.clear();
 	state.showUploadToSection = null;
 }
@@ -431,7 +429,7 @@ async function copyLink() {
 				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
-				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small" :loading="state.isProcessingFiles">Upload</Button>
+				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small" :loading="state.isProcessingFiles">Next</Button>
 			</div>
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
 				<label for="fileSelect"><div class="drop-text">

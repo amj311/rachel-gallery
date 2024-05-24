@@ -59,18 +59,21 @@ export const useUploaderStore = defineStore('uploader', {
 					this.googleDriveInfo = await GoogleUploadService.driveInfo;
 				}
 				this.checkGoogleStatus();
-				this.startUploadLoop()
 			}
 		},
-		uploadImages(images: any[]) {
-			console.log("recieved images to uploader!", images.length);
+
+		async resetGoogle() {
+			GoogleUploadService.reset();
+			this.googleDriveInfo = {};
+			this.isGoogleReady = false;
+			this.setupGoogle();
+		},
+		queueImages(images: any[]) {
 			if (!images || images.length === 0) return;
 			// TODO validate images?
 			this.isOpen = true;
 			this.viewMode = 'modal';
 			this.photosToUpload.push(...images);
-			this.startUploadLoop()
-			console.log("added images to uploader!", this.photosToUpload, this.isOpen, this.viewMode);
 		},
 
 		checkGoogleStatus() {

@@ -2,6 +2,8 @@
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader.store';
 import Button from 'primevue/button';
+import ProgressBar from 'primevue/progressbar';
+import { computed } from 'vue';
 
 const uploaderStore = useUploaderStore();
 uploaderStore.init();
@@ -10,6 +12,10 @@ const bytesToGB = (bytes) => {
 	let gigaBytes = bytes / 1024 / 1024 / 1024;
 	return gigaBytes.toFixed(gigaBytes % 1 === 0 ? 0 : 1);
 }
+
+const usedSpace = computed(() => uploaderStore.googleDriveInfo.storage.usage);
+const availableSpace = computed(() => uploaderStore.googleDriveInfo.storage.limit - usedSpace.value);
+const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveInfo.storage.limit * 100);
 
 </script>
 
@@ -28,18 +34,20 @@ const bytesToGB = (bytes) => {
 		<div class="body">
 			<div class="drive-info">
 				<h3>1. Connect to Google Drive</h3>
-				<div v-if="!uploaderStore.isGoogleReady">
-					<button @click="uploaderStore.setupGoogle">Log in to Google Drive</button>
-				</div>
-				<div v-else>
-					<div>
-						Uploading to: {{ uploaderStore.googleDriveInfo.owner.email }}
-					</div>
-					<div>
-						Available space: {{ bytesToGB(uploaderStore.googleDriveInfo.storage.limit -
-							uploaderStore.googleDriveInfo.storage.usage) }} GB / {{
-							bytesToGB(uploaderStore.googleDriveInfo.storage.limit) }} GB
-					</div>
+				<div class="p-2">
+					<template v-if="!uploaderStore.isGoogleReady">
+						<Button outlined @click="uploaderStore.setupGoogle" class="gap-2" size="small"><i class="pi pi-google" />Log in to Google Drive</button>
+					</template>
+					<template v-else>
+						<div>
+							Drive: {{ uploaderStore.googleDriveInfo.owner.email }}
+							<a @click="uploaderStore.resetGoogle">Change</a>
+						</div>
+						<div class="mt-2">
+							<ProgressBar :value="Number(usedPercent)" :showValue="true" :class="{ danger: bytesToGB(availableSpace) <= 2 }">{{}}</ProgressBar>
+							{{ bytesToGB(availableSpace) }} GB remaining
+						</div>
+					</template>
 				</div>
 			</div>
 			<div>
@@ -225,8 +233,20 @@ const bytesToGB = (bytes) => {
 	}
 }
 
+a {
+	color: blue;
+	cursor: pointer;
+}
+
 :deep(.pi-window-minimize), :deep(.pi-window-maximize) {
     transform: rotate(-90deg);
 }
 
+:deep(.p-progressbar-value) {
+    background: #0ad;
+}
+
+.danger :deep(.p-progressbar-value) {
+    background: #da0;
+}
 </style>
