@@ -101,7 +101,12 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes,
-	scrollBehavior: () => ({ top: 0 }),
+	scrollBehavior: (to, from) => {
+		if (to.path === from.path) {
+			return { top: window.scrollY };
+		}
+		return { top: 0 };
+	},
 });
 
 router.beforeEach(async (to, from, next) => {

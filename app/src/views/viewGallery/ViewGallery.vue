@@ -33,7 +33,6 @@ const state = reactive({
 	viewAuth: {} as any,
 	gallery: null as any,
 	providedCode: null,
-	showSlideshow: false,
 	slideshowPhotos: [],
 	firstSlideshowPhoto: null,
 	favoriteIds: new Set(),
@@ -58,6 +57,8 @@ const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.clientEmail);
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
+
+const showSlideshow = computed(() => router.currentRoute.value.query.slideshow === 'true' && state.slideshowPhotos.length > 0);
 
 const canView = computed(() => {
 	if (isAdmin.value) {
@@ -130,15 +131,14 @@ async function loadGallery() {
 
 const allPhotos = computed(() => state.gallery?.sections?.flatMap(s => s.photos));
 
-function openSlideshow(photo?) {
-	state.slideshowPhotos = allPhotos.value;
-	state.firstSlideshowPhoto = photo;
-	state.showSlideshow = true;
+function openSlideshow(photos, firstPhoto) {
+	state.slideshowPhotos = photos;
+	state.firstSlideshowPhoto = firstPhoto;
+	router.push({ query: { slideshow: 'true' } });
 }
-function openFavoritesSlideshow(photo?) {
-	state.slideshowPhotos = favoritePhotos.value;
-	state.firstSlideshowPhoto = photo;
-	state.showSlideshow = true;
+
+function closeSlideshow() {
+	router.push({ query: {} });
 }
 
 function toggleFavorite(photo) {
@@ -322,7 +322,7 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="section.photos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
-								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(allPhotos, photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -338,7 +338,7 @@ async function loadDownloadLink() {
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
-								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openSlideshow(photo)"><i class="pi pi-expand" /></div>
+								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openSlideshow(allPhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -358,7 +358,7 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
-								<div class="photo-trigger" @click="() => !isMobile && openFavoritesSlideshow(photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(favoritePhotos, photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -370,7 +370,7 @@ async function loadDownloadLink() {
 										</DropdownMenu>
 									</div>
 								</div>
-								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openFavoritesSlideshow(photo)"><i class="pi pi-expand" /></div>
+								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openSlideshow(favoritePhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -420,8 +420,8 @@ async function loadDownloadLink() {
 				</template>
 			</div>
 
-			<Slideshow v-if="state.showSlideshow" :photos="state.slideshowPhotos"
-				:firstPhoto="state.firstSlideshowPhoto" :onClose="() => state.showSlideshow = false">
+			<Slideshow v-if="showSlideshow" :photos="state.slideshowPhotos"
+				:firstPhoto="state.firstSlideshowPhoto" :onClose="closeSlideshow">
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
 						@click="toggleFavorite(photo)" size="large" />
