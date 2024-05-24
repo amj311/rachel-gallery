@@ -508,7 +508,7 @@ async function loadDownloadLink() {
 	}
 
 	.sections-wrapper {
-		padding: 0 3em;
+		padding: 0 5%;
 		margin-bottom: 3em;
 	}
 

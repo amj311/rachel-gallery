@@ -56,9 +56,9 @@ const computeTiles = (() => {
 
 	const fullWidth = wall.value!.clientWidth;
 	const numCols = isMobile.value ? 2 : 3;
-	const margin = isMobile.value ? 5 : 15;
+	const margin = isMobile.value ? 5 : fullWidth * .015;
 	const columnWidth = (fullWidth - (margin * (numCols - 1))) / numCols;
-	const lineMatchRange = margin;
+	const lineMatchRange = fullWidth * .03;
 
 	let imagesSinceDouble = 30;
 	const cols: ImageRect[] = [];
