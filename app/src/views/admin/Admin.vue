@@ -25,10 +25,12 @@ if (!userStore.hasLoadedSessionData) {
 
 <template>
 	<NavBar>
-		<RouterLink to="/admin" >Galleries</RouterLink>
+		<RouterLink to="/admin">Galleries</RouterLink>
 	</NavBar>
 
 	<div class="px-4 pb-4"><RouterView /></div>
+
+	<UploaderWindow />
 </template>
 
 <style>

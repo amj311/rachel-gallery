@@ -36,6 +36,7 @@ const state = reactive({
 	galleryId: router.currentRoute.value.params.galleryId,
 	gallery: null as any,
 	showUploadToSection: null as any,
+	isProcessingFiles: false,
 	imagesToUpload: new Set<any>(),
 	showShareModal: false,
 });
@@ -96,9 +97,11 @@ function openUploadToSection(section) {
 }
 
 async function handleFiles(files) {
+	state.isProcessingFiles = true;
 	for (const file of files) {
 		state.imagesToUpload.add(await processImageFile(file));
 	}
+	state.isProcessingFiles = false;
 }
 
 function onImageUploadComplete(newPhoto) {
@@ -138,7 +141,9 @@ function removeFileFromUpload(file) {
 }
 
 function sendToUploader() {
-	uploaderStore.uploadImages(state.imagesToUpload as any);
+	console.log("sendToUploader", state.imagesToUpload);
+	console.log(uploaderStore);
+	uploaderStore.uploadImages(Array.from(state.imagesToUpload as any));
 	state.imagesToUpload.clear();
 	state.showUploadToSection = null;
 }
@@ -405,7 +410,7 @@ async function copyLink() {
 				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
-				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small">Upload</Button>
+				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small" :loading="state.isProcessingFiles">Upload</Button>
 			</div>
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
 				<div class="drop-text">

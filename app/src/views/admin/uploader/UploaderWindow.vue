@@ -15,7 +15,7 @@ const bytesToGB = (bytes) => {
 
 
 <template>
-	<div v-if="uploaderStore.isOpen" id="uploaderWindow" :classList="[uploaderStore.viewMode]">
+	<div v-if="uploaderStore.isOpen" id="uploaderWindow" :classList="[uploaderStore.viewMode+'-view']">
 		<div class="header">
 			<h3>{{ uploaderStore.headerText }}</h3>
 			<div class="flex-spacer" />
@@ -86,7 +86,7 @@ const bytesToGB = (bytes) => {
 	padding: 1px;
 }
 
-#uploaderWindow.modal {
+#uploaderWindow.modal-view {
 	bottom: 50%;
 	right: 50%;
 	background: #fff;
@@ -98,7 +98,7 @@ const bytesToGB = (bytes) => {
     border-radius: .5em;
 }
 
-#uploaderWindow.drawer {
+#uploaderWindow.drawer-view {
 	bottom: calc(25px);
 	right: calc(2em + 150px);
 	width: 300px;

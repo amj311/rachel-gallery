@@ -136,6 +136,9 @@ export const GalleryService = {
 				galleryId,
 				name: 'New Section',
 				order,
+			},
+			include: {
+				photos: true,
 			}
 		});
 	},

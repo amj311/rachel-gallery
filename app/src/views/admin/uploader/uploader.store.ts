@@ -62,12 +62,15 @@ export const useUploaderStore = defineStore('uploader', {
 				this.startUploadLoop()
 			}
 		},
-		uploadImages(images: []) {
+		uploadImages(images: any[]) {
+			console.log("recieved images to uploader!", images.length);
+			if (!images || images.length === 0) return;
 			// TODO validate images?
 			this.isOpen = true;
 			this.viewMode = 'modal';
 			this.photosToUpload.push(...images);
 			this.startUploadLoop()
+			console.log("added images to uploader!", this.photosToUpload, this.isOpen, this.viewMode);
 		},
 
 		checkGoogleStatus() {

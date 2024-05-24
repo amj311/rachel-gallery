@@ -105,9 +105,9 @@ const hasCover = computed(() => !!gallery.coverPhoto);
 
 		&.bottom {
 			top: auto;
-			bottom: 30px;
-			left: 30px;
-			padding: 30px;
+			bottom: 1.5em;
+			left: 1.5em;
+			padding: 2.5em;
 		}
 	}
 

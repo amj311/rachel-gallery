@@ -512,12 +512,12 @@ async function loadDownloadLink() {
 	}
 
 	.section-header {
-		font-size: 1.5rem;
-		margin: 5rem 0 3em;
+		font-size: 1.2rem;
+		margin: 7em 0 4em;
 		text-align: center;
 		text-transform: uppercase;
 		font-family: "serif";
-		letter-spacing: 4px;
+		letter-spacing: .1em;
 	}
 
 
