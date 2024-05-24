@@ -55,10 +55,13 @@ const isMobile = computed(() => useAppStore().isMobile);
 const isLoggedIn = computed(() => userStore.isLoggedIn);
 const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.clientEmail);
+
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
+const showSelectors = computed(() => state.selectedIds.size > 0);
 
 const showSlideshow = computed(() => router.currentRoute.value.query.slideshow === 'true' && state.slideshowPhotos.length > 0);
+
 
 const canView = computed(() => {
 	if (isAdmin.value) {
@@ -334,7 +337,7 @@ async function loadDownloadLink() {
 										</DropdownMenu>
 									</div>
 								</div>
-								<div v-if="isClient" class="selector">
+								<div v-if="isClient" class="selector" :class="{ 'show': showSelectors }">
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
@@ -548,6 +551,10 @@ async function loadDownloadLink() {
 			padding: 5px;
 			margin: 0 0 0 5px;
 			opacity: 0;
+
+			&.show {
+				opacity: 1;
+			}
 		}
 
 
