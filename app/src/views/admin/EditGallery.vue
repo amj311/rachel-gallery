@@ -327,7 +327,7 @@ async function copyLink() {
 									@click="() => state.gallery.coverStyle = style"
 									:classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
 									<div class="cover-small">
-										<GalleryCover :gallery="state.gallery" :style="style" />
+										<GalleryCover :gallery="state.gallery" :style="style" :preview="true" />
 									</div>
 								</div>
 							</div>
@@ -360,12 +360,12 @@ async function copyLink() {
 			<div class="cover-previews">
 				<div class="cover-preview-wrapper desktop">
 					<div class="cover-preview">
-						<GalleryCover :gallery="state.gallery" />
+						<GalleryCover :gallery="state.gallery" :preview="true" />
 					</div>
 				</div>
 				<div class="cover-preview-wrapper mobile">
 					<div class="cover-preview">
-						<GalleryCover :gallery="state.gallery" :pretendMobile="true" />
+						<GalleryCover :gallery="state.gallery" :pretendMobile="true" :preview="true" />
 					</div>
 					<div class="faux-button" />
 				</div>

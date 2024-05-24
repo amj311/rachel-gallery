@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import PhotoFrame from './PhotoFrame.vue';
 import dayjs from 'dayjs';
 
-const { gallery, style: styleOverride, pretendMobile } = defineProps<{
+const { gallery, style: styleOverride, pretendMobile, preview = false } = defineProps<{
 	gallery: any,
 	style?: string,
-	pretendMobile?: boolean
+	pretendMobile?: boolean,
+	preview?: boolean
 }>()
 
 const style = computed(() => styleOverride || gallery.coverStyle || 'full');
@@ -15,12 +16,34 @@ const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
 const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, YYYY') : null);
 const position = computed(() => settings.value.focalPoint ? `${settings.value.focalPoint.x}% ${settings.value.focalPoint.y}%` : undefined);
 const hasCover = computed(() => !!gallery.coverPhoto);
+
+// const windowState = ref(window);
+const parallaxShift = ref(0);
+
+const updateWindow = () => {
+	// windowState.value = window;
+	// console.log(windowState.value.scrollY);
+	parallaxShift.value = window.scrollY * 0.7;
+}
+
+
+onMounted(() => {
+	if (!preview) {
+		window.addEventListener('scroll', updateWindow);
+		updateWindow();
+	}
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('scroll', updateWindow);
+});
+
 </script>
 
 <template>
 	<div :classList="['gallery-cover', style || 'full', isMobile ? 'mobile' : ''].join(' ')">
 		<template v-if="style === 'full'">
-			<div class="bg">
+			<div class="bg" :style="{ top: `${parallaxShift}px` }">
 				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
 			</div>
 			<div class="filter"></div>
