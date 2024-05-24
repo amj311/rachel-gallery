@@ -14,8 +14,6 @@ export const GoogleUploadService = {
 			client_id: '611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com',
 			scope: 'https://www.googleapis.com/auth/drive',
 			callback: (tokenResponse) => {
-				console.log("token response");
-				console.log(tokenResponse);
 				tokenResponse.expires_at = Date.now() + tokenResponse.expires_in * 1000;
 				localStorage.setItem('googleDriveToken', JSON.stringify(tokenResponse));
 				this.onToken?.call(null, tokenResponse);

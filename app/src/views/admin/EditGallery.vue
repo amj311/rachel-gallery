@@ -80,11 +80,21 @@ function updateGallery() {
 	if (nextDebounce > 0) {
 		clearTimeout(nextDebounce);
 	}
+
 	state.isSaving = true;
 	nextDebounce = setTimeout(async () => {
-		const { data } = await request.put('admin/gallery/' + state.galleryId, state.gallery);
+		// Trusting debounce to make sure the gallery name is complete before saving
+		attemptAssignSlug();
+		
+		await request.put('admin/gallery/' + state.galleryId, state.gallery);
 		state.isSaving = false;
 	}, saveDebounceTime) as any;
+}
+
+function attemptAssignSlug() {
+	if (!state.gallery.slug && state.gallery.name && state.gallery.name !== 'New Gallery') {
+		state.gallery.slug = state.gallery.name.toLowerCase().replace(/([^a-z0-9]+)/gi, '-');
+	}
 }
 
 function assignCoverPhoto(photo) {
@@ -378,7 +388,7 @@ async function copyLink() {
 								<div class="options">
 									<DropdownMenu
 										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
-										<i class="pi pi-ellipsis-v" style="font-size: 10px;" />
+										<i class="pi pi-ellipsis-v" style="font-size: .7em;" />
 									</DropdownMenu>
 								</div>
 								<div class="filename">{{ photo.filename }}</div>
@@ -544,6 +554,10 @@ async function copyLink() {
 		align-items: start;
 		flex-wrap: wrap;
 		gap: 1em;
+		overflow: hidden;
+		overflow-x: auto;
+		padding: 1em;
+		margin: -1em;
 	}
 }
 
@@ -552,7 +566,7 @@ async function copyLink() {
 	border-top: 1px solid lightgrey;
 
 	.photo-grid {
-		height: 155px;
+		height: 10rem;
 		overflow: hidden;
 	}
 
