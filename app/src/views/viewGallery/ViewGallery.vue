@@ -141,7 +141,7 @@ function openSlideshow(photos, firstPhoto) {
 }
 
 function closeSlideshow() {
-	router.push({ query: {} });
+	router.back();
 }
 
 function toggleFavorite(photo) {
