@@ -204,6 +204,10 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 	font-size: .7em;
 	line-break: anywhere;
 	text-align: center;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .status {
