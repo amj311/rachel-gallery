@@ -1,46 +1,31 @@
  import axios from "axios";
+ import request from "./request";
 
 // 'google' provided from script tag in index.html
-const uploadFolderName = '__rachel_gallery_photos__';
+// const uploadFolderName = '__rachel_gallery_photos__';
+const targetFolderId = '14mYn4ieKb19hoUHmg7o0-mBuKWEqyR17';
 
 
 export const GoogleUploadService = {
 	googleClient: null,
 	driveInfo: null,
-	onToken: null,
-
-	initClient() {
-		this.googleClient = (google).accounts.oauth2.initTokenClient({
-			client_id: '611544680661-1mo4l472al753pt9j6m0n61cb5ktfdi9.apps.googleusercontent.com',
-			scope: 'https://www.googleapis.com/auth/drive',
-			callback: (tokenResponse) => {
-				tokenResponse.expires_at = Date.now() + tokenResponse.expires_in * 1000;
-				localStorage.setItem('googleDriveToken', JSON.stringify(tokenResponse));
-				this.onToken?.call(null, tokenResponse);
-			},
-		});
-	},
-
-	get token() {
-		return JSON.parse(localStorage.getItem('googleDriveToken') || 'null');
-	},
+	token: null,
 
 	get hasValidToken() {
 		return Boolean(this.token?.expires_at > (Date.now() + 1000 * 60 * 5)); // 5 minutes before expiration
 	},
 
-	getToken() {
-		if (!this.googleClient) {
-			this.initClient();
-		}
+	async getToken() {
 		if (this.hasValidToken) {
 			return this.token;
 		}
-		return new Promise((res) => {
-			this.onToken = res;
-			this.driveInfo = null;
-			this.googleClient.requestAccessToken();
-		});
+
+		const { data } = await request.get('admin/token');
+
+		data.token.expires_at = Date.now() + data.token.expires_in * 1000;
+		this.token = data.token;
+		this.driveInfo = data.driveInfo;
+		return data.token;
 	},
 
 	reset() {
@@ -50,48 +35,42 @@ export const GoogleUploadService = {
 		this.googleClient = null;
 	},
 
-	async getDriveInfo() {
-		if (this.driveInfo) return this.driveInfo;
-		const { data: owner } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + this.token.access_token);
-		const { data: drive } = await axios.get('https://www.googleapis.com/drive/v3/about?fields=storageQuota&access_token=' + this.token.access_token);
-		const { data: folderSearch } = await axios.get(`https://www.googleapis.com/drive/v3/files?q=name+%3d+%27${uploadFolderName}%27+and+mimeType+%3d+%27application/vnd.google-apps.folder%27+and+trashed+%3d+false&access_token=` + this.token.access_token);
-		this.driveInfo = {
-			owner,
-			storage: drive.storageQuota,
-			targetFolder: folderSearch?.files?.[0],
-		};
-		if (this.driveInfo.targetFolder) {
-			const { data: folderPermission } = await axios.get(`https://www.googleapis.com/drive/v3/files/${this.driveInfo.targetFolder.id}/permissions`, {
-				params: { access_token: this.token.access_token},
-			});
-			this.driveInfo.targetFolder.permissions = folderPermission.permissions;
-		}
-		return this.driveInfo;
-	},
+	// async getDriveInfo() {
+	// 	if (this.driveInfo) return this.driveInfo;
+	// 	const { data: owner } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + this.token.access_token);
+	// 	const { data: drive } = await axios.get('https://www.googleapis.com/drive/v3/about?fields=storageQuota&access_token=' + this.token.access_token);
+	// 	const { data: folderSearch } = await axios.get(`https://www.googleapis.com/drive/v3/files?q=name+%3d+%27${uploadFolderName}%27+and+mimeType+%3d+%27application/vnd.google-apps.folder%27+and+trashed+%3d+false&access_token=` + this.token.access_token);
+	// 	this.driveInfo = {
+	// 		owner,
+	// 		storage: drive.storageQuota,
+	// 		targetFolder: folderSearch?.files?.[0],
+	// 	};
+	// 	if (this.driveInfo.targetFolder) {
+	// 		const { data: folderPermission } = await axios.get(`https://www.googleapis.com/drive/v3/files/${targetFolderId}/permissions`, {
+	// 			params: { access_token: this.token.access_token},
+	// 		});
+	// 		this.driveInfo.targetFolder.permissions = folderPermission.permissions;
+	// 	}
+	// 	return this.driveInfo;
+	// },
 
-	async createTargetFolder() {
-		if (!this.driveInfo) throw Error("Must load drive info first");
-		if (this.driveInfo.targetFolder) throw Error("Target folder already exists");
-		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/?access_token=' + this.token.access_token, {
-			name: uploadFolderName,
-			mimeType: 'application/vnd.google-apps.folder',
-		});
-		this.driveInfo.targetFolder = data;
-	},
+	// async createTargetFolder() {
+	// 	if (!this.driveInfo) throw Error("Must load drive info first");
+	// 	if (this.driveInfo.targetFolder) throw Error("Target folder already exists");
+	// 	const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/?access_token=' + this.token.access_token, {
+	// 		name: uploadFolderName,
+	// 		mimeType: 'application/vnd.google-apps.folder',
+	// 	});
+	// 	this.driveInfo.targetFolder = data;
+	// },
 
 	async uploadImage(image) {
-		if (!this.driveInfo?.targetFolder) throw Error("no target folder");
+		if (!targetFolderId) throw Error("no target folder");
 		if (!image?.blob) throw Error("no image blob");
 		const form = new FormData();
-		form.append('metadata', new Blob([JSON.stringify({ name: image.filename, parents: [this.driveInfo.targetFolder.id] })], { type: 'application/json' }));
+		form.append('metadata', new Blob([JSON.stringify({ name: image.filename, parents: [targetFolderId] })], { type: 'application/json' }));
 		form.append('file', image.blob);
-		// upload image
 		const { data } = await axios.post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&access_token=' + this.token.access_token, form);
-		console.log(data)
-		const { data: file } = await axios.get('https://www.googleapis.com/drive/v3/files/' + data.id + '?&access_token=' + this.token.access_token);
-		console.log(file)
-		// make public
-		// await axios.post('https://www.googleapis.com/upload/drive/v3/files/' + data.id + '/permissions?access_token=' + this.token.access_token, { value: 'default', role: 'reader', type: 'anyone' });
 		return data;
 	},
 

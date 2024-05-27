@@ -7,16 +7,15 @@ import { computed } from 'vue';
 import Message from 'primevue/message';
 
 const uploaderStore = useUploaderStore();
-uploaderStore.init();
 
 const bytesToGB = (bytes) => {
 	let gigaBytes = bytes / 1024 / 1024 / 1024;
 	return gigaBytes.toFixed(gigaBytes % 1 === 0 ? 0 : 1);
 }
 
-const usedSpace = computed(() => uploaderStore.googleDriveInfo.storage.usage);
-const availableSpace = computed(() => uploaderStore.googleDriveInfo.storage.limit - usedSpace.value);
-const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveInfo.storage.limit * 100);
+// const usedSpace = computed(() => uploaderStore.googleDriveInfo.storage.usage);
+// const availableSpace = computed(() => uploaderStore.googleDriveInfo.storage.limit - usedSpace.value);
+// const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveInfo.storage.limit * 100);
 
 </script>
 
@@ -31,33 +30,8 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 				<Button v-if="uploaderStore.canClose" icon="pi pi-times" text @click="uploaderStore.close" size="small" />
 			</div>
 		</div>
-		<div class="progress"></div>
 		<div class="body">
-			<div class="drive-info">
-				<h3>1. Connect to Google Drive</h3>
-				<div class="m-2">
-					<template v-if="!uploaderStore.isGoogleReady">
-						<Button outlined @click="uploaderStore.setupGoogle" class="gap-2" size="small"><i class="pi pi-google" />Log in to Google Drive</button>
-					</template>
-					<template v-else>
-						<div>
-							Drive: {{ uploaderStore.googleDriveInfo.owner.email }}
-							<a @click="uploaderStore.resetGoogle">Change</a>
-						</div>
-						<div class="mt-2">
-							<ProgressBar :value="Number(usedPercent)" :showValue="true" :class="{ danger: bytesToGB(availableSpace) <= 2 }">{{}}</ProgressBar>
-							{{ bytesToGB(availableSpace) }} GB remaining
-						</div>
-					</template>
-				</div>
-				<Message v-if="!uploaderStore.folderIsPublic" :closable="false" severity="warn">&nbsp;&nbsp;Please make <a :href="'https://drive.google.com/drive/folders/' + uploaderStore.googleDriveInfo.targetFolder.id" target="_blank">this folder</a> public!</Message>
-			</div>
 			<div>
-				<div class="flex align-items-center mb-3">
-					<h3>2. Upload Photos</h3>
-					<div class="flex-grow-1"></div>
-					<Button v-if="uploaderStore.uploadQueue.length" @click="uploaderStore.startUploadLoop" :loading="uploaderStore.isLoading" size="small" class="gap-2" icon="pi pi-upload" :label="uploaderStore.isLoading ? 'Uploading' : 'Upload'" />
-				</div>
 				<div class="photo-grid">
 					<div v-for="photo in uploaderStore.photosToUpload" :key="photo.id"
 						class="photo-grid-item">
@@ -79,12 +53,6 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 					</div>
 				</div>
 			</div>
-<!-- 
-			<div v-if="uploaderStore.isGoogleReady">
-				<h3>3. Make Photos Public</h3>
-				<p>Open the <a :href="'https://drive.google.com/drive/folders/' + uploaderStore.googleDriveInfo.targetFolder.id" target="_blank">Drive folder</a>, select all photos, and and share publicly.</p>
-			</div>
-			 -->
 		</div>
 	</div>
 </template>
@@ -140,7 +108,7 @@ const usedPercent = computed(() => usedSpace.value / uploaderStore.googleDriveIn
 }
 
 .body {
-	margin: 1.5em;
+	margin: 1em;
 	display: flex;
 	flex-direction: column;
 	gap: 1em;

@@ -47,61 +47,42 @@ export const useUploaderStore = defineStore('uploader', {
 		},
 	},
 	actions: {
-		init() {
-			if (GoogleUploadService.hasValidToken) {
-				this.setupGoogle();
-				return;
-			}
-		},
-		async setupGoogle() {
-			const token = await GoogleUploadService.getToken();
-			if (token) {
-				await this.loadDriveInfo();
-				if (!this.googleDriveInfo.targetFolder) {
-					await GoogleUploadService.createTargetFolder();
-					this.googleDriveInfo = await GoogleUploadService.driveInfo;
-				}
-				this.checkGoogleStatus();
-			}
-		},
-
-		async loadDriveInfo() {
-			this.googleDriveInfo = await GoogleUploadService.getDriveInfo();
-		},
-
-		async resetGoogle() {
-			GoogleUploadService.reset();
-			this.googleDriveInfo = {};
-			this.isGoogleReady = false;
-			this.setupGoogle();
-		},
 		queueImages(images: any[]) {
 			if (!images || images.length === 0) return;
 			// TODO validate images?
 			this.isOpen = true;
 			this.viewMode = 'modal';
 			this.photosToUpload.push(...images);
+
+			this.startUploadLoop();
 		},
 
-		checkGoogleStatus() {
+		async checkGoogleStatus() {
 			if (!GoogleUploadService.hasValidToken) {
 				this.googleDriveInfo = {};
 				this.isGoogleReady = false;
+				await this.setupGoogle();
 				return;
 			}
-			if (this.googleDriveInfo.targetFolder && GoogleUploadService.hasValidToken) {
+		},
+
+		async setupGoogle() {
+			const token = await GoogleUploadService.getToken();
+			if (token) {
+				this.googleDriveInfo = await GoogleUploadService.driveInfo;
 				this.isGoogleReady = true;
 			}
 		},
+
 
 		async startUploadLoop() {
 			if (this.isUploading) return;
 
 			// run 5 upload workers
 			for (let i = 0; i < 5; i++) {
-				// stagger so we don't grab the same photo
+				// stagger so we don't grab the same photo on race condition
 				this._doNextUpload();
-				await new Promise(resolve => setTimeout(resolve, 1000));
+				await new Promise(resolve => setTimeout(resolve, 500));
 			}
 		},
 
@@ -125,7 +106,7 @@ export const useUploaderStore = defineStore('uploader', {
 				await new Promise(resolve => setTimeout(resolve, 5000));
 				const googleRes = await GoogleUploadService.uploadImage(photo);
 				photo.googleFileId = googleRes.id;
-				photo.googleOwnerEmail = this.googleDriveInfo.owner.email;
+				photo.googleOwnerEmail = this.googleDriveInfo.user.emailAddress;
 	
 				// save to db. If fails, delete from google
 				try {
@@ -133,7 +114,7 @@ export const useUploaderStore = defineStore('uploader', {
 					photo.id = data.data.id;
 				}
 				catch (error) {
-					console.log("deleting from drive.....")
+					console.log("server save error, deleting from drive.....")
 					await GoogleUploadService.deleteFile(googleRes.id);
 					throw error;
 				}
@@ -141,9 +122,6 @@ export const useUploaderStore = defineStore('uploader', {
 				// wrap up and continue
 				photo.uploadStatus = "complete";
 				photo.onUploadComplete?.call(null, photo);
-
-				// Load drive info for updated usage
-				this.loadDriveInfo();
 
 				// free memory after time for google image to load
 				setTimeout(() => URL.revokeObjectURL(photo.dataUrl), 3000);

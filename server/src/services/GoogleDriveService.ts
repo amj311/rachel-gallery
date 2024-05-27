@@ -5,11 +5,10 @@ import { JWT } from "googleapis-common";
 
 export const GoogleDriveService = {
 	_token: <JWT | null>null,
-	_client: <drive_v3.Drive | null>null,
 
-	async _getClient() {
+	async _getToken() {
 		if (this._token?.gtoken?.expiresAt && !(Date.now() > this._token.gtoken.expiresAt)) {
-			return this._client;
+			return this._token;
 		}
 		try {
 			// configure a JWT auth client
@@ -22,9 +21,9 @@ export const GoogleDriveService = {
 
 			//authenticate request
 			await jwtClient.authorize();
+
 			this._token = jwtClient;
-			this._client = google.drive({ version: 'v3', auth: jwtClient });
-			return this._client;
+			return jwtClient;
 		}
 		catch (error: any) {
 			console.error(error);
@@ -32,11 +31,29 @@ export const GoogleDriveService = {
 		}
 	},
 
+	async getDrive() {
+		return google.drive({ version: 'v3', auth: await this._getToken() });
+	},
+
+	async loadDriveInfo() {
+		try {
+			const drive = await this.getDrive();
+			const { data } = await drive!.about.get({
+				fields: 'storageQuota, user',
+			});
+			return data;
+		}
+		catch(error) {
+			console.error(error);
+			throw Error("Could not load drive info!")
+		}
+	},
+
 	
 
 	async loadFile(googleFileId) {
 		try {
-			const drive = await this._getClient();
+			const drive = await this.getDrive();
 			const file = await drive!.files.get({
 				fileId: googleFileId,
       			alt: 'media',
@@ -46,6 +63,19 @@ export const GoogleDriveService = {
 		catch(error) {
 			console.error(error);
 			throw Error("Could not load file!")
+		}
+	},
+
+	async deleteFile(googleFileId) {
+		try {
+			const drive = await this.getDrive();
+			await drive!.files.delete({
+				fileId: googleFileId,
+			});
+		}
+		catch(error) {
+			console.error(error);
+			throw Error("Could not delete file!")
 		}
 	},
 };

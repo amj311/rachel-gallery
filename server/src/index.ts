@@ -6,11 +6,13 @@ dotenv.config({
 import adminRoute from "./routes/admin.route";
 import userRoute from "./routes/user.route";
 import galleryRoute from "./routes/gallery.route";
+import googleTokenRoute from "./routes/googleToken.route";
 
 import Fastify from "fastify";
 import firebaseAuthMiddleware, { firebaseConfig } from "./services/FirebaseService";
 import path from "path";
 import { createReadStream } from "fs";
+import { GoogleDriveService } from "./services/GoogleDriveService";
 
 const app = Fastify({
 	logger: false
@@ -38,6 +40,22 @@ app.register((fastify, _, done) => {
 	fastify.register(adminRoute, { prefix: '/admin' });
 	done();
 }, { prefix: '/api' });
+
+
+// internal routes
+app.register((route, _, done) => {
+	route.addHook('preValidation', (request, reply, done) => {
+		console.log("doing validation")
+		// if (!request.sessionUser?.isAdmin) {
+		// 	reply.status(403).send();
+		// }
+		done();
+	});
+
+
+	route.register(googleTokenRoute, { prefix: '/google-token' });
+	done();
+}, { prefix: '/internal' });
 
 
 // Serving the static app

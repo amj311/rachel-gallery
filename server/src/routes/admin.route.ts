@@ -1,6 +1,6 @@
-import { Gallery, User } from "@prisma/client";
 import { UserService } from "../services/UserService";
 import { GalleryService } from "../services/GalleryService";
+import { GoogleDriveService } from "../services/GoogleDriveService";
 
 export default (route, _, done) => {
 	// Validate user is admin
@@ -11,6 +11,18 @@ export default (route, _, done) => {
 		done();
 	});
 
+
+
+	route.get('/token' , async (request, reply) => {
+		// await GoogleDriveService._getClient();
+		const driveData = await GoogleDriveService.loadDriveInfo();
+		// const userInfo = await GoogleDriveService.getUserInfo();
+		return {
+			success: true,
+			token: GoogleDriveService._token?.gtoken?.rawToken,
+			driveInfo: driveData,
+		};
+	})
 
 
 
@@ -95,6 +107,14 @@ export default (route, _, done) => {
 		}
 	})
 
+	// Delete a gallery section
+	route.delete('/gallery/:galleryId/section/:sectionId', async (request, reply) => {
+		const { sectionId } = request.params;
+		await GalleryService.deleteSection(sectionId);
+		return {
+			success: true,
+		}
+	})
 
 	// Upload a photo to a gallery section
 	route.post('/photo', async (request, reply) => {

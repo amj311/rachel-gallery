@@ -165,7 +165,33 @@ export const GalleryService = {
 	},
 
 	async deletePhoto(id: string) {
+		// load google file id
+		const photo = await prisma.photo.findUnique({
+			where: {
+				id,
+			},
+		});
+		// TODO authenticate as correct user
+		await GoogleDriveService.deleteFile(photo?.googleFileId);
 		await prisma.photo.delete({
+			where: {
+				id,
+			}
+		})
+	},
+
+	async deleteSection(id: string) {
+		// delete all photos in section from google
+		const photos = await prisma.photo.findMany({
+			where: {
+				gallerySectionId: id,
+			},
+		});
+		for (const photo of photos) {
+			// TODO authenticate as correct user
+			await GoogleDriveService.deleteFile(photo?.googleFileId);
+		}
+		await prisma.gallerySection.delete({
 			where: {
 				id,
 			}

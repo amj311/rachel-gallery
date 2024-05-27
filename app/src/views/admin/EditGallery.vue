@@ -179,51 +179,39 @@ function onDrop(event) {
 	event.target.classList.remove('drag-over');
 }
 
-async function deletePhoto(photo) {
-	if (!confirm('Are you sure you want to delete this photo?')) return;
-	if (!GoogleUploadService.hasValidToken) {
-		await GoogleUploadService.getToken();
-	}
-	// TODO check that photo is in activated drive
+async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
+	if (!skipConfirm && !confirm('Are you sure you want to delete this photo?')) return;
+	// if (!GoogleUploadService.hasValidToken) {
+	// 	await GoogleUploadService.getToken();
+	// }
 	try {
-		await GoogleUploadService.deleteFile(photo.googleFileId);
+		// await GoogleUploadService.deleteFile(photo.googleFileId);
 		await request.delete('admin/photo/' + photo.id);
+		const deleteFromSection = state.gallery.sections.find(s => s.id === photo.gallerySectionId);
+		deleteFromSection.photos = deleteFromSection.photos.filter(p => p.id !== photo.id);
+		if (!skipAlert) {
+			toast.add({ severity: 'success', summary: 'Success', detail: 'Photo deleted', life: 3000 });
+		}
 	}
 	catch (error) {
 		console.error(error);
-		console.log("Failed to delete photo. Will try to restore it in Google Drive.");
-		await GoogleUploadService.restoreFile(photo.googleFileId);
-		return;
-	}
-	const deleteFromSection = state.gallery.sections.find(s => s.id === photo.gallerySectionId);
-	deleteFromSection.photos = deleteFromSection.photos.filter(p => p.id !== photo.id);
+		console.log("Failed to delete photo.");
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete photo. Try again later', life: 3000 });	}
 }
 
 async function deleteSection(section) {
 	if (!confirm('Are you sure you want to delete this section?')) {
 		return;
 	}
-	const res = await Promise.all(section.photos.map(async (p) => {
-		let success = true;
-		try {
-			await GoogleUploadService.deleteFile(p.googleFileId);
-			p.marked_for_deletion = true; // just to hide it from view
-		}
-		catch (error) {
-			console.error(error);
-			success = false;
-		}
-		return {
-			photo: p,
-			success,
-		}
-	}));
-	const failed = res.filter(r => !r.success);
-	if (!failed.length) {
-		section.marked_for_deletion = true; // will trigger delete on backend, which should cascade to photos
+	try {
+		await request.delete('admin/gallery/' + state.galleryId + '/section/' + section.id);
+		state.gallery.sections = state.gallery.sections.filter(s => s.id !== section.id);
+		toast.add({ severity: 'success', summary: 'Success', detail: 'Section deleted', life: 3000 });
 	}
-	else {
-		// warn about failed deletion
+	catch (error) {
+		console.error(error);
+		console.log("Failed to delete section.");
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete section. Try again later', life: 3000 });
 	}
 }
 
