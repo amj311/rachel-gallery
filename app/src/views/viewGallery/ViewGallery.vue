@@ -490,7 +490,7 @@ async function loadDownloadLink() {
 			height: 3em;
 			width: 3em;
 			transform: translateX(-50%);
-			line-height: 3.4em;
+			line-height: 3.1em;
 			text-align: center;
 			animation: rise 1s ease 2s forwards;
 
