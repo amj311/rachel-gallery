@@ -3,16 +3,16 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import PhotoFrame from './PhotoFrame.vue';
 import dayjs from 'dayjs';
 
-const { gallery, style: styleOverride, pretendMobile, preview = false } = defineProps<{
+const { gallery, style: styleOverride, forceMode, preview = false } = defineProps<{
 	gallery: any,
 	style?: string,
-	pretendMobile?: boolean,
+	forceMode?: string,
 	preview?: boolean
 }>()
 
 const style = computed(() => styleOverride || gallery.coverStyle || 'full');
 const settings = computed(() => gallery.coverSettings || {});
-const isMobile = computed(() => pretendMobile || window.innerWidth < 768);
+const isMobile = computed(() => forceMode === 'mobile' || (window.innerWidth < 768 && forceMode !== 'desktop'));
 const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, YYYY') : null);
 const position = computed(() => settings.value.focalPoint ? `${settings.value.focalPoint.x}% ${settings.value.focalPoint.y}%` : undefined);
 const hasCover = computed(() => !!gallery.coverPhoto);
@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
 		color: white;
 		background-color: rgba(0, 0, 0, 0.5);
 		height: 100%;
-		width: 33%;
+		width: 38%;
 		padding: 30px;
 		display: flex;
 		align-items: top;
