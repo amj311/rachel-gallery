@@ -5,7 +5,7 @@ import { GoogleDriveService } from "../services/GoogleDriveService";
 import { Readable } from "stream";
 import sharp from "sharp";
 import JSZip from "jszip";
-import { DownloadService } from "../services/DownloadService";
+// import { DownloadService } from "../services/DownloadService";
 import axios from "axios";
 
 export default (route, _, done) => {
