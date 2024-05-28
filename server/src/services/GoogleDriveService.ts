@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 import { JWT } from "googleapis-common";
 
-const accounts = require('../../' + process.env.ACCOUNTS_PATH!);
+const accounts = require(process.env.ACCOUNTS_PATH!);
 const currentEmail = accounts.current;
 
 export const GoogleDriveService = {
