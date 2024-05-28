@@ -629,7 +629,7 @@ async function loadDownloadLink() {
 		}
 
 		&:hover .bottom-bar {
-			box-shadow: inset 0 -2em 1em #0000004d;
+			box-shadow: inset 0 -3em 1em -1em #0000004d;
 			transition: 500ms;
 		}
 
