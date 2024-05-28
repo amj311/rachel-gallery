@@ -20,6 +20,8 @@ const isPlaying = computed(() => state.playingTimer !== 0);
 const nextPhoto = computed(() => photos[(state.activePhotoIdx + 1) % photos.length]);
 const prevPhoto = computed(() => photos[(state.activePhotoIdx - 1 + photos.length) % photos.length]);
 
+const initialScroll = window.scrollY;
+
 onBeforeMount(async () => {
 	if (firstPhoto) {
 		state.activePhotoIdx = photos.findIndex(p => p.id === firstPhoto.id);
@@ -28,6 +30,7 @@ onBeforeMount(async () => {
 	window.addEventListener('touchstart', handleTouchStart);
 	window.addEventListener('touchmove', handleTouchMove);
 	window.addEventListener('touchend', handleTouchEnd);
+	window.addEventListener('scroll', preventScroll);
 })
 
 const animationTime = 500;
@@ -126,12 +129,21 @@ function handleTouchEnd(e) {
 	}
 }
 
+function preventScroll(e) {
+	window.scroll({
+		top: initialScroll,
+		left: 0,
+		behavior: 'instant',
+	});
+}
+
 onBeforeUnmount(() => {
 	clearTimeout(state.playingTimer);
 	window.removeEventListener('keydown', handleKeydown);
 	window.removeEventListener('touchstart', handleTouchStart);
 	window.removeEventListener('touchmove', handleTouchMove);
 	window.removeEventListener('touchend', handleTouchEnd);
+	window.removeEventListener('scroll', preventScroll);
 });
 
 </script>
