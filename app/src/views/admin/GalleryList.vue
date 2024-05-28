@@ -42,7 +42,7 @@ async function createNewGallery() {
 		<div class="gallery-grid">
 			<template v-for="gallery in state.galleries" :key="gallery.id" >
 				<Card size="small" :style="{ maxWidth: '400px', zoom: .8 }" class="overflow-hidden cursor-pointer" @click="router.push(`/admin/galleries/${gallery.id}`)">
-					<template #header><div class="cover-small"><GalleryCover :gallery="gallery" :preview="true" /></div></template>
+					<template #header><div class="cover-small"><GalleryCover :gallery="gallery" :preview="true" forceMode="desktop" /></div></template>
 					<template #title>{{ gallery.name || 'Untitled' }}</template>
 					<template #subtitle>{{ gallery.clientName || gallery.clientEmail }}</template>
 					
