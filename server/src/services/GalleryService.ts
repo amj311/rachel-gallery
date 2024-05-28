@@ -154,15 +154,15 @@ export const GalleryService = {
 	},
 
 
-	async downloadPhoto(id: string) {
-		const photo = await prisma.photo.findUnique({
-			where: {
-				id,
-			},
-		});
+	// async downloadPhoto(id: string) {
+	// 	const photo = await prisma.photo.findUnique({
+	// 		where: {
+	// 			id,
+	// 		},
+	// 	});
 
-		return await GoogleDriveService.loadFile(photo?.googleFileId);
-	},
+	// 	return await GoogleDriveService.loadFile(photo?.googleFileId);
+	// },
 
 	async deletePhoto(id: string) {
 		// load google file id
@@ -172,7 +172,7 @@ export const GalleryService = {
 			},
 		});
 		// TODO authenticate as correct user
-		await GoogleDriveService.deleteFile(photo?.googleFileId);
+		await GoogleDriveService.deleteFile(photo!.googleFileId, photo!.googleOwnerEmail);
 		await prisma.photo.delete({
 			where: {
 				id,
@@ -189,7 +189,7 @@ export const GalleryService = {
 		});
 		for (const photo of photos) {
 			// TODO authenticate as correct user
-			await GoogleDriveService.deleteFile(photo?.googleFileId);
+			await GoogleDriveService.deleteFile(photo!.googleFileId, photo!.googleOwnerEmail);
 		}
 		await prisma.gallerySection.delete({
 			where: {
