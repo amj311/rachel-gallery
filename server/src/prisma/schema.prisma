@@ -23,6 +23,21 @@ model User {
 
 // }
 
+model Inquiry {
+    id         String    @id @default(uuid())
+    name       String
+    email      String
+    message    String
+    phone      String?
+    occasion   String?
+    date       DateTime?
+    location   String?
+    peopleQty  Int?
+    notes      String    @default("")
+    created_at DateTime  @default(now())
+    read_at    DateTime?
+}
+
 model Gallery {
     id             String    @id //@default(uuid())
     clientName     String?

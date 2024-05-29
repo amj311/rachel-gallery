@@ -1,0 +1,26 @@
+import { prisma } from "../prisma/client";
+
+export const InquiryService = {
+	async createInquiry(data) {
+        return await prisma.inquiry.create({
+			data,
+		});
+    },
+
+    async getInquiryList(where?) {
+        return await prisma.inquiry.findMany({
+			where,
+			orderBy: {
+				created_at: 'desc' as any,
+			},
+		});
+    },
+
+    async deleteInquiry(id: string) {
+        await prisma.inquiry.delete({
+            where: {
+                id,
+            },
+        });
+    },
+};

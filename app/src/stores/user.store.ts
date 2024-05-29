@@ -69,6 +69,7 @@ export const useUserStore = defineStore('user', () => {
 		currentUser,
 		session,
 		createUser,
-		loadSessionData
+		loadSessionData,
+		isLoading,
 	};
 });

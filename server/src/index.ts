@@ -1,7 +1,5 @@
 import * as dotenv from "dotenv"
-dotenv.config({
-	// path: '../.env'
-})
+dotenv.config()
 
 import adminRoute from "./routes/admin.route";
 import userRoute from "./routes/user.route";
@@ -10,9 +8,9 @@ import googleTokenRoute from "./routes/googleToken.route";
 
 import Fastify from "fastify";
 import firebaseAuthMiddleware, { firebaseConfig } from "./services/FirebaseService";
-import path from "path";
-import { createReadStream } from "fs";
-import { GoogleDriveService } from "./services/GoogleDriveService";
+import inquiryRoute from "./routes/inquiry.route";
+// import path from "path";
+// import { createReadStream } from "fs";
 
 const app = Fastify({
 	logger: false
@@ -31,6 +29,7 @@ app.get('/api/firebase-config', () => {
 
 // public routes
 app.register(galleryRoute, { prefix: '/api/gallery' });
+app.register(inquiryRoute, { prefix: '/api/inquiry' });
 
 app.addHook('preValidation', firebaseAuthMiddleware);
 

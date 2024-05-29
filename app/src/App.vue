@@ -3,13 +3,10 @@ import { RouterView } from 'vue-router';
 import { useUserStore } from './stores/user.store';
 import Toast from 'primevue/toast';
 import watermarkImage from '@/assets/images/watermark.png'
-import { computed, onMounted } from 'vue';
 import { onBeforeUnmount } from 'vue';
 import { ref } from 'vue';
 import LoadSplash from './components/LoadSplash.vue';
-import { useAppStore } from './stores/app.store';
 
-const appStore = useAppStore();
 const userStore = useUserStore();
 const sessionInterval = setInterval(userStore.loadSessionData, 60000);
 
@@ -28,7 +25,7 @@ onBeforeUnmount(() => {
 <template>
 	<LoadSplash v-if="waitingForAuth || !userStore.hasLoadedSessionData" />
 	<div v-else>
-		<RouterView />
+		<section><RouterView /></section>
 		<Toast></Toast>
 		<footer class="flex align-items-top flex-wrap justify-content-center gap-8 p-8">
 			<img :src="watermarkImage" width="100" />
@@ -43,6 +40,10 @@ onBeforeUnmount(() => {
 
 
 <style scoped>
+section {
+	min-height: calc(100vh - 17rem);
+}
+
 footer {
 	background: #ece6de;
 

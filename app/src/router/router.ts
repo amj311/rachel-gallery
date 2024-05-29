@@ -42,7 +42,11 @@ const routes: Array<RouteRecordRaw> = [
 		// }
 
 		children: [
-			
+			{
+				path: '/inquiry',
+				name: "Inquiry",
+				component: () => import('@/views/Inquiry.vue'),
+			},
 		],
 	},
 
@@ -51,10 +55,6 @@ const routes: Array<RouteRecordRaw> = [
 		name: "Admin",
 		component: () => import('@/views/admin/Admin.vue'),
 		async beforeEnter(to, from, next) {
-			while (!useUserStore().hasLoadedSessionData) {
-				await new Promise((resolve) => setTimeout(resolve, 500));
-			}
-
 			if (!useUserStore().currentUser?.isAdmin) {
 				return next('');
 			}
@@ -114,7 +114,7 @@ router.beforeEach(async (to, from, next) => {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 		await useUserStore().loadSessionData();
 	}
-	while (!useUserStore().hasLoadedSessionData) {
+	while (!useUserStore().hasLoadedSessionData || useUserStore().isLoading) {
 		await new Promise((resolve) => setTimeout(resolve, 500));
 	}
 	next();
