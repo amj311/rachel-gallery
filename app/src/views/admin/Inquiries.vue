@@ -36,7 +36,7 @@ const asSidebar = computed(() => !useAppStore().isMobile && state.currentInquiry
 <template>
 	<div class="flex gap-3">
 		<div v-show="showList" class="flex-grow-1" :class="{ sidebar: asSidebar }">
-			<DataView :value="inquiriesStore.inquiries" paginator :rows="5">
+			<DataView :value="inquiriesStore.inquiries" paginator :rows="5" data-key="id">
 				<template #list="{ items }">
 					<div v-for="inquiry of items" :key="inquiry.id" class="inquiry-row white-space-nowrap" :class="{ unread: Boolean(!inquiry.read_at) }" @click="setCurrentInquiry(inquiry)">
 						<div v-if="showAsList">

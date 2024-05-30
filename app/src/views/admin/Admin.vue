@@ -23,7 +23,7 @@ inquiriesStore.loadInquiries()
 			<RouterLink to="/admin">Galleries</RouterLink>
 			<div class="flex align-items-center">
 				<RouterLink to="/admin/inquiries">Inquiries</RouterLink>
-				<Badge v-show="inquiriesStore.unread.length > 0" :value="inquiriesStore.unread.length" size="small" style="transform: scale(.8)" severity="danger"/>
+				<Badge v-show="inquiriesStore.unread.length > 0" :value="inquiriesStore.unread.length" style="transform: scale(.8)" severity="danger"/>
 			</div>
 		</div>
 	</NavBar>
