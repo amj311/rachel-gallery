@@ -16,6 +16,15 @@ export const InquiryService = {
 		});
     },
 
+	async updateInquiry(id: string, data) {
+		return await prisma.inquiry.update({
+			where: {
+				id,
+			},
+			data,
+		});
+	},
+
     async deleteInquiry(id: string) {
         await prisma.inquiry.delete({
             where: {

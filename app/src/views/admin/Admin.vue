@@ -1,34 +1,34 @@
 <script setup lang="ts">
-import { useRouter, RouterView } from 'vue-router';
-// import AdminMenu from './AdminMenu.vue'
+import { RouterView } from 'vue-router';
 import { useUserStore } from '@/stores/user.store';
-import LoginForm from '@/components/LoginForm.vue';
+import { useInquiriesStore } from '@/stores/inquiries.store';
 import UploaderWindow from './uploader/UploaderWindow.vue';
 import NavBar from '@/components/NavBar.vue';
-
-// const state = reactive({
-// 	showSidePanel: false
-// });
+import Badge from 'primevue/badge';
 
 const userStore = useUserStore();
 if (!userStore.hasLoadedSessionData) {
 	userStore.loadSessionData();
 }
 
-// if (userStore.currentUser) {
-// 	const redirect = new URL(window.location.href).searchParams.get('redirect');
-// 	useIonRouter().push(redirect || '/');
-// }
+const inquiriesStore = useInquiriesStore();
+inquiriesStore.loadInquiries()
 
 </script>
 
 
 <template>
 	<NavBar>
-		<RouterLink to="/admin">Galleries</RouterLink>
+		<div class="flex justify-content-end gap-3">
+			<RouterLink to="/admin">Galleries</RouterLink>
+			<div class="flex align-items-center">
+				<RouterLink to="/admin/inquiries">Inquiries</RouterLink>
+				<Badge v-show="inquiriesStore.unread.length > 0" :value="inquiriesStore.unread.length" size="small" style="transform: scale(.8)" severity="danger"/>
+			</div>
+		</div>
 	</NavBar>
 
-	<div class="px-4 pb-4"><RouterView /></div>
+	<div class="p-3 pt-0"><RouterView /></div>
 
 	<UploaderWindow />
 </template>

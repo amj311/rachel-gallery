@@ -1,6 +1,7 @@
 import { UserService } from "../services/UserService";
 import { GalleryService } from "../services/GalleryService";
 import { GoogleDriveService } from "../services/GoogleDriveService";
+import { InquiryService } from "../services/InquiryService";
 
 export default (route, _, done) => {
 	// Validate user is admin
@@ -154,6 +155,26 @@ export default (route, _, done) => {
 		}
 	})
 
+
+	// INQUIRIES
+
+	route.get('/inquiries', async (request, reply) => {
+		const data = await InquiryService.getInquiryList();
+		return {
+			success: true,
+			data: data
+		}
+	})
+
+	route.put('/inquiry/:id', async (request, reply) => {
+		const { id } = request.params;
+		const data = request.body;
+		const inquiry = await InquiryService.updateInquiry(id, data);
+		return {
+			success: true,
+			data: inquiry
+		}
+	})
 
     done();
 }

@@ -45,7 +45,7 @@ const routes: Array<RouteRecordRaw> = [
 			{
 				path: '/inquiry',
 				name: "Inquiry",
-				component: () => import('@/views/Inquiry.vue'),
+				component: () => import('@/views/NewInquiry.vue'),
 			},
 		],
 	},
@@ -77,14 +77,14 @@ const routes: Array<RouteRecordRaw> = [
 						component: () => import('@/views/admin/EditGallery.vue'),
 					},
 				],
-	
 			},
 
-			// {
-			// 	path: '/admin/users',
-			// 	name: "Users",
-			// 	component: () => import('@/views/admin/Users.vue'),
-			// },
+
+			{
+				path: '/admin/inquiries',
+				name: 'Inquiries',
+				component: () => import('@/views/admin/Inquiries.vue'),
+			},
 		]
 	},
 	
