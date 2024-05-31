@@ -69,16 +69,21 @@ function deleteInquiry(inquiry) {
 				<template #list="{ items }">
 					<div v-for="inquiry of items" :key="inquiry.id" class="inquiry-row white-space-nowrap" :class="{ unread: Boolean(!inquiry.readAt) }" @click="setCurrentInquiry(inquiry)">
 						<div v-if="showAsList">
-							<div class="flex">
-								<div class="name" style="width: max(20%, 100px)">{{ inquiry.name }}</div>
+							<div class="flex gap-2">
+								<div class="name overflow-hidden text-overflow-ellipsis">{{ inquiry.name }}</div>
 								<div class="flex-grow-1" />
 								<div class="date">{{ dayjs(inquiry.createdAt).format('MMM D, YYYY') }}</div>
 							</div>
-							<div class="message flex-grow-1 opacity-80 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
+							<div class="message flex-grow-1 opacity-80 overflow-hidden text-overflow-ellipsis"><template v-if="inquiry.occasion">{{ inquiry.occasion }} - </template>{{ htmlPlain(inquiry.message) }}</div>
 						</div>
-						<div v-else class="flex gap-3">
-							<div class="name" style="max-width: 100px; width: 100px;">{{ inquiry.name }}</div>
-							<div class="message flex-grow-1 opacity-80 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
+						<div v-else class="flex gap-2">
+							<div class="name"><div style="width: 150px" class="overflow-hidden text-overflow-ellipsis">{{ inquiry.name }}</div></div>
+							<div v-if="inquiry.occasion">{{ inquiry.occasion }}</div>
+							<div class="message flex-grow-1 opacity-70 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
+							<div class="hidden lg:flex gap-2">
+								<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-map-marker" />{{ inquiry.location }}</div>
+								<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.peopleQty }}</div>
+							</div>
 							<div class="date">{{ dayjs(inquiry.createdAt).format('MMM D, YYYY') }}</div>
 						</div>
 					</div>
@@ -125,7 +130,7 @@ function deleteInquiry(inquiry) {
 	&.unread {
 		background: #fff;
 
-		& * {
+		& *:not(.message) {
 			font-weight: 600;
 		}
 	}
