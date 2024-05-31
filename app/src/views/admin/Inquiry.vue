@@ -33,6 +33,7 @@ function cleanHTML(html){
 			<small v-if="inquiry.phone"> - {{ inquiry.phone }}</small>
 		</div>
 		<div class="flex flex-wrap gap-3 my-2">
+			<div v-if="inquiry.occasion" class="flex align-items-center gap-1"><i class="pi pi-gift" />{{ inquiry.occasion }}</div>
 			<div v-if="inquiry.date" class="flex align-items-center gap-1"><i class="pi pi-calendar" />{{ dayjs(inquiry.date).format('MMM D, YYYY') }}</div>
 			<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-map-marker" />{{ inquiry.location }}</div>
 			<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.peopleQty }}</div>

@@ -21,14 +21,20 @@ function htmlPlain(html) {
 }
 
 function setCurrentInquiry(inquiry) {
-	state.currentInquiry = inquiry;
-	router.push({ query: { inquiry: inquiry.id } });
+	// if drawer is already open change query w/o adding history
+	if (!router.currentRoute.value.query.inquiry) {
+		router.push({ query: { inquiry: inquiry.id } });
+		state.currentInquiry = inquiry;
+	}
+	else {
+		history.replaceState(null, '', '?inquiry=' + inquiry.id);
+		state.currentInquiry = inquiry;
+	}
 }
 
 function closeCurrentInquiry() {
 	state.currentInquiry = null;
-	router.push({ query: {} });
-
+	router.back();
 }
 
 const showCurrent = computed(() => router.currentRoute.value.query.inquiry && state.currentInquiry);
@@ -39,7 +45,7 @@ const showList = computed(() => !isMobile.value || !showCurrent.value);
 const showAsList = computed(() => isMobile.value || showCurrent.value);
 const asSidebar = computed(() => !isMobile.value && showCurrent.value);
 
-const rows = Math.floor((window.innerHeight - 125) / (isMobile.value ? 61 : 48));
+const rows = computed(() => Math.floor((window.innerHeight - 125) / (showAsList.value ? 61 : 48)));
 
 function markAsUnread(inquiry) {
 	inquiry.readAt = null;
@@ -57,7 +63,7 @@ function deleteInquiry(inquiry) {
 
 
 <template>
-	<div class="flex gap-3" style="max-height: calc(100vh - 5rem)">
+	<div class="flex gap-3 mt-3" style="max-height: calc(100vh - 5rem)">
 		<div v-show="showList" class="flex-grow-1" :class="{ sidebar: asSidebar }" style="max-width: 100%; max-height: 100%;">
 			<DataView :value="inquiriesStore.inquiries" paginator :rows="rows" data-key="id" style="height: 100%;">
 				<template #list="{ items }">
