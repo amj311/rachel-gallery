@@ -24,18 +24,18 @@ model User {
 // }
 
 model Inquiry {
-    id         String    @id @default(uuid())
-    name       String
-    email      String
-    message    String
-    phone      String?
-    occasion   String?
-    date       DateTime?
-    location   String?
-    peopleQty  Int?
-    notes      String?
-    read_at    DateTime?
-    created_at DateTime  @default(now())
+    id        String    @id @default(uuid())
+    name      String
+    email     String
+    message   String
+    phone     String?
+    occasion  String?
+    date      DateTime?
+    location  String?
+    peopleQty Int?
+    notes     String?
+    readAt    DateTime?
+    createdAt DateTime  @default(now())
 }
 
 model Gallery {

@@ -18,13 +18,18 @@ export const useInquiriesStore = defineStore('inquiries', () => {
 		},
 
 		unread: computed(() => {
-			return inquiries.value.filter(i => !i.read_at);
+			return inquiries.value.filter(i => !i.readAt);
 		}),
 
 		async updateInquiry(inquiry) {
 			await request.put('admin/inquiry/' + inquiry.id, inquiry);
 			const idx = inquiries.value.indexOf(inquiry);
 			inquiries.value[idx] = inquiry;
+		},
+
+		async deleteInquiry(id: string) {
+			await request.delete('admin/inquiry/' + id);
+			inquiries.value = inquiries.value.filter(i => i.id !== id);
 		}
 	};
 });

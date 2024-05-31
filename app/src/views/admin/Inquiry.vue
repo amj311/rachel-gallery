@@ -9,11 +9,9 @@ const props = defineProps<{
 }>();
 const inquiry = computed(() => props.inquiry );
 
-if (!inquiry.value.read_at) {
-	setTimeout(() => {
-		inquiry.value.read_at = new Date();
-		useInquiriesStore().updateInquiry(inquiry.value);
-	}, 1000);
+if (!inquiry.value.readAt) {
+	inquiry.value.readAt = new Date();
+	useInquiriesStore().updateInquiry(inquiry.value);
 }
 
 function cleanHTML(html){

@@ -6,8 +6,10 @@ import Inquiry from './Inquiry.vue';
 import dayjs from 'dayjs';
 import DataView from 'primevue/dataview';
 import Button from 'primevue/button';
+import { useRouter } from 'vue-router';
 
 const inquiriesStore = useInquiriesStore();
+const router = useRouter();
 
 const state = reactive({
 	currentInquiry: null as any,
@@ -20,18 +22,37 @@ function htmlPlain(html) {
 
 function setCurrentInquiry(inquiry) {
 	state.currentInquiry = inquiry;
+	router.push({ query: { inquiry: inquiry.id } });
 }
 
 function closeCurrentInquiry() {
 	state.currentInquiry = null;
+	router.push({ query: {} });
+
 }
 
-const isMobile = computed(() => useAppStore().isMobile);
-const showList = computed(() => !isMobile.value || !state.currentInquiry);
-const showAsList = computed(() => isMobile.value || state.currentInquiry);
-const asSidebar = computed(() => !isMobile.value && state.currentInquiry);
+const showCurrent = computed(() => router.currentRoute.value.query.inquiry && state.currentInquiry);
 
-const rows = Math.floor((window.innerHeight - 100) / (isMobile.value ? 61 : 48));
+
+const isMobile = computed(() => useAppStore().isMobile);
+const showList = computed(() => !isMobile.value || !showCurrent.value);
+const showAsList = computed(() => isMobile.value || showCurrent.value);
+const asSidebar = computed(() => !isMobile.value && showCurrent.value);
+
+const rows = Math.floor((window.innerHeight - 125) / (isMobile.value ? 61 : 48));
+
+function markAsUnread(inquiry) {
+	inquiry.readAt = null;
+	inquiriesStore.updateInquiry(inquiry);
+	closeCurrentInquiry();
+}
+
+function deleteInquiry(inquiry) {
+	if (!confirm('Are you sure you want to delete this inquiry?')) return;
+	inquiriesStore.deleteInquiry(inquiry.id);
+	closeCurrentInquiry();
+}
+
 </script>
 
 
@@ -40,7 +61,7 @@ const rows = Math.floor((window.innerHeight - 100) / (isMobile.value ? 61 : 48))
 		<div v-show="showList" class="flex-grow-1" :class="{ sidebar: asSidebar }" style="max-width: 100%; max-height: 100%;">
 			<DataView :value="inquiriesStore.inquiries" paginator :rows="rows" data-key="id" style="height: 100%;">
 				<template #list="{ items }">
-					<div v-for="inquiry of items" :key="inquiry.id" class="inquiry-row white-space-nowrap" :class="{ unread: Boolean(!inquiry.read_at) }" @click="setCurrentInquiry(inquiry)">
+					<div v-for="inquiry of items" :key="inquiry.id" class="inquiry-row white-space-nowrap" :class="{ unread: Boolean(!inquiry.readAt) }" @click="setCurrentInquiry(inquiry)">
 						<div v-if="showAsList">
 							<div class="flex">
 								<div class="name" style="width: max(20%, 100px)">{{ inquiry.name }}</div>
@@ -59,9 +80,12 @@ const rows = Math.floor((window.innerHeight - 100) / (isMobile.value ? 61 : 48))
 			</DataView>
 		</div>
 		<div v-if="asSidebar" class="divider" />
-		<div v-if="state.currentInquiry" class="current-inquiry flex-grow-1">
+		<div v-if="showCurrent" class="current-inquiry flex-grow-1">
 			<div class="flex">
 				<Button icon="pi pi-arrow-left" text size="small" @click="closeCurrentInquiry" />
+				<div class="flex-grow-1" />
+				<Button icon="pi pi-envelope" text size="small" v-tooltip.bottom="'Mark as unread'" @click="markAsUnread(state.currentInquiry)" />
+				<Button icon="pi pi-trash" text size="small"  v-tooltip.left="'Delete'" @click="deleteInquiry(state.currentInquiry)" />
 			</div>
 			<Inquiry :inquiry="state.currentInquiry" :key="state.currentInquiry.id" />
 		</div>

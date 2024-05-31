@@ -11,7 +11,7 @@ export const InquiryService = {
         return await prisma.inquiry.findMany({
 			where,
 			orderBy: {
-				created_at: 'desc' as any,
+				createdAt: 'desc' as any,
 			},
 		});
     },

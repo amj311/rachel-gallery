@@ -176,5 +176,13 @@ export default (route, _, done) => {
 		}
 	})
 
+	route.delete('/inquiry/:id', async (request, reply) => {
+		const { id } = request.params;
+		await InquiryService.deleteInquiry(id);
+		return {
+			success: true,
+		}
+	})
+
     done();
 }
