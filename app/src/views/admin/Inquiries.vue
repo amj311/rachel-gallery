@@ -26,17 +26,19 @@ function closeCurrentInquiry() {
 	state.currentInquiry = null;
 }
 
-const showList = computed(() => !useAppStore().isMobile || !state.currentInquiry);
-const showAsList = computed(() => useAppStore().isMobile || state.currentInquiry);
-const asSidebar = computed(() => !useAppStore().isMobile && state.currentInquiry);
+const isMobile = computed(() => useAppStore().isMobile);
+const showList = computed(() => !isMobile.value || !state.currentInquiry);
+const showAsList = computed(() => isMobile.value || state.currentInquiry);
+const asSidebar = computed(() => !isMobile.value && state.currentInquiry);
 
+const rows = Math.floor((window.innerHeight - 100) / (isMobile.value ? 61 : 48));
 </script>
 
 
 <template>
-	<div class="flex gap-3">
-		<div v-show="showList" class="flex-grow-1" :class="{ sidebar: asSidebar }">
-			<DataView :value="inquiriesStore.inquiries" paginator :rows="5" data-key="id">
+	<div class="flex gap-3" style="max-height: calc(100vh - 5rem)">
+		<div v-show="showList" class="flex-grow-1" :class="{ sidebar: asSidebar }" style="max-width: 100%; max-height: 100%;">
+			<DataView :value="inquiriesStore.inquiries" paginator :rows="rows" data-key="id" style="height: 100%;">
 				<template #list="{ items }">
 					<div v-for="inquiry of items" :key="inquiry.id" class="inquiry-row white-space-nowrap" :class="{ unread: Boolean(!inquiry.read_at) }" @click="setCurrentInquiry(inquiry)">
 						<div v-if="showAsList">
@@ -47,8 +49,8 @@ const asSidebar = computed(() => !useAppStore().isMobile && state.currentInquiry
 							</div>
 							<div class="message flex-grow-1 opacity-80 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
 						</div>
-						<div v-else class="flex">
-							<div class="name" style="width: max(20%, 100px)">{{ inquiry.name }}</div>
+						<div v-else class="flex gap-3">
+							<div class="name" style="max-width: 100px; width: 100px;">{{ inquiry.name }}</div>
 							<div class="message flex-grow-1 opacity-80 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
 							<div class="date">{{ dayjs(inquiry.createdAt).format('MMM D, YYYY') }}</div>
 						</div>
@@ -61,7 +63,7 @@ const asSidebar = computed(() => !useAppStore().isMobile && state.currentInquiry
 			<div class="flex">
 				<Button icon="pi pi-arrow-left" text size="small" @click="closeCurrentInquiry" />
 			</div>
-			<Inquiry :inquiry="state.currentInquiry" />
+			<Inquiry :inquiry="state.currentInquiry" :key="state.currentInquiry.id" />
 		</div>
 	</div>
 	
@@ -69,9 +71,14 @@ const asSidebar = computed(() => !useAppStore().isMobile && state.currentInquiry
 
 
 <style scoped lang="scss">
+:deep(.p-dataview-content) {
+	max-height: calc(100vh - 9rem);
+	overflow: hidden;
+	overflow-y: auto;
+}
 
 .sidebar {
-	max-width: 20rem;
+	max-width: 20rem !important;
 }
 
 .inquiry-row {

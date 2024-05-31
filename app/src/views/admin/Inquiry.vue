@@ -16,12 +16,8 @@ if (!inquiry.value.read_at) {
 	}, 1000);
 }
 
-const state = reactive({
-});
-
-
 function cleanHTML(html){
-	return html.replace(/<.*?script.*\/?>/gi, '');
+	return html.replace(/(<\s*?script[^>]*)>([^<]*)?(<\s*\/[^>]*>)?/gi, '');
 }
 
 </script>
@@ -35,13 +31,13 @@ function cleanHTML(html){
 			<div>{{ dayjs(inquiry.createdAt).format('MMM D, YYYY') }}</div>
 		</div>
 		<div>
-			{{ inquiry.email }}
-			<span v-if="inquiry.phone"> - {{ inquiry.phone }}</span>
+			<small>{{ inquiry.email }}</small>
+			<small v-if="inquiry.phone"> - {{ inquiry.phone }}</small>
 		</div>
-		<div class="flex flex-wrap gap-3">
+		<div class="flex flex-wrap gap-3 my-2">
+			<div v-if="inquiry.date" class="flex align-items-center gap-1"><i class="pi pi-calendar" />{{ dayjs(inquiry.date).format('MMM D, YYYY') }}</div>
 			<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-map-marker" />{{ inquiry.location }}</div>
-			<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.location }}</div>
-			<div v-if="inquiry.date" class="flex align-items-center gap-1"><i class="pi pi-calendar" />{{ inquiry.date }}</div>
+			<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.peopleQty }}</div>
 		</div>
 		<div class="my-3">
 			<div v-html="cleanHTML(inquiry.message)" />
