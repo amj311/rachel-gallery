@@ -126,6 +126,14 @@ async function loadGallery() {
 			authMode.value = 'code';
 		}
 
+		// Remove deleted photos from favorites
+		for (const id of state.favoriteIds.values()) {
+			if (!allPhotos.value.find(p => p.id === id)) {
+				state.favoriteIds.delete(id);
+			}
+			localStorage.setItem(favoritesKey.value, JSON.stringify(Array.from(state.favoriteIds)));
+		}
+
 		useAppStore().setTitle(state.gallery.name);
 	}
 
@@ -358,6 +366,8 @@ async function loadDownloadLink() {
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
+					{{ favoritePhotos }}
+					{{ state.favoriteIds }}
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
