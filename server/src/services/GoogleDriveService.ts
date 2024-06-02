@@ -45,7 +45,10 @@ export const GoogleDriveService = {
 			const { data } = await drive!.about.get({
 				fields: 'storageQuota, user',
 			});
-			return data;
+			return {
+				...data,
+				targetFolderId: process.env.GOOGLE_DRIVE_TARGET_FOLDER_ID!,
+			};
 		}
 		catch(error) {
 			console.error(error);

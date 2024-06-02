@@ -300,6 +300,10 @@ async function copyLink() {
 							<div>
 								<InputText v-model="state.gallery.clientEmail" placeholder="Email" />
 							</div>
+							<label>Client</label>
+							<div>
+								<InputText v-model="state.gallery.client" placeholder="Client" />
+							</div>
 						</div>
 
 					</TabPanel>

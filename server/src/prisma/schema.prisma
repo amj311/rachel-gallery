@@ -24,18 +24,41 @@ model User {
 // }
 
 model Inquiry {
-    id        String    @id @default(uuid())
-    name      String
-    email     String
-    message   String
-    phone     String?
-    occasion  String?
-    date      DateTime?
-    location  String?
-    peopleQty Int?
-    notes     String?
-    readAt    DateTime?
-    createdAt DateTime  @default(now())
+    id          String       @id @default(uuid())
+    name        String
+    email       String
+    message     String
+    phone       String?
+    occasion    String?
+    date        DateTime?
+    location    String?
+    peopleQty   Int?
+    readAt      DateTime?
+    createdAt   DateTime     @default(now())
+    Opportunity Opportunity?
+}
+
+model Client {
+    id            String        @id @default(uuid())
+    name          String
+    email         String
+    phone         String?
+    Opportunities Opportunity[]
+    Galleries     Gallery[]
+}
+
+model Opportunity {
+    id           String   @id @default(uuid())
+    createdAt    DateTime @default(now())
+    contractType String?
+    contractUrl  String?
+
+    Client    Client   @relation(fields: [clientId], references: [id])
+    clientId  String
+    Inquiry   Inquiry? @relation(fields: [inquiryId], references: [id])
+    inquiryId String?  @unique
+    Gallery   Gallery? @relation(fields: [galleryId], references: [id])
+    galleryId String?  @unique
 }
 
 model Gallery {
@@ -46,7 +69,6 @@ model Gallery {
     slug           String?
     date           DateTime?
     isPublished    Boolean   @default(false)
-    coverPhoto     Photo?    @relation(fields: [coverPhotoId], references: [id])
     coverStyle     String?
     coverSettings  Json?
     visibility     String    @default("draft")
@@ -56,7 +78,11 @@ model Gallery {
     clientCanShare Boolean   @default(false)
 
     sections     GallerySection[]
+    coverPhoto   Photo?           @relation(fields: [coverPhotoId], references: [id])
     coverPhotoId String?          @unique
+    Client       Client?          @relation(fields: [clientId], references: [id])
+    clientId     String?
+    Opportunity  Opportunity?
 }
 
 model GallerySection {

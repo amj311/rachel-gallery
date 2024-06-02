@@ -5,6 +5,8 @@ import { GoogleDriveService } from "./GoogleDriveService";
 
 const fullGalleryInclusion = {
 	coverPhoto: true,
+	Client: true,
+	Opportunity: true,
 	sections: {
 		include: {
 			photos: {
