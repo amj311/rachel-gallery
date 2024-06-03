@@ -185,11 +185,7 @@ function onDrop(event) {
 
 async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
 	if (!skipConfirm && !confirm('Are you sure you want to delete this photo?')) return;
-	// if (!GoogleUploadService.hasValidToken) {
-	// 	await GoogleUploadService.getToken();
-	// }
 	try {
-		// await GoogleUploadService.deleteFile(photo.googleFileId);
 		await request.delete('admin/photo/' + photo.id);
 		const deleteFromSection = state.gallery.sections.find(s => s.id === photo.gallerySectionId);
 		deleteFromSection.photos = deleteFromSection.photos.filter(p => p.id !== photo.id);
@@ -321,10 +317,12 @@ async function createClient() {
 							<label>Client</label>
 							<div>
 								<Dropdown v-model="state.gallery.clientId" filter placeholder="Select client"
-									:style="{ width: '100%' }" optionLabel="name" optionValue="id"
-									:options="clientStore.clients">
+									:style="{ width: '100%' }" optionLabel="name" optionValue="id" show-clear
+									:options="[{ name: '', id: 'new_client' }].concat(clientStore.clients)"
+								>
 									<template #option="{ option }">
-										{{ option.name }} - {{ option.email }}
+										<div v-if="option.id === 'new_client'" @click="state.showNewClientModal = true" class="w-full">New client...</div>
+										<div v-else>{{ option.name }} - {{ option.email }}</div>
 									</template>
 								</Dropdown>
 							</div>
@@ -446,12 +444,12 @@ async function createClient() {
 				<Button icon="pi pi-times" text @click="state.showNewClientModal = false" size="small" />
 			</div>
 
-			<div>
-				<Input v-model="state.newClient.name" placeholder="Name" />
-				<Input v-model="state.newClient.email" placeholder="Email" />
+			<div class="flex flex-column gap-1">
+				<InputText class="w-full" v-model="state.newClient.name" placeholder="Name" />
+				<InputText class="w-full" v-model="state.newClient.email" placeholder="Email" />
 			</div>
 
-			<div>
+			<div class="flex justify-content-end mt-3">
 				<Button @click="createClient" :loading="state.isCreatingClient">Create</Button>
 			</div>
 		</div>
