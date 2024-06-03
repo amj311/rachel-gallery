@@ -4,7 +4,6 @@ import { reactive, onBeforeMount, watch } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
-import { GoogleUploadService } from '@/services/googleUploadService';
 import GalleryCover from '@/components/GalleryCover.vue';
 import Calendar from 'primevue/calendar';
 import FocalPointInput from '@/components/FocalPointInput.vue';
@@ -21,9 +20,11 @@ import InputGroupAddon from 'primevue/inputgroupaddon';
 import { visibilityOptions } from '@/utils/visibilityOptions';
 import ShareModal from '@/components/GalleryAccessModal.vue';
 import { useToast } from 'primevue/usetoast';
+import { useClientStore } from '@/stores/client.store';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
+const clientStore = useClientStore();
 const toast = useToast();
 
 const coverStyles = [
@@ -42,6 +43,9 @@ const state = reactive({
 	isProcessingFiles: false,
 	imagesToUpload: new Set<any>(),
 	showShareModal: false,
+	showNewClientModal: false,
+	newClient: { name: '', email: '' } as any,
+	isCreatingClient: false,
 });
 
 onBeforeMount(async () => {
@@ -88,7 +92,7 @@ function updateGallery() {
 	nextDebounce = setTimeout(async () => {
 		// Trusting debounce to make sure the gallery name is complete before saving
 		attemptAssignSlug();
-		
+
 		await request.put('admin/gallery/' + state.galleryId, state.gallery);
 		state.isSaving = false;
 		state.lastSaved = new Date();
@@ -196,7 +200,8 @@ async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
 	catch (error) {
 		console.error(error);
 		console.log("Failed to delete photo.");
-		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete photo. Try again later', life: 3000 });	}
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete photo. Try again later', life: 3000 });
+	}
 }
 
 async function deleteSection(section) {
@@ -234,6 +239,26 @@ async function copyLink() {
 	toast.add({ severity: 'success', summary: 'Copied link', life: 3000 });
 }
 
+async function createClient() {
+	try {
+		state.isCreatingClient = true;
+		const client = await clientStore.createClient(state.newClient);
+		state.isCreatingClient = false;
+		state.newClient = { name: '', client: '' } as any;
+		state.gallery.clientId = client.id;
+		state.showNewClientModal = false;
+		toast.add({ severity: 'success', summary: 'Success', detail: 'Client created', life: 3000 });
+	}
+	catch(error) {
+		console.error(error);
+		console.log("Failed to create client code.");
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to create client', life: 3000 });
+	}
+	finally {
+		state.isCreatingClient = false;
+	}
+}
+
 </script>
 
 
@@ -246,7 +271,8 @@ async function copyLink() {
 				<h2>
 					<GhostInput v-model="state.gallery.name" placeholder="Gallery name..." />
 				</h2>
-				<div v-if="state.isSaving" class="flex align-items-center gap-2"><i class="pi pi-spinner pi-spin" /> Saving...</div>
+				<div v-if="state.isSaving" class="flex align-items-center gap-2"><i class="pi pi-spinner pi-spin" />
+					Saving...</div>
 				<small v-else-if="state.lastSaved"> All changes saved</small>
 			</div>
 			<div class="flex-grow-1"></div>
@@ -292,20 +318,17 @@ async function copyLink() {
 									<InputText v-model="state.gallery.slug" placeholder="link" />
 								</InputGroup>
 							</div>
-							<label>Client name</label>
-							<div>
-								<InputText v-model="state.gallery.clientName" placeholder="Name" />
-							</div>
-							<label>Client email</label>
-							<div>
-								<InputText v-model="state.gallery.clientEmail" placeholder="Email" />
-							</div>
 							<label>Client</label>
 							<div>
-								<InputText v-model="state.gallery.client" placeholder="Client" />
+								<Dropdown v-model="state.gallery.clientId" filter placeholder="Select client"
+									:style="{ width: '100%' }" optionLabel="name" optionValue="id"
+									:options="clientStore.clients">
+									<template #option="{ option }">
+										{{ option.name }} - {{ option.email }}
+									</template>
+								</Dropdown>
 							</div>
 						</div>
-
 					</TabPanel>
 
 					<TabPanel header="Cover">
@@ -317,7 +340,8 @@ async function copyLink() {
 									@click="() => state.gallery.coverStyle = style"
 									:classList="['cover-style-option', state.gallery.coverStyle === style ? 'selected' : ''].join(' ')">
 									<div class="cover-small">
-										<GalleryCover :gallery="state.gallery" :style="style" :preview="true" forceMode="desktop" />
+										<GalleryCover :gallery="state.gallery" :style="style" :preview="true"
+											forceMode="desktop" />
 									</div>
 								</div>
 							</div>
@@ -415,25 +439,46 @@ async function copyLink() {
 		<div class="flex justify-content-center"><Button @click="addSection" outlined>&plus; Add Section</Button></div>
 
 
+		<div v-if="state.showNewClientModal" class="modal" style="max-width: 300px">
+			<div class="mb-3 flex align-items-center gap-2">
+				<h3>Create new client</h3>
+				<div class="flex-grow-1"></div>
+				<Button icon="pi pi-times" text @click="state.showNewClientModal = false" size="small" />
+			</div>
+
+			<div>
+				<Input v-model="state.newClient.name" placeholder="Name" />
+				<Input v-model="state.newClient.email" placeholder="Email" />
+			</div>
+
+			<div>
+				<Button @click="createClient" :loading="state.isCreatingClient">Create</Button>
+			</div>
+		</div>
+
 
 		<div v-if="state.showUploadToSection" id="uploadModal" class="modal">
 			<div class="mb-3 flex align-items-center gap-2">
 				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
-				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small" :loading="state.isProcessingFiles">Next</Button>
+				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
+					:loading="state.isProcessingFiles">Next</Button>
 			</div>
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
-				<label for="fileSelect"><div class="drop-text">
-					<div>Drag and drop or <a>select images</a></div>
-				</div></label>
+				<label for="fileSelect">
+					<div class="drop-text">
+						<div>Drag and drop or <a>select images</a></div>
+					</div>
+				</label>
 				<div class="grid-wrapper">
 					<div class="photo-grid">
 						<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
 							<div class="photo-frame">
 								<PhotoFrame :photo="photo as any" size="xs" fillMethod="contain" />
 							</div>
-							<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div>
+							<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" />
+							</div>
 							<div class="filename">{{ photo.filename }}</div>
 						</div>
 					</div>
@@ -602,10 +647,10 @@ async function copyLink() {
 		top: 0;
 		right: 0;
 		z-index: 1;
-        width: 1.5rem;
-        height: 1.5rem;
-        line-height: 1.5rem;
-        font-size: .7rem;
+		width: 1.5rem;
+		height: 1.5rem;
+		line-height: 1.5rem;
+		font-size: .7rem;
 		transform: translate(25%, -25%);
 		justify-content: center;
 		border-radius: 50%;
@@ -629,10 +674,10 @@ async function copyLink() {
 		top: 0;
 		right: 0;
 		z-index: 1;
-        width: 1.5rem;
-        height: 1.5rem;
-        line-height: 1.5rem;
-        font-size: .7rem;
+		width: 1.5rem;
+		height: 1.5rem;
+		line-height: 1.5rem;
+		font-size: .7rem;
 		transform: translate(25%, -25%);
 		justify-content: center;
 		border-radius: 50%;
@@ -676,10 +721,10 @@ async function copyLink() {
 	font-size: .7em;
 	line-break: anywhere;
 	text-align: center;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 #uploadModal {
@@ -721,6 +766,4 @@ async function copyLink() {
 	color: blue;
 	font-weight: bold;
 }
-
-
 </style>

@@ -4,8 +4,6 @@ import 'primeflex/primeflex.css';
 import 'primevue/resources/themes/aura-light-noir/theme.css'
 import 'primeicons/primeicons.css'
 
-// import 'ant-design-vue/dist/reset.css';
-
 import './assets/main.css'
 
 import { createApp } from 'vue'

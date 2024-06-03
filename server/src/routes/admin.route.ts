@@ -2,6 +2,7 @@ import { UserService } from "../services/UserService";
 import { GalleryService } from "../services/GalleryService";
 import { GoogleDriveService } from "../services/GoogleDriveService";
 import { InquiryService } from "../services/InquiryService";
+import { ClientService } from "../services/ClientService";
 
 export default (route, _, done) => {
 	// Validate user is admin
@@ -179,6 +180,43 @@ export default (route, _, done) => {
 	route.delete('/inquiry/:id', async (request, reply) => {
 		const { id } = request.params;
 		await InquiryService.deleteInquiry(id);
+		return {
+			success: true,
+		}
+	})
+
+
+	// CRUD for clients
+	route.get('/clients', async (request, reply) => {
+		const data = await ClientService.getClientList();
+		return {
+			success: true,
+			data: data
+		}
+	})
+
+	route.post('/client', async (request, reply) => {
+		const data = request.body;
+		const client = await ClientService.createClient(data);
+		return {
+			success: true,
+			data: client
+		}
+	})
+
+	route.put('/client/:id', async (request, reply) => {
+		const { id } = request.params;
+		const data = request.body;
+		const client = await ClientService.updateClient(id, data);
+		return {
+			success: true,
+			data: client
+		}
+	})
+
+	route.delete('/client/:id', async (request, reply) => {
+		const { id } = request.params;
+		await ClientService.deleteClient(id);
 		return {
 			success: true,
 		}

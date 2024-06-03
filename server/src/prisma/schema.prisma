@@ -41,7 +41,7 @@ model Inquiry {
 model Client {
     id            String        @id @default(uuid())
     name          String
-    email         String
+    email         String        @unique
     phone         String?
     Opportunities Opportunity[]
     Galleries     Gallery[]

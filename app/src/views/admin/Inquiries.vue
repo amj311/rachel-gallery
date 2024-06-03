@@ -1,21 +1,12 @@
 <script setup lang="ts">
-import { reactive, computed, h } from 'vue';
+import { reactive, computed } from 'vue';
 import { useInquiriesStore } from '@/stores/inquiries.store';
 import { useAppStore } from '@/stores/app.store';
 import Inquiry from './Inquiry.vue';
 import dayjs from 'dayjs';
 import DataView from 'primevue/dataview';
-// import Button from 'primevue/button';
-
+import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import {
-	MailOutlined,
-	DeleteOutlined,
-	EnvironmentOutlined,
-	UserOutlined,
-	ArrowLeftOutlined,
-} from '@/components/icons';
-import { Button } from 'ant-design-vue';
 
 const inquiriesStore = useInquiriesStore();
 const router = useRouter();
@@ -90,8 +81,8 @@ function deleteInquiry(inquiry) {
 							<div v-if="inquiry.occasion">{{ inquiry.occasion }}</div>
 							<div class="message flex-grow-1 opacity-70 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
 							<div class="hidden lg:flex gap-2">
-								<div v-if="inquiry.location" class="flex align-items-center gap-1"><EnvironmentOutlined />{{ inquiry.location }}</div>
-								<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><UserOutlined />{{ inquiry.peopleQty }}</div>
+								<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-map-marker" />{{ inquiry.location }}</div>
+								<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.peopleQty }}</div>
 							</div>
 							<div class="date">{{ dayjs(inquiry.createdAt).format('MMM D, YYYY') }}</div>
 						</div>
@@ -102,10 +93,10 @@ function deleteInquiry(inquiry) {
 		<div v-if="asSidebar" class="divider" />
 		<div v-if="showCurrent" class="current-inquiry flex-grow-1">
 			<div class="flex">
-				<Button :icon="h(ArrowLeftOutlined)" type="text" @click="closeCurrentInquiry" />
+				<Button icon="pi pi-arrow-left" text size="small" @click="closeCurrentInquiry" />
 				<div class="flex-grow-1" />
-				<Button :icon="h(MailOutlined)" type="text" v-tooltip.bottom="'Mark as unread'" @click="markAsUnread(state.currentInquiry)"  />
-				<Button :icon="h(DeleteOutlined)" type="text"  v-tooltip.left="'Delete'" @click="deleteInquiry(state.currentInquiry)" />
+				<Button icon="pi pi-envelope" text size="small" v-tooltip.bottom="'Mark as unread'" @click="markAsUnread(state.currentInquiry)" />
+				<Button icon="pi pi-trash" text size="small"  v-tooltip.left="'Delete'" @click="deleteInquiry(state.currentInquiry)" />
 			</div>
 			<Inquiry :inquiry="state.currentInquiry" :key="state.currentInquiry.id" />
 		</div>

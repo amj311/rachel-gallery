@@ -1,4 +1,3 @@
-import { Gallery } from "@prisma/client";
 import { prisma } from "../prisma/client";
 import { v4 as uuid } from 'uuid';
 import { GoogleDriveService } from "./GoogleDriveService";
@@ -89,6 +88,7 @@ export const GalleryService = {
 				slug: galleryData.slug,
 				clientEmail: galleryData.clientEmail,
 				clientName: galleryData.clientName,
+				clientId: galleryData.clientId,
 				date: galleryData.date ? new Date(galleryData.date).toISOString() : undefined,
 				isPublished: galleryData.isPublished,
 				coverStyle: galleryData.coverStyle,

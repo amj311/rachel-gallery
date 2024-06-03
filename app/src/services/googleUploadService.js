@@ -1,5 +1,5 @@
  import axios from "axios";
- import request from "./request";
+import request from "./request";
 
 export const GoogleUploadService = {
 	googleClient: null,
