@@ -38,13 +38,24 @@ html {
 
 
 /* PRIME VUE OVERRIDES */
+
+/*  toast icon */
 .p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon.p-icon {
     width: 1.75rem;
     height: 1.75rem;
     padding: .3em;
 }
 
+
+/* icons */
 .pi {
 	font-size: inherit;
 	line-height: inherit;
+}
+
+
+/* Icons within inputs */
+.p-dropdown-filter-icon, .p-dropdown-clear-icon {
+    top: 50%;
+    transform: translateY(-50%);
 }

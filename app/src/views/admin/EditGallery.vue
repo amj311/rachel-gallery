@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, watch } from 'vue';
+import { reactive, onBeforeMount, watch, computed } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
@@ -21,6 +21,7 @@ import { visibilityOptions } from '@/utils/visibilityOptions';
 import ShareModal from '@/components/GalleryAccessModal.vue';
 import { useToast } from 'primevue/usetoast';
 import { useClientStore } from '@/stores/client.store';
+import debounce from '@/utils/debounce';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -72,38 +73,51 @@ onBeforeMount(async () => {
 	}
 })
 
-let oldGallery = 'null';
-watch(state, (newState) => {
-	if (!state.skipAutoSave && oldGallery !== 'null' && JSON.stringify(newState.gallery) !== oldGallery) {
-		updateGallery();
+// handle change detection and autosave
+const galleryState = computed(() => JSON.stringify(state.gallery));
+watch(galleryState, () => {
+	if (!state.skipAutoSave && galleryState.value !== 'null') {
+		debounceGallery();
 	}
-	oldGallery = JSON.stringify(newState.gallery);
 })
 
 const saveDebounceTime = 1000;
-let nextDebounce = 0;
+const debounceGallery = debounce(updateGallery, saveDebounceTime, () => state.isSaving = true);
 
-function updateGallery() {
-	if (nextDebounce > 0) {
-		clearTimeout(nextDebounce);
+// maintain last save to abort when nothing changes
+let lastSave = 'null';
+async function updateGallery() {
+	if (JSON.stringify(state.gallery) === lastSave) {
+		state.isSaving = false;
+		return;
 	}
 
-	state.isSaving = true;
-	nextDebounce = setTimeout(async () => {
-		// Trusting debounce to make sure the gallery name is complete before saving
-		attemptAssignSlug();
+	lastSave = JSON.stringify(state.gallery);
 
-		await request.put('admin/gallery/' + state.galleryId, state.gallery);
-		state.isSaving = false;
-		state.lastSaved = new Date();
-	}, saveDebounceTime) as any;
+	// Trusting debounce to make sure the gallery name is complete before saving
+	attemptAssignSlug();
+
+	await request.put('admin/gallery/' + state.galleryId, state.gallery);
+	state.isSaving = false;
+	state.lastSaved = new Date();
 }
+
 
 function attemptAssignSlug() {
 	if (!state.gallery.slug && state.gallery.name && state.gallery.name !== 'New Gallery') {
 		state.gallery.slug = state.gallery.name.toLowerCase().replace(/([^a-z0-9]+)/gi, '-');
 	}
 }
+
+// handle selecting 'new client'
+const clientId = computed(() => state.gallery?.clientId);
+watch(clientId, (clientId, oldClientId) => {
+	// console.log(newState.gallery?.clientId, oldState.gallery?.clientId)
+	if (clientId === 'new_client') {
+		console.log("hi")
+		state.gallery.clientId = oldClientId;
+	}
+})
 
 function assignCoverPhoto(photo) {
 	state.gallery.coverPhoto = photo;
