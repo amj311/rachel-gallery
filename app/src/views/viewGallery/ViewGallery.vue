@@ -366,8 +366,6 @@ async function loadDownloadLink() {
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
-					{{ favoritePhotos }}
-					{{ state.favoriteIds }}
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
