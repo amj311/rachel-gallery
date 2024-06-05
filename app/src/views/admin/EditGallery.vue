@@ -75,8 +75,8 @@ onBeforeMount(async () => {
 
 // handle change detection and autosave
 const galleryState = computed(() => JSON.stringify(state.gallery));
-watch(galleryState, () => {
-	if (!state.skipAutoSave && galleryState.value !== 'null') {
+watch(galleryState, (newState, oldState) => {
+	if (!state.skipAutoSave && newState !== 'null' && oldState !== 'null') {
 		debounceGallery();
 	}
 })
@@ -319,7 +319,7 @@ async function createClient() {
 						<div class="settings-grid">
 							<label>Gallery date</label>
 							<div>
-								<Calendar v-model="state.gallery.date" class="galleryDate" />
+								<Calendar v-model="state.gallery.date" class="" />
 							</div>
 							<label>Direct link</label>
 							<div>
