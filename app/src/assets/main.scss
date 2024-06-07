@@ -1,4 +1,4 @@
-@import './base.css';
+@import './base.scss';
 
 html {
 	scroll-behavior: smooth;
@@ -38,6 +38,44 @@ html {
 
 
 /* PRIME VUE OVERRIDES */
+
+.p-button {
+	background-color: $primary;
+	border-color: $primary;
+
+	&:hover {
+		background-color: $primary-dark;
+		border-color: $primary-dark;
+	}
+
+	&-text {
+		background-color: transparent;
+		border-color: transparent;
+
+		&:hover {
+			background-color: $primary-thin;
+			border-color: $primary-thin;
+		}
+	}
+
+	&-outlined {
+		background-color: transparent;
+		border-color: $primary;
+		color: $primary;
+
+		&:hover {
+			color: #fff;
+		}
+	}
+}
+
+.p-focus {
+	background-color: $primary-thin;
+}
+.p-highlight {
+	background-color: $primary;
+}
+
 
 /*  toast icon */
 .p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon.p-icon {
