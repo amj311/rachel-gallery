@@ -52,7 +52,7 @@ const state = reactive({
 	} | null,
 });
 
-const megaBytes = ref(8); // for testing
+const megaBytes = ref(2); // for testing
 
 const isMobile = computed(() => useAppStore().isMobile);
 const isLoggedIn = computed(() => userStore.isLoggedIn);
@@ -198,14 +198,14 @@ function downloadMenu(photos, cb?) {
 
 async function startDownloadPhotos(photos, hiRes = false) {
 	// download individual hi res through google
-	if (hiRes && photos.length === 1) {
-		const link = document.createElement('a');
-		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
-		link.download = photos[0].filename;
-		link.click();
-		link.remove();
-		return;
-	}
+	// if (hiRes && photos.length === 1) {
+	// 	const link = document.createElement('a');
+	// 	link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
+	// 	link.download = photos[0].filename;
+	// 	link.click();
+	// 	link.remove();
+	// 	return;
+	// }
 
 
 	if (state.pendingDownload) {
@@ -232,11 +232,32 @@ async function startDownloadPhotos(photos, hiRes = false) {
 
 			let maxBytes = megaBytes.value * 1e+6; // X MB
 			console.log(photo.size, maxBytes);
-			// if (hiRes && photo.size > maxBytes) {
-			// 	console.log('hi res');
-			// 	let ratio = maxBytes / photo.size;
-			// 	width = photo.width * ratio;
-			// }
+			if (hiRes && photo.size > maxBytes) {
+				// compute new width to approximate desired size
+				const scaleRatio = maxBytes / photo.size;
+				const heightRatio = photo.height / width;
+				const targetArea = (width * photo.height) * scaleRatio;
+				const range = 1000;
+				let newArea;
+				let lowRatio = 0.1;
+				let highRatio = 1;
+				let widthRatio;
+				let itr = 0;
+
+				while (itr < 100 && (!newArea || Math.abs(newArea - targetArea) > range)) {
+					widthRatio = ((highRatio - lowRatio) / 2) + lowRatio;
+					const newWidth = width * widthRatio;
+					newArea = newWidth * (newWidth * heightRatio);
+					console.log(widthRatio, newArea, targetArea);
+					if (newArea > targetArea) {
+						highRatio = widthRatio;
+					} else {
+						lowRatio = widthRatio;
+					}
+					itr += 1;
+				}
+				width = width * widthRatio;
+			}
 			if (!hiRes) {
 				if (photo.width < photo.height) {
 					width = 1600 * (photo.width / photo.height);
@@ -247,10 +268,9 @@ async function startDownloadPhotos(photos, hiRes = false) {
 			}
 
 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
-			
+
 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
-			// console.log(blob.size);
 		}
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
@@ -314,7 +334,7 @@ async function loadDownloadLink() {
 			<GalleryCover :gallery="state.gallery" />
 			<div v-if="canView" class="down-pointer"><i class="pi pi-chevron-down" /></div>
 		</div>
-		
+
 		<div v-if="!canView" class="login-guard">
 			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
 			<div v-if="authMode === 'code'" class="code-modal modal">
@@ -359,7 +379,8 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="section.photos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
-								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(allPhotos, photo)"></div>
+								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(allPhotos, photo)">
+								</div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -375,7 +396,8 @@ async function loadDownloadLink() {
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
-								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openSlideshow(allPhotos, photo)"><i class="pi pi-expand" /></div>
+								<div v-if="isMobile" class="slideshow-trigger button"
+									@click="() => openSlideshow(allPhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -386,8 +408,8 @@ async function loadDownloadLink() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu v-if="doClientActions" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download"
-							text />
+					<DropdownMenu v-if="doClientActions" :model="downloadMenu(favoritePhotos)"><Button
+							icon="pi pi-download" text />
 					</DropdownMenu>
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
@@ -395,7 +417,8 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
-								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(favoritePhotos, photo)"></div>
+								<div class="photo-trigger"
+									@click="() => !isMobile && openSlideshow(favoritePhotos, photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
@@ -407,7 +430,8 @@ async function loadDownloadLink() {
 										</DropdownMenu>
 									</div>
 								</div>
-								<div v-if="isMobile" class="slideshow-trigger button" @click="() => openSlideshow(favoritePhotos, photo)"><i class="pi pi-expand" /></div>
+								<div v-if="isMobile" class="slideshow-trigger button"
+									@click="() => openSlideshow(favoritePhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -457,8 +481,8 @@ async function loadDownloadLink() {
 				</template>
 			</div>
 
-			<Slideshow v-if="showSlideshow" :photos="state.slideshowPhotos"
-				:firstPhoto="state.firstSlideshowPhoto" :onClose="closeSlideshow">
+			<Slideshow v-if="showSlideshow" :photos="state.slideshowPhotos" :firstPhoto="state.firstSlideshowPhoto"
+				:onClose="closeSlideshow">
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
 						@click="toggleFavorite(photo)" size="large" />
@@ -480,12 +504,12 @@ async function loadDownloadLink() {
 	transform: translate(-25px, 0px);
 	zoom: .6;
 	font-size: 1em;
-    aspect-ratio: 1;
-    border-radius: 2em;
-    height: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	aspect-ratio: 1;
+	border-radius: 2em;
+	height: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 
