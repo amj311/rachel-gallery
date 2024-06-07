@@ -5,6 +5,7 @@ import { ref } from 'vue';
 const menu = ref<InstanceType<typeof Menu>>();
 const props = defineProps<{
 	disabled?: boolean
+	style?: any
 }>();
 
 function openMenu(event) {
@@ -14,7 +15,7 @@ function openMenu(event) {
 </script>
 
 <template>
-	<div @click="openMenu" v-bind="$attrs"><slot></slot></div>
+	<span @click="openMenu" v-bind="{ ...$props, ...$attrs }"><slot></slot></span>
 	<Menu ref="menu" id="overlay_menu" :popup="true" v-bind="$attrs">
 		<template #start><slot name="start"></slot></template>
 	</Menu>

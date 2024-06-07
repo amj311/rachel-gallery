@@ -424,6 +424,7 @@ async function createClient() {
 								</div>
 								<div class="options">
 									<DropdownMenu
+										:style="{ width: '100%' }"
 										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
 										<i class="pi pi-ellipsis-v" />
 									</DropdownMenu>
@@ -697,6 +698,12 @@ async function createClient() {
 		color: white;
 		cursor: pointer;
 		display: none;
+
+		i {
+			display: inline-block;
+			width: 100%;
+			text-align: center;
+		}
 	}
 
 	&:hover .options {

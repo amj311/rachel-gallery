@@ -22,6 +22,7 @@ import { Buffer } from 'buffer';
 import JSZip from 'jszip';
 import { ref } from 'vue';
 import { useAppStore } from '@/stores/app.store';
+import InputNumber from 'primevue/inputnumber';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -51,10 +52,13 @@ const state = reactive({
 	} | null,
 });
 
+const megaBytes = ref(8); // for testing
+
 const isMobile = computed(() => useAppStore().isMobile);
 const isLoggedIn = computed(() => userStore.isLoggedIn);
 const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.Client.email);
+const doClientActions = computed(() => isAdmin.value || isClient.value);
 
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
@@ -193,6 +197,17 @@ function downloadMenu(photos, cb?) {
 }
 
 async function startDownloadPhotos(photos, hiRes = false) {
+	// download individual hi res through google
+	if (hiRes && photos.length === 1) {
+		const link = document.createElement('a');
+		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
+		link.download = photos[0].filename;
+		link.click();
+		link.remove();
+		return;
+	}
+
+
 	if (state.pendingDownload) {
 		toast.add({
 			severity: 'warn',
@@ -214,19 +229,28 @@ async function startDownloadPhotos(photos, hiRes = false) {
 		// have to do these one at a time to not crash server
 		for (const photo of photos) {
 			let width = photo.width;
+
+			let maxBytes = megaBytes.value * 1e+6; // X MB
+			console.log(photo.size, maxBytes);
+			// if (hiRes && photo.size > maxBytes) {
+			// 	console.log('hi res');
+			// 	let ratio = maxBytes / photo.size;
+			// 	width = photo.width * ratio;
+			// }
 			if (!hiRes) {
 				if (photo.width < photo.height) {
-					width = 1200 * (photo.width / photo.height);
+					width = 1600 * (photo.width / photo.height);
 				}
 				else {
-					width = 1200;
+					width = 1600;
 				}
 			}
 
 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
-
+			
 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
+			// console.log(blob.size);
 		}
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
@@ -272,8 +296,8 @@ async function loadDownloadLink() {
 	var url = URL.createObjectURL(state.pendingDownload?.finalBlob);
 	const link = document.createElement('a');
 	link.href = url;
-	link.download = state.pendingDownload.downloadName!,
-		link.click();
+	link.download = state.pendingDownload.downloadName!;
+	link.click();
 	link.remove();
 	URL.revokeObjectURL(url);
 
@@ -316,7 +340,7 @@ async function loadDownloadLink() {
 							<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
 								class="small-badge" />
 						</div>
-						<template v-if="isClient">
+						<template v-if="doClientActions">
 							<DropdownMenu :model="downloadMenu(allPhotos)">
 								<Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" />
 							</DropdownMenu>
@@ -326,6 +350,8 @@ async function loadDownloadLink() {
 					</div>
 				</div>
 			</NavBar>
+
+			<InputNumber v-if="isAdmin" v-model="megaBytes" />
 
 			<div class="sections-wrapper">
 				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
@@ -340,12 +366,12 @@ async function loadDownloadLink() {
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
+										<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
 											<div class="button"><i class="pi pi-download" /></div>
 										</DropdownMenu>
 									</div>
 								</div>
-								<div v-if="isClient" class="selector" :class="{ 'show': showSelectors }">
+								<div v-if="doClientActions" class="selector" :class="{ 'show': showSelectors }">
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
@@ -360,7 +386,7 @@ async function loadDownloadLink() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu v-if="isClient" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download"
+					<DropdownMenu v-if="doClientActions" :model="downloadMenu(favoritePhotos)"><Button icon="pi pi-download"
 							text />
 					</DropdownMenu>
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
@@ -376,7 +402,7 @@ async function loadDownloadLink() {
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
+										<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
 											<div class="button"><i class="pi pi-download" /></div>
 										</DropdownMenu>
 									</div>
@@ -436,7 +462,7 @@ async function loadDownloadLink() {
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
 						@click="toggleFavorite(photo)" size="large" />
-					<DropdownMenu v-if="isClient" :model="downloadMenu([photo])">
+					<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
 						<Button text icon="pi pi-download" size="large" />
 					</DropdownMenu>
 				</template>

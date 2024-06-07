@@ -40,35 +40,44 @@ html {
 /* PRIME VUE OVERRIDES */
 
 .p-button {
-	background-color: $primary;
-	border-color: $primary;
+	&:not(&-outlined):not(&-text) {
+		background-color: $primary;
+		border-color: $primary;			
 
-	&:hover {
-		background-color: $primary-dark;
-		border-color: $primary-dark;
+		&:hover {
+			background-color: $primary-dark;
+			border-color: $primary-dark;
+		}
 	}
 
-	&-text {
-		background-color: transparent;
-		border-color: transparent;
 
+	&-text {
 		&:hover {
 			background-color: $primary-thin;
 			border-color: $primary-thin;
 		}
 	}
 
-	&-outlined {
-		background-color: transparent;
-		border-color: $primary;
-		color: $primary;
+	// &-outlined {
+	// 	background-color: transparent;
+	// 	border-color: $primary;
+	// 	color: $primary;
 
-		&:hover {
-			color: #fff;
-		}
+	// 	&:hover {
+	// 		color: #fff;
+	// 	}
+	// }
+
+	&-disabled {
+		filter: grayscale(15%);
+		pointer-events: none;
 	}
 }
 
+// menu and dropdown items
+.p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover, .p-menuitem.p-focus > .p-menuitem-content {
+	background-color: $primary-thin;
+}
 
 .p-dropdown-item {
 	&.p-focus {
