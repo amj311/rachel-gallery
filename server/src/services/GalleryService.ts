@@ -31,7 +31,7 @@ export const GalleryService = {
 						name: 'Section 1',
 						order: 0,
 					}
-				}
+				},
 			}
 		});
     },
@@ -44,6 +44,7 @@ export const GalleryService = {
 			},
 			include: {
 				coverPhoto: true,
+				Client: true,
 				sections: {
 					select: {
 						_count: {
@@ -65,6 +66,7 @@ export const GalleryService = {
             },
 			include: {
 				coverPhoto: true,
+				Client: true,
 			}
         });
     },

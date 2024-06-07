@@ -54,7 +54,7 @@ const state = reactive({
 const isMobile = computed(() => useAppStore().isMobile);
 const isLoggedIn = computed(() => userStore.isLoggedIn);
 const isAdmin = computed(() => userStore.currentUser?.isAdmin);
-const isClient = computed(() => userStore.currentUser?.email === state.gallery.clientEmail);
+const isClient = computed(() => userStore.currentUser?.email === state.gallery.Client.email);
 
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);

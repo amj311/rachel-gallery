@@ -45,7 +45,7 @@ async function createNewGallery() {
 					<Card size="small" :style="{ width: '100%', zoom: .8 }" class="overflow-hidden cursor-pointer" @click="router.push(`/admin/galleries/${gallery.id}`)">
 						<template #header><div class="cover-small"><GalleryCover :gallery="gallery" :preview="true" forceMode="desktop" /></div></template>
 						<template #title>{{ gallery.name || 'Untitled' }}</template>
-						<template #subtitle>{{ gallery.clientName || gallery.clientEmail }}</template>
+						<template #subtitle>{{ gallery.Client?.name }}</template>
 						
 						<template #content>
 							<div class="flex align-items-center gap-3">
@@ -80,7 +80,7 @@ async function createNewGallery() {
 
 .gallery-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: 20px;
 	justify-content: center;
 }

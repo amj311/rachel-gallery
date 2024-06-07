@@ -4,7 +4,7 @@ import 'primeflex/primeflex.css';
 import 'primevue/resources/themes/aura-light-noir/theme.css'
 import 'primeicons/primeicons.css'
 
-import './assets/main.css'
+import './assets/main.scss'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

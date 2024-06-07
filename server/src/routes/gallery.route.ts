@@ -44,7 +44,7 @@ export default (route, _, done) => {
 				}
 			}
 
-			if (gallery.clientEmail === request.sessionUser?.email) {
+			if (gallery.Client.email === request.sessionUser?.email) {
 				loadData = true;
 				viewAuth.isAllowedEmail = true;
 			}
