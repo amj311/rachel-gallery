@@ -454,6 +454,12 @@ async function loadDownloadLink() {
 	transform: translate(-25px, 0px);
 	zoom: .6;
 	font-size: 1em;
+    aspect-ratio: 1;
+    border-radius: 2em;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 

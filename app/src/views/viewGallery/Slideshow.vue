@@ -2,6 +2,7 @@
 import { reactive, onBeforeMount, onBeforeUnmount, computed, ref } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import Button from 'primevue/button';
+import { useAppStore } from '@/stores/app.store';
 
 const { photos, firstPhoto, onClose } = defineProps<{
 	photos: any[],
@@ -222,7 +223,7 @@ onBeforeUnmount(() => {
 	.photo-frame {
 		position: relative;
 		height: calc(100% - 110px);
-		width: calc(100% - 50px);
+		width: calc(100% - max(5%, 10px));
 
 		>div {
 			position: absolute;

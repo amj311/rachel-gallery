@@ -475,7 +475,7 @@ async function createClient() {
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
 				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
-					:loading="state.isProcessingFiles">Next</Button>
+					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.size }})</Button>
 			</div>
 			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
 				<label for="fileSelect">
