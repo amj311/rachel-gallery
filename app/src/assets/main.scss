@@ -69,11 +69,14 @@ html {
 	}
 }
 
-.p-focus {
-	background-color: $primary-thin;
-}
-.p-highlight {
-	background-color: $primary;
+
+.p-dropdown-item {
+	&.p-focus {
+		background-color: $primary-thin;
+	}
+	&.p-highlight {
+		background-color: $primary;
+	}	
 }
 
 

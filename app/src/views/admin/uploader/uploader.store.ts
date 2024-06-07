@@ -80,6 +80,7 @@ export const useUploaderStore = defineStore('uploader', {
 
 			// run 5 upload workers
 			for (let i = 0; i < 5; i++) {
+				console.log('Starting upload loop', i);
 				// stagger so we don't grab the same photo on race condition
 				this._doNextUpload();
 				await new Promise(resolve => setTimeout(resolve, 500));
@@ -88,12 +89,13 @@ export const useUploaderStore = defineStore('uploader', {
 
 		// async recurse until upload stack is empty
 		async _doNextUpload() {
-			this.checkGoogleStatus();
+			await this.checkGoogleStatus();
 			if (!this.isGoogleReady) {
 				return;
 			}
 			// get next not-started photo
 			const photo = (this as any).uploadQueue.find((photo) => !photo.uploadStatus);
+			console.log("got photo", photo)
 			if (!photo) {
 				return;
 			}
