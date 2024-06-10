@@ -23,6 +23,8 @@ import JSZip from 'jszip';
 import { ref } from 'vue';
 import { useAppStore } from '@/stores/app.store';
 import InputNumber from 'primevue/inputnumber';
+import OverlayPanel from 'primevue/overlaypanel';
+import RefOpener from '@/components/RefOpener.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -186,26 +188,28 @@ function scrollDown() {
 function downloadMenu(photos, cb?) {
 	return [
 		{
-			label: 'High-res',
-			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
-		},
-		{
-			label: 'Web-size',
+			label: 'Shareable file',
 			command: () => { startDownloadPhotos(photos); cb?.call(); }
-		}
-	]
+		},
+		photos.length === 1 ? {
+			label: `Printable file (${(photos[0].size / 1e+6).toFixed(1)} MB)`,
+			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
+		} : null,
+	].filter(Boolean);
 }
 
+
+// my server can't handle pulling large files from google yet, so full print res must be downloaded one at a time
 async function startDownloadPhotos(photos, hiRes = false) {
 	// download individual hi res through google
-	// if (hiRes && photos.length === 1) {
-	// 	const link = document.createElement('a');
-	// 	link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
-	// 	link.download = photos[0].filename;
-	// 	link.click();
-	// 	link.remove();
-	// 	return;
-	// }
+	if (hiRes && photos.length === 1) {
+		const link = document.createElement('a');
+		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
+		link.download = photos[0].filename;
+		link.click();
+		link.remove();
+		return;
+	}
 
 
 	if (state.pendingDownload) {
@@ -231,46 +235,29 @@ async function startDownloadPhotos(photos, hiRes = false) {
 			let width = photo.width;
 
 			let maxBytes = megaBytes.value * 1e+6; // X MB
-			console.log(photo.size, maxBytes);
-			if (hiRes && photo.size > maxBytes) {
-				// compute new width to approximate desired size
-				const scaleRatio = maxBytes / photo.size;
-				const heightRatio = photo.height / width;
-				const targetArea = (width * photo.height) * scaleRatio;
-				const range = 1000;
-				let newArea;
-				let lowRatio = 0.1;
-				let highRatio = 1;
-				let widthRatio;
-				let itr = 0;
-
-				while (itr < 100 && (!newArea || Math.abs(newArea - targetArea) > range)) {
-					widthRatio = ((highRatio - lowRatio) / 2) + lowRatio;
-					const newWidth = width * widthRatio;
-					newArea = newWidth * (newWidth * heightRatio);
-					console.log(widthRatio, newArea, targetArea);
-					if (newArea > targetArea) {
-						highRatio = widthRatio;
-					} else {
-						lowRatio = widthRatio;
-					}
-					itr += 1;
-				}
-				width = width * widthRatio;
-			}
-			if (!hiRes) {
+			console.log(photo.size * 1e-6, maxBytes / 1e+6);
+			// if (hiRes && photo.size > maxBytes) {
+			// 	// compute new width to approximate desired size
+			// 	// new width = sqrt(area * (width / height))
+			// 	const scaleRatio = maxBytes / photo.size;
+			// 	const targetArea = (width * photo.height) * scaleRatio;
+			// 	const ratio = photo.width / photo.height;
+			// 	width = Math.sqrt(targetArea * ratio);
+			// }
+			// if (!hiRes) {
 				if (photo.width < photo.height) {
 					width = 1600 * (photo.width / photo.height);
 				}
 				else {
 					width = 1600;
 				}
-			}
+			// }
 
 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
 
 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
+			console.log(blob.size * 1e-6);
 		}
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
@@ -361,9 +348,19 @@ async function loadDownloadLink() {
 								class="small-badge" />
 						</div>
 						<template v-if="doClientActions">
-							<DropdownMenu :model="downloadMenu(allPhotos)">
-								<Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" />
-							</DropdownMenu>
+							<RefOpener v-if="doClientActions" :component="OverlayPanel">
+								<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
+								<template #ref>
+									<div class="flex flex-column gap-3 w-20rem">
+										<Button class="justify-content-center" @click="startDownloadPhotos(allPhotos)">Download Gallery</Button>
+										<div>
+											<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
+											<p>This may take several minutes.</p>
+										</div>
+										<p>For printable full-resolution files, download each photo individually.</p>
+									</div>
+								</template>
+							</RefOpener>
 							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text
 								@click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
 						</template>
@@ -371,7 +368,7 @@ async function loadDownloadLink() {
 				</div>
 			</NavBar>
 
-			<InputNumber v-if="isAdmin" v-model="megaBytes" />
+			<!-- <InputNumber v-if="isAdmin" v-model="megaBytes" /> -->
 
 			<div class="sections-wrapper">
 				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
@@ -475,8 +472,11 @@ async function loadDownloadLink() {
 					<div>Preparing download...</div>
 					<div class="flex-grow-1">
 						<ProgressBar
-							:value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)">
-							{{}}</ProgressBar>
+							:mode="state.pendingDownload.readyPhotos.length ? 'determinate' : 'indeterminate'"
+							:value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)"
+						>
+							{{}}
+						</ProgressBar>
 					</div>
 				</template>
 			</div>
