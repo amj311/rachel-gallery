@@ -80,7 +80,7 @@ function deleteInquiry(inquiry) {
 							<div class="name"><div style="width: 150px" class="overflow-hidden text-overflow-ellipsis">{{ inquiry.name }}</div></div>
 							<div v-if="inquiry.occasion">{{ inquiry.occasion }}</div>
 							<div class="message flex-grow-1 opacity-70 overflow-hidden text-overflow-ellipsis">{{ htmlPlain(inquiry.message) }}</div>
-							<div class="hidden lg:flex gap-2">
+							<div class="hidden md:flex gap-2">
 								<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-map-marker" />{{ inquiry.location }}</div>
 								<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.peopleQty }}</div>
 							</div>

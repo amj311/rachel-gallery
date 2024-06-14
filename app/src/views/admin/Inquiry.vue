@@ -3,6 +3,7 @@ import { reactive, defineProps, computed } from 'vue';
 import { useInquiriesStore } from '@/stores/inquiries.store';
 import request from '@/services/request';
 import dayjs from 'dayjs';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	inquiry: any,
@@ -33,13 +34,16 @@ function cleanHTML(html){
 			<small v-if="inquiry.phone"> - {{ inquiry.phone }}</small>
 		</div>
 		<div class="flex flex-wrap gap-3 my-2">
-			<div v-if="inquiry.occasion" class="flex align-items-center gap-1"><i class="pi pi-gift" />{{ inquiry.occasion }}</div>
+			<div v-if="inquiry.occasion" class="flex align-items-center gap-1"><i class="pi pi-camera" />{{ inquiry.occasion }}</div>
 			<div v-if="inquiry.date" class="flex align-items-center gap-1"><i class="pi pi-calendar" />{{ dayjs(inquiry.date).format('MMM D, YYYY') }}</div>
 			<div v-if="inquiry.location" class="flex align-items-center gap-1"><i class="pi pi-map-marker" />{{ inquiry.location }}</div>
 			<div v-if="inquiry.peopleQty" class="flex align-items-center gap-1"><i class="pi pi-users" />{{ inquiry.peopleQty }}</div>
 		</div>
 		<div class="my-3">
 			<div v-html="cleanHTML(inquiry.message)" />
+		</div>
+		<div class="my-6">
+			<Button class="gap-2 py-3" icon="pi pi-camera" outlined label="Plan a Photoshoot" />
 		</div>
 	</div>
 </template>

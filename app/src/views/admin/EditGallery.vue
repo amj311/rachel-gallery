@@ -23,11 +23,14 @@ import { useToast } from 'primevue/usetoast';
 import { useClientStore } from '@/stores/client.store';
 import debounce from '@/utils/debounce';
 import draggable from 'vuedraggable';
+import { useAppStore } from '@/stores/app.store';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
 const clientStore = useClientStore();
 const toast = useToast();
+
+const isMobile = computed(() => useAppStore().isMobile);
 
 const coverStyles = [
 	'full',
@@ -447,7 +450,7 @@ function onPhotoDrop(e) {
 
 				<div v-if="section.photos.length">
 
-					<draggable v-model="section.photos" :animation="200" group="photos" itemKey="id" tag="div" class="photo-grid" @end="onPhotoDrop" :data-sectionid="section.id">
+					<draggable v-model="section.photos" :animation="200" group="photos" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPhotoDrop" :data-sectionid="section.id">
 						<template #header>
 							<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
 								<i class="pi pi-plus" />
@@ -455,14 +458,14 @@ function onPhotoDrop(e) {
 						</template>
 						<template #item="{ element: photo }">
 							<div v-if="!photo.marked_for_deletion" class="photo-grid-item" :data-photoid="photo.id">
-								<div class="photo-frame">
+								<div class="photo-frame" :class="isMobile ? null : 'handle'">
 									<PhotoFrame :photo="photo" />
 								</div>
 								<div class="options">
+									<i v-if="isMobile" class="button pi pi-arrows-alt handle" />
 									<DropdownMenu
-										:style="{ width: '100%' }"
 										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
-										<i class="pi pi-ellipsis-v" />
+										<i class="button pi pi-ellipsis-v" />
 									</DropdownMenu>
 								</div>
 								<div class="filename">{{ photo.filename }}</div>
@@ -488,7 +491,7 @@ function onPhotoDrop(e) {
 		</template>
 
 		<br />
-		<div class="flex justify-content-center"><Button @click="addSection" outlined>&plus; Add Section</Button></div>
+		<div class="flex justify-content-center my-5"><Button @click="addSection" outlined>&plus; Add Section</Button></div>
 
 
 		<div v-if="state.showNewClientModal" class="modal" style="max-width: 300px">
@@ -545,7 +548,9 @@ function onPhotoDrop(e) {
 	</div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../../assets/colors.scss';
+
 .gallery-settings {
 	width: calc(100% - 700px);
 	min-width: 360px;
@@ -685,18 +690,31 @@ function onPhotoDrop(e) {
 	align-items: center;
 }
 
+.handle {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+
 .photo-grid-item {
 	position: relative;
 	max-width: 6rem;
 	padding: .5rem;
+	border: 1px solid transparent;
+	background: #fff;
 
 	&:hover {
-		background-color: #f5f5f5;
+		background-color: $primary-thin;
+		border: 1px solid #eee;
 	}
 
 	&.sortable-ghost {
 		opacity: .4;
 		border: 1px solid lightgrey;
+		cursor: grabbing;
 	}
 
 	.removePhoto {
@@ -727,26 +745,23 @@ function onPhotoDrop(e) {
 
 
 	.options {
-		position: absolute;
-		top: 0;
-		right: 0;
-		z-index: 1;
-		width: 1.5rem;
-		height: 1.5rem;
-		line-height: 1.5rem;
-		font-size: .7rem;
-		transform: translate(25%, -25%);
-		justify-content: center;
-		border-radius: 50%;
-		background: #555;
-		color: white;
-		cursor: pointer;
-		display: none;
-
-		i {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1;
+		height: 0;
+        justify-content: space-between;
+        display: none;
+		
+		.button {
 			display: inline-block;
-			width: 100%;
+			background: #fffe;
+			width: 2em;
+			height: 2em;
+			line-height: 2em;
 			text-align: center;
+			cursor: pointer;
 		}
 	}
 
