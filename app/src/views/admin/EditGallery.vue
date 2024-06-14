@@ -462,7 +462,8 @@ function onPhotoDrop(e) {
 									<PhotoFrame :photo="photo" />
 								</div>
 								<div class="options">
-									<i v-if="isMobile" class="button pi pi-arrows-alt handle" />
+									<i v-show="isMobile" class="button pi pi-arrows-alt handle" />
+									<div class="flex-grow-1"></div>
 									<DropdownMenu
 										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
 										<i class="button pi pi-ellipsis-v" />
