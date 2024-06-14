@@ -22,6 +22,7 @@ import ShareModal from '@/components/GalleryAccessModal.vue';
 import { useToast } from 'primevue/usetoast';
 import { useClientStore } from '@/stores/client.store';
 import debounce from '@/utils/debounce';
+import draggable from 'vuedraggable';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -73,6 +74,10 @@ onBeforeMount(async () => {
 	}
 })
 
+
+const saveDebounceTime = 1000;
+const debounceGallery = debounce(updateGallery, saveDebounceTime, () => state.isSaving = true);
+
 // handle change detection and autosave
 const galleryState = computed(() => JSON.stringify(state.gallery));
 watch(galleryState, (newState, oldState) => {
@@ -81,17 +86,14 @@ watch(galleryState, (newState, oldState) => {
 	}
 })
 
-const saveDebounceTime = 1000;
-const debounceGallery = debounce(updateGallery, saveDebounceTime, () => state.isSaving = true);
-
 // maintain last save to abort when nothing changes
 let lastSave = 'null';
+
 async function updateGallery() {
 	if (JSON.stringify(state.gallery) === lastSave) {
 		state.isSaving = false;
 		return;
 	}
-
 	lastSave = JSON.stringify(state.gallery);
 
 	// Trusting debounce to make sure the gallery name is complete before saving
@@ -100,8 +102,12 @@ async function updateGallery() {
 	await request.put('admin/gallery/' + state.galleryId, state.gallery);
 	state.isSaving = false;
 	state.lastSaved = new Date();
-}
 
+	state.gallery.sections.forEach((section) => {
+		section.photosMovedIn = null;
+		section.photosMovedOut = null;
+	})
+}
 
 function attemptAssignSlug() {
 	if (!state.gallery.slug && state.gallery.name && state.gallery.name !== 'New Gallery') {
@@ -269,6 +275,34 @@ async function createClient() {
 	}
 }
 
+function onPhotoDrop(e) {
+	console.log(e)
+	const fromSection = state.gallery.sections.find(s => s.id === e.from.attributes['data-sectionid'].value);
+	const toSection = state.gallery.sections.find(s => s.id === e.to.attributes['data-sectionid'].value);
+	const photo = e.item._underlying_vm_;
+
+	// mark photo for reassignment
+	if (fromSection.photosMovedIn?.some(p => p === photo.id)) {
+		fromSection.photosMovedIn = fromSection.photosMovedIn.filter(p => p !== photo.id);
+	}
+	if (!fromSection.photosMovedOut) fromSection.photosMovedOut = [photo.id];
+	else fromSection.photosMovedOut.push(photo.id);
+	
+	if (toSection.photosMovedOut?.some(p => p === photo.id)) {
+		toSection.photosMovedOut = toSection.photosMovedOut.filter(p => p !== photo.id);
+	}
+	if (!toSection.photosMovedIn) toSection.photosMovedIn = [photo.id];
+	else toSection.photosMovedIn.push(photo.id);
+	
+	// update all photos with current order
+	for (const section of [fromSection, toSection]) {
+		for (const i in section.photos) {
+			section.photos[i].order = parseInt(i);
+		}
+	}
+	console.log(fromSection, toSection, photo);
+}
+
 </script>
 
 
@@ -412,13 +446,15 @@ async function createClient() {
 				</div>
 
 				<div v-if="section.photos.length">
-					<div class="photo-grid">
-						<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
-							<i class="pi pi-plus" />
-						</div>
 
-						<template v-for="photo in section.photos" :key="photo.id">
-							<div v-if="!photo.marked_for_deletion" class="photo-grid-item">
+					<draggable v-model="section.photos" :animation="200" group="photos" itemKey="id" tag="div" class="photo-grid" @end="onPhotoDrop" :data-sectionid="section.id">
+						<template #header>
+							<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
+								<i class="pi pi-plus" />
+							</div>
+						</template>
+						<template #item="{ element: photo }">
+							<div v-if="!photo.marked_for_deletion" class="photo-grid-item" :data-photoid="photo.id">
 								<div class="photo-frame">
 									<PhotoFrame :photo="photo" />
 								</div>
@@ -432,11 +468,14 @@ async function createClient() {
 								<div class="filename">{{ photo.filename }}</div>
 							</div>
 						</template>
-					</div>
-					<div v-if="!section.expanded && section.photos.length > 0"
+					</draggable>
+
+					<div v-if="section.photos.length > 0"
 						class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4"
-						@click="section.expanded = true">
-						View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" />
+						@click="section.expanded = !section.expanded"
+					>
+						<template v-if="!section.expanded">View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" /></template>
+						<template v-else>View less <i class="pi pi-chevron-up" /></template>
 					</div>
 				</div>
 
@@ -653,6 +692,11 @@ async function createClient() {
 
 	&:hover {
 		background-color: #f5f5f5;
+	}
+
+	&.sortable-ghost {
+		opacity: .4;
+		border: 1px solid lightgrey;
 	}
 
 	.removePhoto {

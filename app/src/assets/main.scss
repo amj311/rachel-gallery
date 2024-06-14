@@ -129,3 +129,18 @@ html {
     background: inherit;
     transform: rotate(45deg) translateY(60%);
 }
+
+// checkbox
+.p-checkbox.p-highlight .p-checkbox-box {
+    border-color: $primary;
+    background: $primary;
+}
+
+// radio
+.p-radiobutton.p-highlight .p-radiobutton-box {
+	border-color: $primary;
+
+	.p-radiobutton-icon {
+		background: $primary;
+	}
+}

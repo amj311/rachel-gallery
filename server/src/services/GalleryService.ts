@@ -81,6 +81,24 @@ export const GalleryService = {
     },
 
     async updateGallery(id: string, galleryData) {
+		for (const section of galleryData.sections) {
+			if (section.photosMovedIn) {
+				for (const photoId of galleryData.sections[0].photosMovedIn) {
+					await prisma.gallerySection.update({
+						where: {
+							id:  section.id
+						},
+						data: {
+							photos: {
+								connect: {
+									id: photoId,
+								}
+							}
+						}
+					})
+				}
+			}
+		}
         return await prisma.gallery.update({
             where: {
                 id,
@@ -114,7 +132,18 @@ export const GalleryService = {
 						data: {
 							name: section.name,
 							order: section.order,
-						}
+
+							photos: {
+								update: (section.photosMovedIn?.length || section.photosMovedOut?.length) ? section.photos?.map(photo => ({
+									where: { id: photo.id },
+									data: {
+										order: photo.order,
+									}
+								})) : undefined,
+								// connect: section.photosMovedIn?.map(id => ({ id })),
+								// disconnect: section.photosMovedOut?.map(id => ({ id }))
+							},
+						},
 					})),
 					delete: galleryData.sections?.filter(s => s.marked_for_deletion).map(section => ({
 						id: section.id,
