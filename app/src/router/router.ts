@@ -81,6 +81,25 @@ const routes: Array<RouteRecordRaw> = [
 
 
 			{
+				path: '/admin/shoots',
+				name: 'PhotoShoots',
+				component: () => import('@/views/admin/PhotoShoots.vue'),
+
+				children: [
+					{
+						path: '',
+						name: 'PhotoShootList',
+						component: () => import('@/views/admin/PhotoShootList.vue'),
+					},
+					{
+						path: '/admin/shoots/:opportunityId',
+						component: () => import('@/views/admin/PhotoShoot.vue'),
+					},
+				],
+			},
+
+
+			{
 				path: '/admin/inquiries',
 				name: 'Inquiries',
 				component: () => import('@/views/admin/Inquiries.vue'),

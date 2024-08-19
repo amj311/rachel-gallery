@@ -7,6 +7,12 @@ export const ClientService = {
 		});
     },
 
+	async getClientWhere(where) {
+		return await prisma.client.findFirst({
+			where,
+		});
+	},
+
     async getClientList(where?) {
         return await prisma.client.findMany({
 			where,

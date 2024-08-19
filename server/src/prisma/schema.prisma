@@ -48,10 +48,18 @@ model Client {
 }
 
 model Opportunity {
-    id           String   @id @default(uuid())
-    createdAt    DateTime @default(now())
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+
+    occasion  String?
+    date      DateTime?
+    location  String?
+    peopleQty Int?
+
     contractType String?
     contractUrl  String?
+
+    notes String?
 
     Client    Client   @relation(fields: [clientId], references: [id])
     clientId  String

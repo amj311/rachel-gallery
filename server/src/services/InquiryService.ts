@@ -7,12 +7,26 @@ export const InquiryService = {
 		});
     },
 
+	async getInquiry(id) {
+		return await prisma.inquiry.findFirst({
+			where: {
+				id,
+			},
+			include: {
+				Opportunity: true,
+			}
+		});
+	},
+
     async getInquiryList(where?) {
         return await prisma.inquiry.findMany({
 			where,
 			orderBy: {
 				createdAt: 'desc' as any,
 			},
+			include: {
+				Opportunity: true,
+			}
 		});
     },
 

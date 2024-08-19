@@ -3,6 +3,7 @@ import { GalleryService } from "../services/GalleryService";
 import { GoogleDriveService } from "../services/GoogleDriveService";
 import { InquiryService } from "../services/InquiryService";
 import { ClientService } from "../services/ClientService";
+import { OpportunityService } from "../services/OpportunityService";
 
 export default (route, _, done) => {
 	// Validate user is admin
@@ -180,6 +181,78 @@ export default (route, _, done) => {
 	route.delete('/inquiry/:id', async (request, reply) => {
 		const { id } = request.params;
 		await InquiryService.deleteInquiry(id);
+		return {
+			success: true,
+		}
+	})
+
+	route.put('/inquiry/:inquiryId/accept', async (request, reply) => {
+		const { inquiryId } = request.params;
+		const inquiry = await InquiryService.getInquiry(inquiryId);
+
+		if (!inquiry) {
+			throw Error("No such inquiry: " + inquiryId);
+		}
+
+		let client = await ClientService.getClientWhere({ email: inquiry.email });
+		if (!client) {
+			client = await ClientService.createClient({
+				name: inquiry.name,
+				email: inquiry.email,
+				phone: inquiry.phone,
+			})
+		}
+
+		const opportunity = await OpportunityService.createOpportunity({
+			clientId: client.id,
+			inquiryId: inquiry.id,
+			occasion: inquiry.occasion,
+			location: inquiry.location,
+			date: inquiry.date,
+			peopleQty: inquiry.peopleQty,
+		})
+
+		return {
+			success: true,
+			data: opportunity
+		}
+	})
+
+
+
+
+	// OPPORTUNITIES
+
+	route.get('/opportunities', async (request, reply) => {
+		const data = await OpportunityService.getOpportunityList();
+		return {
+			success: true,
+			data: data
+		}
+	})
+
+	route.get('/opportunity/:id', async (request, reply) => {
+		const { id } = request.params;
+		const data = await OpportunityService.getOpportunity(id);
+		return {
+			success: true,
+			data: data
+		}
+	})
+
+	route.put('/opportunity/:id', async (request, reply) => {
+		const { id } = request.params;
+		const data = request.body;
+		const opportunity = await OpportunityService.updateOpportunity(id, data);
+		return {
+			success: true,
+			data: opportunity
+		}
+	})
+
+	route.delete('/opportunity/:id', async (request, reply) => {
+		const { id } = request.params;
+		await OpportunityService.deleteOpportunity(id);
 		return {
 			success: true,
 		}
