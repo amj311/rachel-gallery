@@ -23,6 +23,7 @@ app.addHook("onResponse", (request, reply) => {
 
 app.get('/api/firebase-config', () => {
 	return {
+		env: process.env.FB_API_KEY,
 		data: firebaseConfig
 	}
 });
@@ -83,8 +84,9 @@ app.setErrorHandler((error: any, request, reply) => {
 	try {
 		const port = Number(process.env.PORT || 5000);
 		const host = ("RENDER" in process.env) ? `0.0.0.0` : `localhost`;
-		await app.listen({ port, host })
+		await app.listen({ port, host: `0.0.0.0` })
 		console.log('Server started on ' + port)
+		console.log("Database URL: " + process.env.DATABASE_URL)
 	} catch (err) {
 		console.error(err)
 		process.exit(1)

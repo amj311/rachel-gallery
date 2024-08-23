@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.server.prod
+    image: gallery-server
+    container_name: gallery-server
+    command: node build/index.js
+    ports:
+      - 3101:5000
+    depends_on:
+      - db
+    links:
+      - db
+  db:
+    image: gallery-db:latest
+    container_name: gallery-db
+    build:
+      context: .
+      dockerfile: ./Dockerfile.db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=rachel_gallery
+    ports:
+      - 3102:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+    name: gallery-data

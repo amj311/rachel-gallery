@@ -1,29 +1,29 @@
 {
 	"scripts": {
 		"dev": "nodemon src/index.ts",
-		"build": "yarn --ignore-engines; cd src && prisma generate; tsc",
-		"serve": "cd src && prisma generate; cd ..; node build/index.js"
+		"build": "cd src && prisma generate; tsc",
+		"serve": "node build/index.js"
 	},
 	"dependencies": {
 		"@fastify/cors": "^8.3.0",
 		"@fastify/static": "^6.11.2",
 		"@prisma/client": "^5.2.0",
-		"@types/node": "^20.12.8",
 		"axios": "^1.5.0",
 		"dayjs": "^1.11.9",
 		"dotenv": "^16.3.1",
 		"fastify": "^4.26.2",
-		"firebase": "^10.4.0",
 		"firebase-admin": "^12.1.0",
 		"googleapis": "^126.0.1",
 		"jszip": "^3.10.1",
-		"prisma": "^5.2.0",
 		"sharp": "^0.33.4",
-		"ts-node": "^10.9.1",
-		"typescript": "^5.2.2",
 		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
-		"nodemon": "^3.1.0"
+		"nodemon": "^3.1.0",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.2.2",
+		"@types/node": "^20.12.8",
+		"prisma": "^5.2.0",
+		"firebase": "^10.4.0"
 	}
 }
