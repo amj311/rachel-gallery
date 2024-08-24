@@ -1,24 +1,8 @@
+import '../services/requestInterceptor';
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '@/stores/user.store';
 import { AuthService } from '@/services/authService';
-import request from '@/services/request';
 
-const loadAuth = async () => {
-	AuthService.info.push('loading firebase config');
-	try {
-		const { data } = await request.get('firebase-config');
-		AuthService.info.push("got config")
-		AuthService.setupAuth(data.data);
-
-		console.log("loaded auth")
-		useUserStore().loadSessionData();
-	}
-	catch (e: any) {
-		AuthService.info.push("failed to get config")
-		AuthService.info.push(e.message);
-	}
-}
-loadAuth();
 
 const routes: Array<RouteRecordRaw> = [
 	{
