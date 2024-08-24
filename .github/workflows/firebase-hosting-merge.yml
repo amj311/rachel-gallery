@@ -15,7 +15,7 @@ jobs:
       - run: cd app && yarn --frozen-lockfile && yarn build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          entryPoint: app/dist
+          entryPoint: app/
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RACHEL_GALLERY }}
           channelId: live
