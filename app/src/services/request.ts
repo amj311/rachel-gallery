@@ -6,13 +6,17 @@ const request = axios.create();
 let serverHost = '';
 
 async function discoverHost() {
-	if (process.env.NODE_ENV === 'development') {
-		serverHost = 'http://localhost:5000/api';
-	}
-	else {
-		const res = await axios.get('http://104.37.250.80:31513');
+	// if (process.env.NODE_ENV === 'development') {
+	// 	serverHost = 'http://localhost:5000/api';
+	// }
+	// else {
+		const res = await axios.get('https://intimate-redbird-eager.ngrok-free.app/', {
+			headers: {
+				'ngrok-skip-browser-warning': 'true'
+			}
+		});
 		serverHost = 'http://' + res.data + ':31513/api';
-	}
+	// }
 }
 
 request.interceptors.request.use(async (config) => {
