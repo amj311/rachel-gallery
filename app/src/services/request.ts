@@ -3,27 +3,27 @@ import { AuthService } from "./authService";
 import { useUserStore } from "@/stores/user.store";
 
 const request = axios.create();
-let serverHost = '';
+const serverHost = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api' : '/api';
 
-async function discoverHost() {
-	if (process.env.NODE_ENV === 'development') {
-		serverHost = 'http://localhost:5000/api';
-	}
-	else {
-		const res = await axios.get('https://intimate-redbird-eager.ngrok-free.app/', {
-			headers: {
-				'ngrok-skip-browser-warning': 'true'
-			}
-		});
-		serverHost = 'http://' + res.data + ':31513/api';
-	}
-}
+// async function discoverHost() {
+// 	if (process.env.NODE_ENV === 'development') {
+// 		serverHost = 'http://localhost:5000/api';
+// 	}
+// 	else {
+// 		const res = await axios.get('https://intimate-redbird-eager.ngrok-free.app/', {
+// 			headers: {
+// 				'ngrok-skip-browser-warning': 'true'
+// 			}
+// 		});
+// 		serverHost = 'http://' + res.data + ':31513/api';
+// 	}
+// }
 
 request.interceptors.request.use(async (config) => {
 	// Find base url
-	if (!serverHost) {
-		await discoverHost();
-	}
+	// if (!serverHost) {
+	// 	await discoverHost();
+	// }
 
 	config.baseURL = serverHost;
 	if (config.method !== 'options') {
@@ -48,7 +48,7 @@ request.interceptors.response.use(null, (error) => {
 
 const loadAuth = async () => {
 	try {
-		const { data } = await request.get(`${serverHost}/firebase-config`);
+		const { data } = await request.get('/firebase-config');
 		AuthService.setupAuth(data.data);
 		useUserStore().loadSessionData();
 	}
