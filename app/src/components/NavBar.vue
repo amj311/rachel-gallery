@@ -5,16 +5,24 @@ import { computed } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
 
 const userStore = useUserStore();
+const isDev = computed(() => {
+	return process.env.NODE_ENV === 'development';
+})
 
 </script>
 
 <template>
 	<div class="nav-bar">
-		<div class="logo">RACHEL FLORENCE<br/>PHOTO</div>
-		<div class="flex-grow-1">
-			<slot></slot>
+		<div class="dev-banner" v-if="isDev">
+			You are in DEV MODE. Have fun!
 		</div>
-		<UserMenu />
+		<div class="nav-row">
+			<div class="logo">RACHEL FLORENCE<br/>PHOTO</div>
+			<div class="flex-grow-1">
+				<slot></slot>
+			</div>
+			<UserMenu />
+		</div>
 	</div>
 </template>
 
@@ -22,28 +30,40 @@ const userStore = useUserStore();
 .nav-bar {
 	position: sticky;
 	top: 0;
-	display: flex;
-	gap: 1em;
-	align-items: center;
 	z-index: 10;
 	background-color: #fffd;
 	backdrop-filter: blur(10px);
-	padding: 1em;
 
-	.logo {
-		font-family: serif;
-		line-height: 1.2;
-		font-size: .8rem;
-		letter-spacing: 2px;
+	.nav-row {
+		display: flex;
+		gap: 1em;
+		align-items: center;
+		padding: 1em;
+
+
+		.logo {
+			font-family: serif;
+			line-height: 1.2;
+			font-size: .8rem;
+			letter-spacing: 2px;
+		}
+
+		a {
+			text-decoration: none;
+			color: #000 !important;
+
+			&.router-link-exact-active {
+				border-bottom: 1px solid;
+			}
+		}
 	}
 
-	a {
-		text-decoration: none;
-		color: #000 !important;
-
-		&.router-link-exact-active {
-			border-bottom: 1px solid;
-		}
+	.dev-banner {
+		background: #0a0;
+		text-align: center;
+		color: #fff;
+		padding: 5px;
+		font-size: .8em;
 	}
 }
 </style>

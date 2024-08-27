@@ -22,15 +22,4 @@ const isAdmin = computed(() => {
 </template>
 
 <style scoped>
-.nav-bar {
-	position: sticky;
-	top: 0;
-	display: flex;
-	gap: 1em;
-	align-items: center;
-	z-index: 10;
-	background-color: #fffd;
-	backdrop-filter: blur(10px);
-	padding: 1em;
-}
 </style>
