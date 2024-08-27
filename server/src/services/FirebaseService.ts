@@ -33,12 +33,12 @@ export const firebaseAuthMiddleware = async (request, reply) => {
 		// Assume this is a new SSO login and create new user
 		if (!user) {
 			console.log(decodedToken);
-			const names = decodedToken.name.split(' ');
+			const names = decodedToken.name?.split(' ');
 			const userData = {
 				auth_id: uid,
 				email: decodedToken.email,
-				givenName: names.shift(),
-				familyName: names.pop() || '',
+				givenName: names?.shift() || '',
+				familyName: names?.pop() || '',
 				isAdmin: false,
 			};
 			user = await UserService.createUser(userData);

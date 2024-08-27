@@ -73,7 +73,7 @@ const menu = computed(() => {
 			</template>
 		</DropdownMenu>
 
-	<LoginModal v-if="state.showLoginModal" :closeable="true" @close="() => state.showLoginModal = false" />
+	<LoginModal v-if="!isLoggedIn && state.showLoginModal" :closeable="true" @close="() => state.showLoginModal = false" />
 </template>
 
 

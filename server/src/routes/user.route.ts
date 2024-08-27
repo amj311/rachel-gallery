@@ -10,9 +10,10 @@ export default (fastify, _, done) => {
         }
     });
 
-	fastify.post('/create-account', async (request, reply) => {
-		const data = request.body as Omit<User, 'user_id'>;
-		const user = await UserService.createUser(data);
+	// Update current user
+	fastify.put('/self', async (request, reply) => {
+		const data = request.body as { givenName, familyName };
+		const user = await UserService.updateUser(request.sessionUser.id, data);
 		return {
 			success: true,
 			data: user

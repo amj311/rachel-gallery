@@ -8,6 +8,7 @@ export const useUserStore = defineStore('user', () => {
 	const loginError = ref<String>('');
 	const isLoggedIn = ref(false);
 	const currentUser = ref<any>();
+	const newUserData = ref<any>(null);
 	const session = ref<any>();
 	const isLoading = ref(false);
 
@@ -27,7 +28,12 @@ export const useUserStore = defineStore('user', () => {
 				currentUser.value = null;
 				return;
 			}
+			if (newUserData.value) {
+				await request.put('user/self', newUserData.value);
+				newUserData.value = null;
+			}
 			const { data } = await request.get('user/session');
+			// Push new user details after creating account with email
 			currentUser.value = data.data;
 			session.value = data;
 			loginError.value = '';
@@ -46,7 +52,11 @@ export const useUserStore = defineStore('user', () => {
 	AuthService.onLogInOrOut = () => {
 		loadSessionData();
 	};
- 
+
+	const setNewUserData = (data) => {
+		newUserData.value = data;
+	};
+	
 	const createUser = async (newUser) => {
 		if (!isLoggedIn.value) {
 			throw Error("There is no active session");
@@ -68,6 +78,7 @@ export const useUserStore = defineStore('user', () => {
 		loginError,
 		currentUser,
 		session,
+		setNewUserData,
 		createUser,
 		loadSessionData,
 		isLoading,

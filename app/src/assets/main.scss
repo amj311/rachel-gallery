@@ -144,3 +144,11 @@ html {
 		background: $primary;
 	}
 }
+
+.text-link {
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}

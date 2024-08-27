@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, type Auth, signInWithCredential } from 'firebase/auth';
-// import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, type Auth, signInWithCredential, sendPasswordResetEmail } from 'firebase/auth';
+import { useUserStore } from '@/stores/user.store';
 
 let firebaseApp: FirebaseApp;
 let auth: Auth;
@@ -36,15 +36,21 @@ export const AuthService = {
 		return await auth?.currentUser?.getIdToken();
 	},
 
-	async createEmailUser(email, password) {
+	async createEmailUser(email, password, givenName, familyName) {
+		// flag user store to create new user
+		useUserStore().setNewUserData({givenName, familyName});
+		// register firebase user
+		let newFbUser;
 		try {
 			const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-			const user = userCredential.user;
-			return user;
-		} catch (error: any) {
+			newFbUser = userCredential.user;
+		}
+		catch (error: any) {
 			console.log('createEmailUser error', error)
 			throw new Error(error.message);
 		}
+
+		this.onLogInOrOut?.call(null, newFbUser);
 	},
 
 	async signInWithEmail(email, password) {
@@ -58,12 +64,13 @@ export const AuthService = {
 		}
 	},
 
+	// SIGN IN WITH GOOGLE IS NOT WORKING!
 	async signInWithGoogle() {
 		try {
 			// if (isWeb) {
 				this.info.push('google signin with redirect')
 				const provider = new GoogleAuthProvider();
-				const userCredential:any = await signInWithRedirect(auth, provider);
+				const userCredential:any = await signInWithPopup(auth, provider);
 				const user = userCredential.user;
 				return user;				
 			// }
@@ -78,6 +85,14 @@ export const AuthService = {
 			
 		} catch (error: any) {
 			console.log('signInWithGoogle error', error)
+			throw new Error(error.message);
+		}
+	},
+
+	async sendPasswordResetEmail(email) {
+		try {
+			await sendPasswordResetEmail(auth, email);
+		} catch (error: any) {
 			throw new Error(error.message);
 		}
 	},
