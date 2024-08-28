@@ -449,7 +449,6 @@ function onPhotoDrop(e) {
 				</div>
 
 				<div v-if="section.photos.length">
-
 					<draggable v-model="section.photos" :animation="200" group="photos" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPhotoDrop" :data-sectionid="section.id">
 						<template #header>
 							<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">

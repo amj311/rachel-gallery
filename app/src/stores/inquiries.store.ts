@@ -27,6 +27,11 @@ export const useInquiriesStore = defineStore('inquiries', () => {
 			inquiries.value[idx] = inquiry;
 		},
 
+		async acceptInquiry(inquiry) {
+			const { data } = await request.put('admin/inquiry/' + inquiry.id + '/accept', inquiry);
+			inquiries.value.find(i => i.id === inquiry.id).Opportunity = data.data;
+		},
+
 		async deleteInquiry(id: string) {
 			await request.delete('admin/inquiry/' + id);
 			inquiries.value = inquiries.value.filter(i => i.id !== id);

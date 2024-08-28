@@ -4,6 +4,10 @@ import { useInquiriesStore } from '@/stores/inquiries.store';
 import request from '@/services/request';
 import dayjs from 'dayjs';
 import Button from 'primevue/button';
+import { ref } from 'vue';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 const props = defineProps<{
 	inquiry: any,
@@ -17,6 +21,22 @@ if (!inquiry.value.readAt) {
 
 function cleanHTML(html){
 	return html.replace(/(<\s*?script[^>]*)>([^<]*)?(<\s*\/[^>]*>)?/gi, '');
+}
+
+const isCreatingOpportunity = ref(false);
+
+async function createOpportunity() {
+	try {
+		isCreatingOpportunity.value = true;
+		await useInquiriesStore().acceptInquiry(inquiry.value);
+	}
+	catch (e) {
+		console.error(e);
+		toast.add({ severity: 'error', summary: 'Could not create photo shoot', life: 3000 });
+	}
+	finally {
+		isCreatingOpportunity.value = false;
+	}
 }
 
 </script>
@@ -43,7 +63,8 @@ function cleanHTML(html){
 			<div v-html="cleanHTML(inquiry.message)" />
 		</div>
 		<div class="my-6">
-			<Button class="gap-2 py-3" icon="pi pi-camera" outlined label="Plan a Photoshoot" />
+			<Button v-if="!inquiry.Opportunity" class="gap-2 py-3" icon="pi pi-camera" outlined label="Plan a Photoshoot" @click="createOpportunity" :loading="isCreatingOpportunity" />
+			<Button v-else class="gap-2 py-3" icon="pi pi-camera" outlined label="View Photoshoot" @click="$router.push(`/admin/shoots/${inquiry.Opportunity.id}`)"/>
 		</div>
 	</div>
 </template>
