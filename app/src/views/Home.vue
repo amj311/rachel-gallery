@@ -7,10 +7,6 @@ import { RouterLink, RouterView } from 'vue-router';
 
 const userStore = useUserStore();
 
-const isAdmin = computed(() => {
-	return userStore.currentUser?.isAdmin;
-});
-
 </script>
 
 <template>

@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import UserMenu from '@/components/UserMenu.vue';
-import { useUserStore } from '@/stores/user.store';
 import { computed } from 'vue';
-import { RouterLink, RouterView } from 'vue-router';
+import { useRouter } from 'vue-router';
 
-const userStore = useUserStore();
 const isDev = computed(() => {
 	return process.env.NODE_ENV === 'development';
 })
-
 </script>
 
 <template>
@@ -17,7 +14,7 @@ const isDev = computed(() => {
 			You are in DEV MODE. Have fun!
 		</div>
 		<div class="nav-row">
-			<div class="logo">RACHEL FLORENCE<br/>PHOTO</div>
+			<div class="logo" @click="$router.push('/')">RACHEL FLORENCE<br/>PHOTO</div>
 			<div class="flex-grow-1">
 				<slot></slot>
 			</div>
@@ -46,6 +43,8 @@ const isDev = computed(() => {
 			line-height: 1.2;
 			font-size: .8rem;
 			letter-spacing: 2px;
+			user-select: none;
+			cursor: pointer;
 		}
 
 		a {

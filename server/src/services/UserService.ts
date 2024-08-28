@@ -28,6 +28,26 @@ export const UserService = {
         });
     },
 
+	async isUserClient(id: string, email?: string) {
+		if (!email) {
+			const user = await prisma.user.findUnique({
+				where: {
+					id
+				},
+				select: {
+					email: true
+				}
+			})
+			email = user?.email;
+		}
+		const client = await prisma.client.findFirst({
+			where: {
+				email,
+			},
+		});
+		return Boolean(client);
+	},
+
     async updateUser(id: string, userData: Partial<User>) {
         return await prisma.user.update({
             where: {
