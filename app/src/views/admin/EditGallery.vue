@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, watch, computed } from 'vue';
+import { reactive, onBeforeMount, watch, computed, ref } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
@@ -24,6 +24,8 @@ import { useClientStore } from '@/stores/client.store';
 import debounce from '@/utils/debounce';
 import draggable from 'vuedraggable';
 import { useAppStore } from '@/stores/app.store';
+import PortfolioPhotoSelector from './portfolio/PortfolioPhotoSelector.vue';
+import PhotoGrid from './PhotoGrid.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -51,6 +53,7 @@ const state = reactive({
 	showNewClientModal: false,
 	newClient: { name: '', email: '' } as any,
 	isCreatingClient: false,
+	showAddToPortfolio: false,
 });
 
 onBeforeMount(async () => {
@@ -279,7 +282,6 @@ async function createClient() {
 }
 
 function onPhotoDrop(e) {
-	console.log(e)
 	const fromSection = state.gallery.sections.find(s => s.id === e.from.attributes['data-sectionid'].value);
 	const toSection = state.gallery.sections.find(s => s.id === e.to.attributes['data-sectionid'].value);
 	const photo = e.item._underlying_vm_;
@@ -303,7 +305,11 @@ function onPhotoDrop(e) {
 			section.photos[i].order = parseInt(i);
 		}
 	}
-	console.log(fromSection, toSection, photo);
+}
+
+const photoSelector: any = ref(null);
+function addToPortfolio(photos) {
+	photoSelector.value!.open(photos, state.galleryId);
 }
 
 </script>
@@ -464,7 +470,7 @@ function onPhotoDrop(e) {
 									<i v-show="isMobile" class="button pi pi-arrows-alt handle" />
 									<div class="flex-grow-1"></div>
 									<DropdownMenu
-										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
+										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Add to Portfolio', command: () => addToPortfolio(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
 										<i class="button pi pi-ellipsis-v" />
 									</DropdownMenu>
 								</div>
@@ -526,18 +532,11 @@ function onPhotoDrop(e) {
 						<div>Drag and drop or <a>select images</a></div>
 					</div>
 				</label>
-				<div class="grid-wrapper">
-					<div class="photo-grid">
-						<div v-for="photo in state.imagesToUpload" :key="photo.id" class="photo-grid-item upload-item">
-							<div class="photo-frame">
-								<PhotoFrame :photo="photo as any" size="xs" fillMethod="contain" />
-							</div>
-							<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" />
-							</div>
-							<div class="filename">{{ photo.filename }}</div>
-						</div>
-					</div>
-				</div>
+				<PhotoGrid :photos="state.imagesToUpload">
+					<template #options="{ photo }">
+						<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div>
+					</template>
+				</PhotoGrid>
 			</div>
 			<label for="fileSelect">
 			</label>
@@ -545,6 +544,10 @@ function onPhotoDrop(e) {
 		</div>
 
 		<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
+
+		<PortfolioPhotoSelector
+			ref="photoSelector"
+		/>
 	</div>
 </template>
 
@@ -580,7 +583,7 @@ function onPhotoDrop(e) {
 	outline: 1px solid grey;
 
 	&.selected {
-		outline: 2px solid blue;
+		outline: 2px solid $primary;
 	}
 
 	.cover-small {
@@ -718,31 +721,22 @@ function onPhotoDrop(e) {
 	}
 
 	.removePhoto {
-		position: absolute;
-		top: 0;
-		right: 0;
-		z-index: 1;
 		width: 1.5rem;
 		height: 1.5rem;
 		line-height: 1.5rem;
 		font-size: .7rem;
 		transform: translate(25%, -25%);
+		display: flex;
 		justify-content: center;
 		border-radius: 50%;
 		background: #555;
 		color: white;
 		cursor: pointer;
-		display: none;
 
 		&:hover {
 			background: red;
 		}
 	}
-
-	&:hover .removePhoto {
-		display: flex;
-	}
-
 
 	.options {
         position: absolute;

@@ -4,6 +4,7 @@ import { GoogleDriveService } from "../services/GoogleDriveService";
 import { InquiryService } from "../services/InquiryService";
 import { ClientService } from "../services/ClientService";
 import { OpportunityService } from "../services/OpportunityService";
+import { PortfolioService } from "../services/PortfolioService";
 
 export default (route, _, done) => {
 	// Validate user is admin
@@ -119,7 +120,7 @@ export default (route, _, done) => {
 		}
 	})
 
-	// Upload a photo to a gallery section
+	// Upload a photo to a gallery or portfolio section
 	route.post('/photo', async (request, reply) => {
 		const { galleryId } = request.params;
 		const {
@@ -131,6 +132,7 @@ export default (route, _, done) => {
 			googleFileId,
 			googleOwnerEmail,
 			gallerySectionId,
+			portfolioSectionId,
 		} = request.body;
 		const photo = await GalleryService.addPhotoToSection(galleryId, {
 			filename,
@@ -141,6 +143,7 @@ export default (route, _, done) => {
 			googleFileId,
 			googleOwnerEmail,
 			gallerySectionId,
+			portfolioSectionId,
 		});
 		return {
 			success: true,
@@ -290,6 +293,33 @@ export default (route, _, done) => {
 	route.delete('/client/:id', async (request, reply) => {
 		const { id } = request.params;
 		await ClientService.deleteClient(id);
+		return {
+			success: true,
+		}
+	})
+
+
+	// PORTFOLIO
+	route.get('/portfolio', async (request, reply) => {
+		const data = await PortfolioService.getPortfolio();
+		return {
+			success: true,
+			data: data,
+		}
+	})
+
+	route.post('/portfolio/section', async (request, reply) => {
+		const { type } = request.body;
+		const section = await PortfolioService.createNewSection(type);
+		return {
+			success: true,
+			data: section
+		}
+	})
+
+	route.delete('/portfolio/section/:id', async (request, reply) => {
+		const { id } = request.params;
+		await PortfolioService.deleteSection(id);
 		return {
 			success: true,
 		}

@@ -2,6 +2,7 @@ import '../services/requestInterceptor';
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '@/stores/user.store';
 import { AuthService } from '@/services/authService';
+import Home from '@/views/Home.vue';
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -15,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
 	},
 	{
 		path: '',
-		component: () => import('@/views/Home.vue'),
+		component: Home,
 		// beforeEnter(to, from, next) {
 		// 	const redirect = sessionStorage.getItem('redirectPath');
 		// 	if (useUserStore().currentUser && redirect) {
@@ -87,6 +88,12 @@ const routes: Array<RouteRecordRaw> = [
 				path: '/admin/inquiries',
 				name: 'Inquiries',
 				component: () => import('@/views/admin/Inquiries.vue'),
+			},
+
+			{
+				path: '/admin/portfolio',
+				name: 'EditPortfolio',
+				component: () => import('@/views/admin/portfolio/EditPortfolio.vue'),
 			},
 		]
 	},

@@ -2,8 +2,6 @@ import { defineStore } from 'pinia'
 import request from '@/services/request';
 import { GoogleUploadService } from '@/services/googleUploadService';
 
-// let google;
-
 export const useUploaderStore = defineStore('uploader', {
 	state: () => ({
 		isOpen: false,
@@ -103,6 +101,11 @@ export const useUploaderStore = defineStore('uploader', {
 			this.isUploading = true;
 
 			try {
+
+				// If completely new photo, upload to google drive
+				// Otherwise copy the existing photo
+
+
 				// upload to google
 				photo.uploadStatus = "uploading";
 				await new Promise(resolve => setTimeout(resolve, 5000));

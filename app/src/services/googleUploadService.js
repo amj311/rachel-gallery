@@ -40,6 +40,11 @@ export const GoogleUploadService = {
 		return data;
 	},
 
+	async copyFile(fileId) {
+		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + this.token.access_token);
+		return data;
+	},
+
 	async deleteFile(fileId) {
 		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + this.token.access_token, { trashed: true });
 	},

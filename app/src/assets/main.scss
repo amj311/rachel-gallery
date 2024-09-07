@@ -75,10 +75,21 @@ html {
 }
 
 // menu and dropdown items
-.p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover, .p-menuitem.p-focus > .p-menuitem-content {
-	background-color: $primary-thin;
-}
+.p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) {
+	> .p-menuitem-content:hover, .p-menuitem.p-focus > .p-menuitem-content {
+		background-color: $primary-thin;
+	}
 
+	&.danger {
+		.p-menuitem-text {
+			color: red;
+		}
+
+		> .p-menuitem-content:hover, .p-menuitem.p-focus > .p-menuitem-content {
+			background-color: pink;
+		}
+	}
+}
 .p-dropdown-item {
 	&.p-focus {
 		background-color: $primary-thin;
