@@ -81,24 +81,27 @@ export const GalleryService = {
     },
 
     async updateGallery(id: string, galleryData) {
-		for (const section of galleryData.sections) {
-			if (section.photosMovedIn) {
-				for (const photoId of galleryData.sections[0].photosMovedIn) {
-					await prisma.gallerySection.update({
-						where: {
-							id:  section.id
-						},
-						data: {
-							photos: {
-								connect: {
-									id: photoId,
+		if (galleryData.sections) {
+			for (const section of galleryData.sections) {
+				if (section.photosMovedIn) {
+					for (const photoId of section.photosMovedIn) {
+						await prisma.gallerySection.update({
+							where: {
+								id:  section.id
+							},
+							data: {
+								photos: {
+									connect: {
+										id: photoId,
+									}
 								}
 							}
-						}
-					})
+						})
+					}
 				}
 			}
 		}
+	
         return await prisma.gallery.update({
             where: {
                 id,
@@ -140,8 +143,6 @@ export const GalleryService = {
 										order: photo.order,
 									}
 								})) : undefined,
-								// connect: section.photosMovedIn?.map(id => ({ id })),
-								// disconnect: section.photosMovedOut?.map(id => ({ id }))
 							},
 						},
 					})),
