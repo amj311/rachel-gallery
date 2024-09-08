@@ -3,20 +3,21 @@ import { computed, onBeforeMount, reactive, watch } from 'vue';
 import request from '@/services/request';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
-import { usePortfolioStore } from './portfolio.store';
+import { usePortfolioStore } from '../../../stores/portfolio.store';
 import Button from 'primevue/button';
 import ImageSelector from '../ImageSelector.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import GalleryCover from '@/components/GalleryCover.vue';
 import PhotoGrid from '../PhotoGrid.vue';
+import { useUploaderStore } from '../uploader/uploader.store';
 
 const portfolioStore = usePortfolioStore();
 
 const state = reactive({
 	isVisible: false,
-	filePhotos: new Set(),
-	galleryPhotos: new Set(),
+	filePhotos: new Set<any>(),
+	galleryPhotos: new Set<any>(),
 	openGalleryId: '',
 	openGalleryData: null as any,
 	portfolioSectionId: '',
@@ -29,14 +30,18 @@ const allPhotos = computed(() => [
 ]);
 
 onBeforeMount(async () => {
-	if (portfolioStore.portfolio?.sections.length === 0) {
-		portfolioStore.loadPortfolio();
-	}
 	const { data } = await request.get('admin/gallery');
 	state.galleryList = data.data;
 })
 
 function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
+	if (!portfolioStore.portfolio?.sections.length) {
+		portfolioStore.loadPortfolio();
+	}
+	
+	// start with a clean slate
+	state.filePhotos.clear();
+	state.galleryPhotos.clear();
 	state.isVisible = true;
 	state.galleryPhotos = new Set(galleryPhotos || []);
 	state.portfolioSectionId = portfolioSectionId || '';
@@ -79,6 +84,22 @@ function galleryPhotoClasses(photo) {
 		'cursor-pointer': true,
 		'is-selected': state.galleryPhotos.has(photo)
 	}
+}
+
+const canSubmit = computed(() => {
+	return state.portfolioSectionId !== '' && allPhotos.value.length > 0;
+});
+
+function sendPhotosToUploader() {
+	useUploaderStore().queueImages(Array.from(allPhotos.value.map(p => ({
+		...p,
+		gallerySectionId: null, // Detach from any galleries
+		portfolioSectionId: state.portfolioSectionId,
+		onUploadComplete: (photo) => {
+			usePortfolioStore().portfolio!.sections.find(s => s.id === photo.portfolioSectionId)!.photos.push(photo);
+		}
+	}))));
+	state.isVisible = false;
 }
 </script>
 
@@ -135,7 +156,8 @@ function galleryPhotoClasses(photo) {
 		</div>
 
 		<template #footer>
-			<Button label="Add Photos" :disabled="allPhotos.length === 0" @click="" />
+			<Button label="Cancel" @click="state.isVisible = false" text />
+			<Button label="Add Photos" :disabled="!canSubmit" @click="sendPhotosToUploader" />
 		</template>
 
 	</Dialog>

@@ -309,7 +309,7 @@ function onPhotoDrop(e) {
 
 const photoSelector: any = ref(null);
 function addToPortfolio(photos) {
-	photoSelector.value!.open(photos, state.galleryId);
+	photoSelector.value!.open([photos], state.galleryId);
 }
 
 </script>

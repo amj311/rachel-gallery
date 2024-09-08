@@ -9,7 +9,7 @@ import { useToast } from 'primevue/usetoast';
 import draggable from 'vuedraggable';
 import { useAppStore } from '@/stores/app.store';
 import PortfolioPhotoSelector from './PortfolioPhotoSelector.vue';
-import { usePortfolioStore } from './portfolio.store';
+import { usePortfolioStore } from '../../../stores/portfolio.store';
 import PortfolioSectionButton from './PortfolioSectionButton.vue';
 
 const toast = useToast();

@@ -101,15 +101,21 @@ export const useUploaderStore = defineStore('uploader', {
 			this.isUploading = true;
 
 			try {
-
-				// If completely new photo, upload to google drive
-				// Otherwise copy the existing photo
-
-
-				// upload to google
 				photo.uploadStatus = "uploading";
 				await new Promise(resolve => setTimeout(resolve, 5000));
-				const googleRes = await GoogleUploadService.uploadImage(photo);
+				
+				let googleRes;
+
+				console.log("uploading", photo)
+				// If completely new photo, upload to google drive
+				// Otherwise copy the existing photo
+				if (photo.googleFileId) {
+					googleRes = await GoogleUploadService.copyFile(photo.googleFileId);
+					console.log("copied", googleRes)
+				} else {
+					googleRes = await GoogleUploadService.uploadImage(photo);
+				}
+
 				photo.googleFileId = googleRes.id;
 				photo.googleOwnerEmail = this.googleDriveInfo.user.emailAddress;
 	
