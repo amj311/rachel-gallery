@@ -42,6 +42,9 @@ function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
 	// start with a clean slate
 	state.filePhotos.clear();
 	state.galleryPhotos.clear();
+	state.openGalleryId = '';
+	state.openGalleryData = null;
+
 	state.isVisible = true;
 	state.galleryPhotos = new Set(galleryPhotos || []);
 	state.portfolioSectionId = portfolioSectionId || '';
