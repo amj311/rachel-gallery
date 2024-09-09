@@ -1,4 +1,4 @@
- import axios from "axios";
+import axios from "axios";
 import request from "./request";
 
 export const GoogleUploadService = {
@@ -41,7 +41,9 @@ export const GoogleUploadService = {
 	},
 
 	async copyFile(fileId) {
-		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + this.token.access_token);
+		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + this.token.access_token, {
+			parents: [this.driveInfo.targetFolderId]
+		});
 		return data;
 	},
 
