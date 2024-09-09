@@ -31,7 +31,7 @@ const props = defineProps<{
 </template>
 
 <style scoped lang="scss">
-@import '../../assets/colors.scss';
+@import '@/assets/colors.scss';
 
 .photo-grid {
 	padding-top: 10px;

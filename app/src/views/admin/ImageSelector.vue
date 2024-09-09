@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
-import PhotoGrid from './PhotoGrid.vue';
+import PhotoGrid from '../../components/PhotoGrid.vue';
 
 const images = defineModel<Set<any>>();
 

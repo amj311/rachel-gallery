@@ -308,6 +308,14 @@ export default (route, _, done) => {
 		}
 	})
 
+	route.put('/portfolio', async (request, reply) => {
+		const data = request.body;
+		await PortfolioService.updatePortfolio(data);
+		return {
+			success: true,
+		}
+	})
+
 	route.post('/portfolio/section', async (request, reply) => {
 		const { type } = request.body;
 		const section = await PortfolioService.createNewSection(type);

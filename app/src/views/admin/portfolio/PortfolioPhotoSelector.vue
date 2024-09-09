@@ -9,7 +9,7 @@ import ImageSelector from '../ImageSelector.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import GalleryCover from '@/components/GalleryCover.vue';
-import PhotoGrid from '../PhotoGrid.vue';
+import PhotoGrid from '../../../components/PhotoGrid.vue';
 import { useUploaderStore } from '../uploader/uploader.store';
 
 const portfolioStore = usePortfolioStore();

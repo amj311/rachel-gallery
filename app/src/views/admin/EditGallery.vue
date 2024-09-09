@@ -25,7 +25,7 @@ import debounce from '@/utils/debounce';
 import draggable from 'vuedraggable';
 import { useAppStore } from '@/stores/app.store';
 import PortfolioPhotoSelector from './portfolio/PortfolioPhotoSelector.vue';
-import PhotoGrid from './PhotoGrid.vue';
+import PhotoGrid from '../../components/PhotoGrid.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();

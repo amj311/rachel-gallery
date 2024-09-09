@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import NavBar from '@/components/NavBar.vue';
-import PhotoWall from '@/components/PhotoWall.vue';
-import UserMenu from '@/components/UserMenu.vue';
 import { usePortfolioStore } from '@/stores/portfolio.store';
 import { useUserStore } from '@/stores/user.store';
 import { computed, onBeforeMount } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
+import PortfolioPhotoWall from './PortfolioPhotoWall.vue';
+import PortfolioCarousel from './PortfolioCarousel.vue';
 
 const userStore = useUserStore();
 const portfolioStore = usePortfolioStore();
@@ -16,20 +16,20 @@ onBeforeMount(async () => {
 	}
 })
 
+const sectionComponents = {
+	'photo-wall': PortfolioPhotoWall,
+	'carousel': PortfolioCarousel,
+}
+
 </script>
 
 <template>
 	<div>
 		<NavBar />
 
-		<div class="px-5">
-			<div v-for="section in portfolioStore.portfolio?.sections" :key="section.id">
-			<div class="section-header">{{ section.name }}</div>
-			<PhotoWall :photos="section.photos" />
+		<div v-for="section in portfolioStore.portfolio?.sections" :key="section.id">
+			<component :is="sectionComponents[section.type]" :section="section" />
 		</div>
-			
-		</div>
-
 		<!-- <div class="px-4 pb-4"><RouterView /></div> -->
 	</div>
 </template>
