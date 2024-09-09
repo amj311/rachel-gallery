@@ -36,6 +36,16 @@ export const PortfolioService = {
 					name: section.name,
 					type: section.type,
 					order: section.order,
+					photos: {
+						update: section.photos.map((photo: any) => ({
+							where: {
+								id: photo.id,
+							},
+							data: {
+								order: photo.order,
+							}
+						}))
+					}
 				},
 			});
 		}
