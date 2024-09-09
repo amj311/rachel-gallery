@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import PhotoFrame from '@/components/PhotoFrame.vue';
-import PhotoWall from '@/components/PhotoWall.vue';
 import { computed, onMounted, onUnmounted, reactive } from 'vue';
 
 const props = defineProps<{
@@ -12,8 +11,6 @@ const state = reactive({
 	playingTimer: 0,
 	animationClass: '',
 });
-
-const activePhoto = computed(() => props.section.photos[state.activePhotoIdx]);
 
 async function goToNext() {
 	state.activePhotoIdx = (state.activePhotoIdx + 1) % props.section.photos.length;
