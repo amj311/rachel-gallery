@@ -38,8 +38,7 @@ html {
 
 
 /* PRIME VUE OVERRIDES */
-
-.p-button {
+.p-button-primary {
 	&:not(&-outlined):not(&-text) {
 		background-color: $primary;
 		border-color: $primary;			

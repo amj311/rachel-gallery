@@ -160,9 +160,8 @@ function sendPhotosToUploader() {
 
 		<template #footer>
 			<Button label="Cancel" @click="state.isVisible = false" text />
-			<Button label="Add Photos" :disabled="!canSubmit" @click="sendPhotosToUploader" />
+			<Button label="Add Photos" severity="primary" :disabled="!canSubmit" @click="sendPhotosToUploader" />
 		</template>
-
 	</Dialog>
 </template>
 

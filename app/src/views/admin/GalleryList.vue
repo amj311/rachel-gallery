@@ -34,7 +34,7 @@ async function createNewGallery() {
 		<div class="flex align-items-center gap-3 mt-2 mb-4">
 			<h1>Your Galleries</h1>
 			<div class="flex-grow-1"></div>
-			<Button @click="createNewGallery">&plus; New Gallery</Button>
+			<Button @click="createNewGallery" severity="primary">&plus; New Gallery</Button>
 		</div>
 
 		<div v-if="state.isLoading"><i class="pi pi-spinner pi-spin" /> Loading...</div>
