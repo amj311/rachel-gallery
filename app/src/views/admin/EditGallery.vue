@@ -25,7 +25,7 @@ import debounce from '@/utils/debounce';
 import draggable from 'vuedraggable';
 import { useAppStore } from '@/stores/app.store';
 import PortfolioPhotoSelector from './portfolio/PortfolioPhotoSelector.vue';
-import PhotoGrid from '../../components/PhotoGrid.vue';
+import ImageSelector from './ImageSelector.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -140,14 +140,6 @@ function openUploadToSection(section) {
 	state.showUploadToSection = section;
 }
 
-async function handleFiles(files) {
-	state.isProcessingFiles = true;
-	for (const file of files) {
-		state.imagesToUpload.add(await processImageFile(file));
-	}
-	state.isProcessingFiles = false;
-}
-
 function onImageUploadComplete(newPhoto) {
 	state.gallery.sections.find(s => s.id === newPhoto.gallerySectionId)!.photos.push(newPhoto);
 
@@ -157,57 +149,16 @@ function onImageUploadComplete(newPhoto) {
 	}
 }
 
-function processImageFile(file) {
-	const photo = {
-		blob: file,
-		filename: file.name,
-		size: file.size,
-		type: file.type,
+function sendToUploader() {
+	uploaderStore.queueImages(Array.from(state.imagesToUpload).map(f => ({
+		...f,
 		gallerySectionId: state.showUploadToSection!.id,
 		onUploadComplete: onImageUploadComplete,
-	} as any;
-
-	var url = URL.createObjectURL(photo.blob);
-	photo.dataUrl = url;
-	var img = new Image;
-	return new Promise((resolve, reject) => {
-		img.onload = function () {
-			photo.width = img.width;
-			photo.height = img.height;
-			resolve(photo);
-		};
-		img.src = url;
-	});
-}
-
-function removeFileFromUpload(file) {
-	state.imagesToUpload.delete(file);
-}
-
-function sendToUploader() {
-	uploaderStore.queueImages(Array.from(state.imagesToUpload as any));
+	})));
 	state.imagesToUpload.clear();
 	state.showUploadToSection = null;
 }
 
-function onDragOver(event) {
-	event.stopPropagation();
-	event.preventDefault();
-	event.dataTransfer.dropEffect = 'copy';
-	event.target.classList.add('drag-over');
-}
-function onDragLeave(event) {
-	event.stopPropagation();
-	event.preventDefault();
-	event.dataTransfer.dropEffect = 'none';
-	event.target.classList.remove('drag-over');
-}
-function onDrop(event) {
-	event.stopPropagation();
-	event.preventDefault();
-	handleFiles(event.dataTransfer.files);
-	event.target.classList.remove('drag-over');
-}
 
 async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
 	if (!skipConfirm && !confirm('Are you sure you want to delete this photo?')) return;
@@ -526,21 +477,7 @@ function addToPortfolio(photos) {
 				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
 					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.size }})</Button>
 			</div>
-			<div class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
-				<label for="fileSelect">
-					<div class="drop-text">
-						<div>Drag and drop or <a>select images</a></div>
-					</div>
-				</label>
-				<PhotoGrid :photos="state.imagesToUpload">
-					<template #options="{ photo }">
-						<div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div>
-					</template>
-				</PhotoGrid>
-			</div>
-			<label for="fileSelect">
-			</label>
-			<input type="file" id="fileSelect" hidden multiple :onchange="(event) => handleFiles(event.target.files)">
+			<ImageSelector v-model="state.imagesToUpload" />
 		</div>
 
 		<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />

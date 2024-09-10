@@ -21,7 +21,7 @@ const props = defineProps<{
 				@click="props.onPhotoClick?.call(null, photo)"
 			>
 				<div class="photo-frame">
-					<PhotoFrame :photo="photo" size="xs" fillMethod="contain" />
+					<PhotoFrame :key="photo.id" :photo="photo" size="xs" fillMethod="contain" />
 				</div>
 				<div class="options"><slot name="options" :photo="photo" /></div>
 				<div class="filename">{{ photo.filename }}</div>
