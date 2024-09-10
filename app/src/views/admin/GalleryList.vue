@@ -44,24 +44,28 @@ async function createNewGallery() {
 				<div>
 					<Card size="small" :style="{ width: '100%', zoom: .8 }" class="overflow-hidden cursor-pointer" @click="router.push(`/admin/galleries/${gallery.id}`)">
 						<template #header><div class="cover-small"><GalleryCover :gallery="gallery" :preview="true" forceMode="desktop" /></div></template>
-						<template #title>{{ gallery.name || 'Untitled' }}</template>
-						<template #subtitle>{{ gallery.Client?.name }}</template>
-						
 						<template #content>
 							<div class="flex align-items-center gap-3">
-								<div class="flex align-items-center gap-1" :style="{ color: visibilityOptions[gallery.visibility].color }">
-									<i :class="visibilityOptions[gallery.visibility].icon" />
-									{{ visibilityOptions[gallery.visibility].label }}
+								<div class="flex align-items-center gap-1">
+									<i class="pi pi-user" />
+									<span>{{ gallery.Client?.name }}</span>
 								</div>
 
 								<div class="flex-grow-1"></div>
 
+								<div class="flex align-items-center gap-1" :style="{ color: visibilityOptions[gallery.visibility].color }">
+									<i :class="visibilityOptions[gallery.visibility].icon" />
+									{{ visibilityOptions[gallery.visibility].label }}
+								</div>
+							</div>
 
+							<div class="flex align-items-center gap-3 text-sm">
 								<div class="flex align-items-center gap-1">
 									<i class="pi pi-images" />
 									<span>{{ gallery.sections.reduce((t, s) => t + s._count.photos, 0) }}</span>
 								</div>
-
+								
+								<div class="flex-grow-1"></div>
 
 								<div v-if="gallery.date" class="flex align-items-center gap-1">
 									<i class="pi pi-calendar" />
@@ -87,7 +91,7 @@ async function createNewGallery() {
 
 .cover-small {
 	font-size: 2em;
-	zoom: .18;
+	zoom: .22;
 	width: 100%;
 	aspect-ratio: 1.8;
 	pointer-events: none;
