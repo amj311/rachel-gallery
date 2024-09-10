@@ -17,6 +17,7 @@ const state = reactive({
 	sortBy: 'Date',
 	sortOrder: 'desc',
 	clientId: 'all' as any,
+	showArchived: false,
 });
 
 onBeforeMount(async () => {
@@ -60,8 +61,11 @@ const sortedGalleries = computed(() => {
 	if (state.sortOrder === 'desc') {
 		sorted.reverse();
 	}
-	return state.clientId === 'all' ? sorted : sorted.filter(g => g.clientId === state.clientId);
+	const filtered = sorted.filter(g => (g.visibility === 'archived') === state.showArchived);
+	return state.clientId === 'all' ? filtered : filtered.filter(g => g.clientId === state.clientId);
 })
+
+const numArchived = computed(() => state.galleries.filter(g => g.visibility === 'archived').length);
 </script>
 
 
@@ -71,6 +75,9 @@ const sortedGalleries = computed(() => {
 			<h1>Your Galleries</h1>
 			<div class="flex-grow-1"></div>
 			<div style="zoom: .9">
+				<Button v-if="numArchived" :text="!state.showArchived" :outlined="state.showArchived" @click="state.showArchived = !state.showArchived" :severity="state.showArchived ? 'danger' : 'secondary'">
+					{{ numArchived }} Archived
+				</Button>
 				<DropdownMenu :model="clientOptions">
 					<Button text class="gap-2" icon="pi pi-user" :label="clientLabel" />
 				</DropdownMenu>
