@@ -21,8 +21,8 @@ import { useToast } from 'primevue/usetoast';
 import { useClientStore } from '@/stores/client.store';
 import debounce from '@/utils/debounce';
 import PortfolioPhotoSelector from './portfolio/PortfolioPhotoSelector.vue';
-import ImageSelector from './ImageSelector.vue';
-import PhotoGridDrag from '@/components/PhotoGridDrag.vue';
+import ImageSelector from './ImageFileSelector.vue';
+import PhotoGrid from '@/components/PhotoGrid.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -400,8 +400,9 @@ function addToPortfolio(photos) {
 					<Button icon="pi pi-trash" text @click="deleteSection(section)" />
 				</div>
 
-				<PhotoGridDrag
+				<PhotoGrid
 					v-model="section.photos"
+					:collapsible="true"
 					:draggable="true"
 					:dragGroup="'gallerySections'"
 					:listId="section.id"

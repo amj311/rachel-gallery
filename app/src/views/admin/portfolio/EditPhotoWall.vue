@@ -4,7 +4,7 @@ import request from '@/services/request';
 import { useToast } from 'primevue/usetoast';
 import PortfolioPhotoSelector from './PortfolioPhotoSelector.vue';
 import { usePortfolioStore } from '../../../stores/portfolio.store';
-import PhotoGridDrag from '@/components/PhotoGridDrag.vue';
+import PhotoGrid from '@/components/PhotoGrid.vue';
 
 const toast = useToast();
 const portfolioStore = usePortfolioStore();
@@ -40,8 +40,9 @@ function openUploadToSection(sectionId) {
 
 <template>
 	<div>
-		<PhotoGridDrag
+		<PhotoGrid
 			v-model="section.photos"
+			:collapsible="true"
 			:draggable="true"
 			:dragGroup="section.id"
 			:listId="section.id"

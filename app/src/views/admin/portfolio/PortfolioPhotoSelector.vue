@@ -5,12 +5,12 @@ import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import { usePortfolioStore } from '../../../stores/portfolio.store';
 import Button from 'primevue/button';
-import ImageSelector from '../ImageSelector.vue';
+import ImageSelector from '../ImageFileSelector.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import GalleryCover from '@/components/GalleryCover.vue';
-import PhotoGrid from '../../../components/PhotoGrid.vue';
 import { useUploaderStore } from '../uploader/uploader.store';
+import PhotoGrid from '@/components/PhotoGrid.vue';
 
 const portfolioStore = usePortfolioStore();
 
@@ -120,7 +120,7 @@ function sendPhotosToUploader() {
 		<div>
 			<TabView>
 				<TabPanel :header="`Selected Photos (${allPhotos.length})`">
-					<PhotoGrid :photos="allPhotos" />
+					<PhotoGrid v-model="allPhotos" />
 				</TabPanel>
 
 				<TabPanel header="Choose from Gallery">
@@ -134,7 +134,7 @@ function sendPhotosToUploader() {
 						<div v-if="state.openGalleryData">
 							<template v-for="section in state.openGalleryData.sections" :key="section.id">
 								<div>{{ section.name }}</div>
-								<PhotoGrid :photos="section.photos" @photoClick="toggleGalleryPhoto" :photoClasses="galleryPhotoClasses" />
+								<PhotoGrid v-model="section.photos" @photoClick="toggleGalleryPhoto" :photoClasses="galleryPhotoClasses" />
 								<br /><br />
 							</template>
 						</div>

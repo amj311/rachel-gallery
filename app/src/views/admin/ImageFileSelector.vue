@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
-import PhotoGrid from '../../components/PhotoGrid.vue';
+import PhotoGrid from '@/components/PhotoGrid.vue';
+import { computed } from 'vue';
 
 const images = defineModel<Set<any>>();
 
@@ -63,6 +64,8 @@ function onDrop(event) {
 	event.target.classList.remove('drag-over');
 }
 
+const photoArray = computed(() => Array.from(images.value?.values() || []));
+
 </script>
 
 
@@ -77,7 +80,7 @@ function onDrop(event) {
 					<slot><div>Drag and drop or <a>select images</a></div></slot>
 				</div>
 			</label>
-			<PhotoGrid :photos="images || []">
+			<PhotoGrid v-model="photoArray">
 				<template #options="{ photo }"><div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div></template>
 			</PhotoGrid>
 		</div>

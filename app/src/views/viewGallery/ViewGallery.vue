@@ -363,6 +363,8 @@ async function loadDownloadLink() {
 							</RefOpener>
 							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text
 								@click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
+							<Button v-if="isAdmin" icon="pi pi-cog" text
+								@click="router.push('/admin/galleries/' + state.gallery.id)" v-tooltip.bottom="'Manage Gallery'" />
 						</template>
 					</div>
 				</div>

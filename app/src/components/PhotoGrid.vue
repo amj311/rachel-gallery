@@ -1,37 +1,97 @@
 <script setup lang="ts">
+import { reactive, computed } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
+import * as Drag from 'vuedraggable';
+import { useAppStore } from '@/stores/app.store';
+import DropdownMenu from './DropdownMenu.vue';
+
+const isMobile = computed(() => useAppStore().isMobile);
+
+const photos = defineModel<any[]>()!;
 
 const props = defineProps<{
-	photos: Iterable<any>,
-	photoClasses?: (photo: any) => any,
-	onPhotoClick?: (photo: any) => void
+	photoOptions?: (photo) => any[],
+	handleAddPhotos?: () => void,
+	collapsible?: boolean,
+
+	// dragging options
+	draggable?: boolean,
+	onPhotoDrop?: (photo, fromListId, toListId) => void,
+	dragGroup?: string,
+	listId?: string,
 }>();
+
+const state = reactive({
+	expanded: props.collapsible ? false : true,
+});
+
+function onDrop(e) {
+	const fromListId = e.from.attributes['data-listid'].value;
+	const toListId = e.to.attributes['data-listid'].value;
+	const photo = e.item._underlying_vm_;
+
+	props.onPhotoDrop?.call(null, photo, fromListId, toListId);
+}
 
 </script>
 
 
 <template>
-	<div class="grid-wrapper">
-		<div class="photo-grid">
-			<div
-				v-for="photo in props.photos"
-				:key="photo.id"
-				class="photo-grid-item upload-item"
-				:class="props.photoClasses?.call(null, photo)"
-				@click="props.onPhotoClick?.call(null, photo)"
+	<div :class="{ expanded: state.expanded }">
+		<div v-if="photos && photos.length">
+			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" :data-listid="listId">
+				<template #header v-if="handleAddPhotos">
+					<div key="add-photos" class="add-photos photo-grid-item" @click="handleAddPhotos">
+						<i class="pi pi-plus" />
+					</div>
+				</template>
+				<template #item="{ element: photo }">
+					<div v-if="!photo.marked_for_deletion" class="photo-grid-item" :data-photoid="photo.id">
+						<div class="photo-frame" :class="(draggable && !isMobile) ? 'handle' : null">
+							<PhotoFrame :photo="photo" />
+						</div>
+						<div class="options">
+							<i v-show="draggable && isMobile" class="button pi pi-arrows-alt handle" />
+							<div class="flex-grow-1"></div>
+							<slot name="options" :photo="photo">
+								<DropdownMenu v-if="photoOptions" :model="photoOptions(photo)">
+									<i class="button pi pi-ellipsis-v" />
+								</DropdownMenu>
+							</slot>
+						</div>
+						<div class="filename">{{ photo.filename }}</div>
+					</div>
+				</template>
+			</Drag>
+
+			<div v-if="collapsible && photos.length > 0"
+				class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4"
+				@click="state.expanded = !state.expanded"
 			>
-				<div class="photo-frame">
-					<PhotoFrame :key="photo.id" :photo="photo" size="xs" fillMethod="contain" />
-				</div>
-				<div class="options"><slot name="options" :photo="photo" /></div>
-				<div class="filename">{{ photo.filename }}</div>
+				<template v-if="!state.expanded">View all ({{ photos.length }}) <i class="pi pi-chevron-down" /></template>
+				<template v-else>View less <i class="pi pi-chevron-up" /></template>
 			</div>
+		</div>
+
+		<div v-else-if="handleAddPhotos" class="flex align-items-center gap-2 cursor-pointer add-photos"
+			@click="handleAddPhotos">
+			<i class="pi pi-plus" />
+			Add Photos
 		</div>
 	</div>
 </template>
 
 <style scoped lang="scss">
 @import '@/assets/colors.scss';
+
+.photo-grid {
+	height: 9rem;
+	overflow: hidden;
+}
+
+.expanded .photo-grid {
+	height: auto;
+}
 
 .photo-grid {
 	padding-top: 10px;
@@ -70,32 +130,65 @@ const props = defineProps<{
 		cursor: grabbing;
 	}
 
-	.photo-frame {
-		width: 5rem;
-		height: 5rem;
-		margin-bottom: .5rem;
-	}
-
-	.filename {
-		font-size: .7em;
-		line-break: anywhere;
-		text-align: center;
-		width: 100%;
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-
 	.options {
         position: absolute;
         top: 0;
         right: 0;
+        left: 0;
         z-index: 1;
+		height: 0;
+        justify-content: space-between;
         display: none;
+		
+		:deep(.button) {
+			display: inline-block;
+			background: #fffe;
+			width: 2em;
+			height: 2em;
+			line-height: 2em;
+			text-align: center;
+			cursor: pointer;
+		}
 	}
 
 	&:hover .options {
-		display: block;
+		display: flex;
 	}
 }
+
+.add-photos {
+	cursor: pointer;
+	color: lightgrey;
+	border: 1px solid;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 5rem;
+	min-width: 5rem;
+
+	&:hover {
+		color: gray;
+	}
+
+	i {
+		font-size: 1.5rem;
+	}
+}
+
+.photo-frame {
+	width: 5rem;
+	height: 5rem;
+	margin-bottom: .5rem;
+}
+
+.filename {
+	font-size: .7em;
+	line-break: anywhere;
+	text-align: center;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 </style>

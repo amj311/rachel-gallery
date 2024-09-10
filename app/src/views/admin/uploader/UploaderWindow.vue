@@ -2,16 +2,13 @@
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader.store';
 import Button from 'primevue/button';
-import ProgressBar from 'primevue/progressbar';
-import { computed } from 'vue';
-import Message from 'primevue/message';
 
 const uploaderStore = useUploaderStore();
 
-const bytesToGB = (bytes) => {
-	let gigaBytes = bytes / 1024 / 1024 / 1024;
-	return gigaBytes.toFixed(gigaBytes % 1 === 0 ? 0 : 1);
-}
+// const bytesToGB = (bytes) => {
+// 	let gigaBytes = bytes / 1024 / 1024 / 1024;
+// 	return gigaBytes.toFixed(gigaBytes % 1 === 0 ? 0 : 1);
+// }
 
 // const usedSpace = computed(() => uploaderStore.googleDriveInfo.storage.usage);
 // const availableSpace = computed(() => uploaderStore.googleDriveInfo.storage.limit - usedSpace.value);
