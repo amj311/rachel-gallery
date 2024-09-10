@@ -79,6 +79,16 @@ export default (route, _, done) => {
 		}
 	})
 
+
+	// Delete a gallery
+	route.delete('/gallery/:galleryId', async (request, reply) => {
+		const { galleryId } = request.params;
+		await GalleryService.deleteGallery(galleryId);
+		return {
+			success: true,
+		}
+	})
+
 	// Get admin gallery view
 	route.get('/gallery/:galleryId', async (request, reply) => {
 		const { galleryId } = request.params;

@@ -98,11 +98,11 @@ function leaveRestPasswordMode() {
 
 
 			<template v-if="state.mode === 'signup'">
-				<Button @click="createEmailUser" :loading="state.isLoading" class="w-full mt-3 justify-content-around">Sign in</button>
+				<Button severity="primary" @click="createEmailUser" :loading="state.isLoading" class="w-full mt-3 justify-content-around">Create Account</button>
 				<small>Already have an account? <span class="text-link" @click="state.mode = 'login'">Sign in</span></small>
 			</template>
 			<template v-else-if="state.mode === 'login'">
-				<Button @click="loginWithEmail" :loading="state.isLoading" class="w-full mt-3 justify-content-around">Sign in</button>
+				<Button severity="primary" @click="loginWithEmail" :loading="state.isLoading" class="w-full mt-3 justify-content-around">Sign in</button>
 				<small>New here? <span class="text-link" @click="state.mode = 'signup'">Create account</span></small>
 				<small><span class="text-link" @click="state.mode = 'reset_password'">Forgot password?</span></small>
 			</template>

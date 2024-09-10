@@ -252,6 +252,22 @@ function onPhotoDrop(photo, fromListId, toListId) {
 	}
 }
 
+async function deleteGallery() {
+	if (!confirm('This will delete ')) {
+		return;
+	}
+	try {
+		await request.delete('admin/gallery/' + state.galleryId);
+		toast.add({ severity: 'success', summary: 'Success', detail: 'Gallery deleted', life: 3000 });
+		await router.push('/admin');
+	}
+	catch (error) {
+		console.error(error);
+		console.log("Failed to delete gallery.");
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete gallery. Try again later', life: 3000 });
+	}
+}
+
 const photoSelector: any = ref(null);
 function addToPortfolio(photos) {
 	photoSelector.value!.open([photos], state.galleryId);
@@ -368,7 +384,15 @@ function addToPortfolio(photos) {
 								</template>
 							</div>
 						</div>
+					</TabPanel>
 
+					<TabPanel header="Settings">
+						<div class="settings-grid">
+							<label>Delete Gallery</label>
+							<div>
+								<Button label="Delete" severity="danger" @click="deleteGallery" />
+							</div>
+						</div>
 					</TabPanel>
 				</TabView>
 			</div>
@@ -440,7 +464,7 @@ function addToPortfolio(photos) {
 				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
-				<Button v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
+				<Button severity="primary" v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
 					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.size }})</Button>
 			</div>
 			<ImageSelector v-model="state.imagesToUpload" />

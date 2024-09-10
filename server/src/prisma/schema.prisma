@@ -92,7 +92,7 @@ model Gallery {
 
 model GallerySection {
     id        String  @id @default(uuid())
-    Gallery   Gallery @relation(fields: [galleryId], references: [id])
+    Gallery   Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
     galleryId String
     name      String
     photos    Photo[]

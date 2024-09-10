@@ -1,4 +1,3 @@
-import '../services/requestInterceptor';
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '@/stores/user.store';
 import { AuthService } from '@/services/authService';

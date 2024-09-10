@@ -48,7 +48,7 @@ async function createNewGallery() {
 							<div class="flex align-items-center gap-3">
 								<div class="flex align-items-center gap-1">
 									<i class="pi pi-user" />
-									<span>{{ gallery.Client?.name }}</span>
+									<span>{{ gallery.Client?.name || 'No Client' }}</span>
 								</div>
 
 								<div class="flex-grow-1"></div>

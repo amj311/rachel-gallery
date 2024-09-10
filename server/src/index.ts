@@ -38,9 +38,13 @@ app.register(inquiryRoute, { prefix: '/api/inquiry' });
 app.addHook('preValidation', firebaseAuthMiddleware);
 
 // protected routes
-app.register((fastify, _, done) => {
-	fastify.register(userRoute, { prefix: '/user' });
-	fastify.register(adminRoute, { prefix: '/admin' });
+app.register((route, _, done) => {
+	route.register(userRoute, { prefix: '/user' });
+	route.register(adminRoute, { prefix: '/admin' });
+
+	route.setNotFoundHandler((req, reply) => {
+		reply.status(404).send({ error: 'Not found' });
+	})
 	done();
 }, { prefix: '/api' });
 

@@ -38,11 +38,12 @@ request.interceptors.request.use(async (config) => {
 });
 
 request.interceptors.response.use(null, (error) => {
-	
 	if (error.isAxiosError && error.response?.status === 401) {
 		console.log("Received unauthenticated response. Logging out");
 		AuthService.signOut();
 	}
+
+	return Promise.reject(error);
 })
 
 

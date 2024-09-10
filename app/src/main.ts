@@ -1,4 +1,4 @@
-import './services/requestInterceptor'
+import './services/request'
 
 import 'primeflex/primeflex.css';
 import 'primevue/resources/themes/aura-light-noir/theme.css'

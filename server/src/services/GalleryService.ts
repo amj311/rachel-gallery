@@ -36,6 +36,21 @@ export const GalleryService = {
 		});
     },
 
+	async deleteGallery(id: string) {
+		// call deleteSection to delete all photos from Google
+		const sections = await prisma.gallerySection.findMany({
+			where: {
+				galleryId: id
+			},
+		})
+		await Promise.all(sections.map(section => this.deleteSection(section.id)))
+		await prisma.gallery.delete({
+			where: {
+				id
+			}
+		});
+	},
+
     async getGalleryList(where?) {
         return await prisma.gallery.findMany({
 			where,
