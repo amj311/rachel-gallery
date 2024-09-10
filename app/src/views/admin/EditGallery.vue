@@ -253,7 +253,7 @@ function onPhotoDrop(photo, fromListId, toListId) {
 }
 
 async function deleteGallery() {
-	if (!confirm('This will delete ')) {
+	if (!confirm('This will delete the gallery AND all of its photos forever. Are you sure?')) {
 		return;
 	}
 	try {
@@ -300,7 +300,7 @@ function addToPortfolio(photos) {
 						@click="state.showShareModal = true" />
 				</div>
 				<div class="flex-grow-1"></div>
-				<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
+				<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline style="zoom: .9;">
 					<template #value="{ value }">
 						<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[value].color }">
 							<i :class="visibilityOptions[value].icon" />
@@ -390,7 +390,7 @@ function addToPortfolio(photos) {
 						<div class="settings-grid">
 							<label>Delete Gallery</label>
 							<div>
-								<Button label="Delete" severity="danger" @click="deleteGallery" />
+								<Button label="Delete" outlined severity="danger" @click="deleteGallery" />
 							</div>
 						</div>
 					</TabPanel>
