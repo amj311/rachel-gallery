@@ -6,6 +6,7 @@ import watermarkImage from '@/assets/images/watermark.png'
 import { onBeforeUnmount } from 'vue';
 import { ref } from 'vue';
 import LoadSplash from './components/LoadSplash.vue';
+import { computed } from 'vue';
 
 const userStore = useUserStore();
 const sessionInterval = setInterval(userStore.loadSessionData, 60000);
@@ -18,6 +19,10 @@ setTimeout(() => {
 onBeforeUnmount(() => {
 	clearInterval(sessionInterval);
 });
+
+const isDev = computed(() => {
+	return process.env.NODE_ENV === 'development';
+})
 
 </script>
 
@@ -36,6 +41,10 @@ onBeforeUnmount(() => {
 			</div>
 		</footer>
 	</div>
+
+	<div class="dev-banner" v-if="isDev">
+		You are in DEV MODE. Have fun!
+	</div>
 </template>
 
 
@@ -52,5 +61,18 @@ footer {
 		text-decoration: none;
 		font-weight: bold;
 	}
+}
+
+
+.dev-banner {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: #0a0;
+	text-align: center;
+	color: #fff;
+	padding: 5px;
+	font-size: .8em;
 }
 </style>

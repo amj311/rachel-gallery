@@ -1,18 +1,9 @@
 <script setup lang="ts">
 import UserMenu from '@/components/UserMenu.vue';
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-
-const isDev = computed(() => {
-	return process.env.NODE_ENV === 'development';
-})
 </script>
 
 <template>
 	<div class="nav-bar">
-		<div class="dev-banner" v-if="isDev">
-			You are in DEV MODE. Have fun!
-		</div>
 		<div class="nav-row">
 			<div class="logo" @click="$router.push('/')">RACHEL FLORENCE<br/>PHOTO</div>
 			<div class="flex-grow-1">
@@ -55,14 +46,6 @@ const isDev = computed(() => {
 				border-bottom: 1px solid;
 			}
 		}
-	}
-
-	.dev-banner {
-		background: #0a0;
-		text-align: center;
-		color: #fff;
-		padding: 5px;
-		font-size: .8em;
 	}
 }
 </style>
