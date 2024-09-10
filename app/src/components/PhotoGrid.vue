@@ -11,6 +11,8 @@ const photos = defineModel<any[]>()!;
 
 const props = defineProps<{
 	photoOptions?: (photo) => any[],
+	onPhotoClick?: (photo) => void,
+	photoClasses?: (photo) => any,
 	handleAddPhotos?: () => void,
 	collapsible?: boolean,
 
@@ -35,7 +37,6 @@ function onDrop(e) {
 
 </script>
 
-
 <template>
 	<div :class="{ expanded: state.expanded }">
 		<div v-if="photos && photos.length">
@@ -46,7 +47,12 @@ function onDrop(e) {
 					</div>
 				</template>
 				<template #item="{ element: photo }">
-					<div v-if="!photo.marked_for_deletion" class="photo-grid-item" :data-photoid="photo.id">
+					<div
+						v-if="!photo.marked_for_deletion"
+						class="photo-grid-item"
+						:class="photoClasses?.call(null, photo)"
+						@click="onPhotoClick?.call(null, photo)"
+					>
 						<div class="photo-frame" :class="(draggable && !isMobile) ? 'handle' : null">
 							<PhotoFrame :photo="photo" />
 						</div>
