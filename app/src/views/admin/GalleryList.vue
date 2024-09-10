@@ -100,28 +100,28 @@ const numArchived = computed(() => state.galleries.filter(g => g.visibility === 
 						<template #header><div class="cover-small"><GalleryCover :gallery="gallery" :preview="true" forceMode="desktop" /></div></template>
 						<template #content>
 							<div class="flex align-items-center gap-3">
-								<div class="flex align-items-center gap-1">
+								<div class="flex align-items-center gap-2">
 									<i class="pi pi-user" />
 									<span>{{ gallery.Client?.name || 'No Client' }}</span>
 								</div>
 
 								<div class="flex-grow-1"></div>
 
-								<div class="flex align-items-center gap-1" :style="{ color: visibilityOptions[gallery.visibility].color }">
+								<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[gallery.visibility].color }">
 									<i :class="visibilityOptions[gallery.visibility].icon" />
 									{{ visibilityOptions[gallery.visibility].label }}
 								</div>
 							</div>
 
 							<div class="flex align-items-center gap-3 text-sm">
-								<div class="flex align-items-center gap-1">
+								<div class="flex align-items-center gap-2">
 									<i class="pi pi-images" />
 									<span>{{ gallery.sections.reduce((t, s) => t + s._count.photos, 0) }}</span>
 								</div>
 								
 								<div class="flex-grow-1"></div>
 
-								<div v-if="gallery.date" class="flex align-items-center gap-1">
+								<div v-if="gallery.date" class="flex align-items-center gap-2">
 									<i class="pi pi-calendar" />
 									{{ dayjs(gallery.date).format('MMM DD, \'YY') }}
 								</div>
