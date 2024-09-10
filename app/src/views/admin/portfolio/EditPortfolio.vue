@@ -2,10 +2,7 @@
 import { reactive, onBeforeMount, computed, ref, watch } from 'vue';
 import request from '@/services/request';
 import Button from 'primevue/button';
-import DropdownMenu from '@/components/DropdownMenu.vue';
-import GhostInput from '@/components/InlineInput.vue';
 import { useToast } from 'primevue/usetoast';
-import { useAppStore } from '@/stores/app.store';
 import { usePortfolioStore } from '../../../stores/portfolio.store';
 import PortfolioSectionButton from './PortfolioSectionButton.vue';
 import EditPhotoWall from './EditPhotoWall.vue';
@@ -123,7 +120,7 @@ async function deleteSection(section) {
 					<Button icon="pi pi-trash" text @click="deleteSection(section)" />
 				</div>
 
-				<component v-if="!section.marked_for_deletion" :is="sectionTypes[section.type].editor" :section="section" />
+				<component v-if="!section.marked_for_deletion" :is="sectionTypes[section.type].editor" v-model="portfolioStore.portfolio!.sections[index]" />
 			</div>
 
 			<div v-if="index < portfolioStore.portfolio!.sections.length - 1" class="hidden-section-button">

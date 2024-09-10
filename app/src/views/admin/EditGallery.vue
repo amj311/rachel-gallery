@@ -2,7 +2,6 @@
 import { useRouter } from 'vue-router';
 import { reactive, onBeforeMount, watch, computed, ref } from 'vue';
 import request from '@/services/request';
-import PhotoFrame from '@/components/PhotoFrame.vue';
 import { useUploaderStore } from './uploader/uploader.store';
 import GalleryCover from '@/components/GalleryCover.vue';
 import Calendar from 'primevue/calendar';
@@ -11,7 +10,6 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
-import DropdownMenu from '@/components/DropdownMenu.vue';
 import GhostInput from '@/components/InlineInput.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -22,17 +20,14 @@ import ShareModal from '@/components/GalleryAccessModal.vue';
 import { useToast } from 'primevue/usetoast';
 import { useClientStore } from '@/stores/client.store';
 import debounce from '@/utils/debounce';
-import draggable from 'vuedraggable';
-import { useAppStore } from '@/stores/app.store';
 import PortfolioPhotoSelector from './portfolio/PortfolioPhotoSelector.vue';
 import ImageSelector from './ImageSelector.vue';
+import PhotoGridDrag from '@/components/PhotoGridDrag.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
 const clientStore = useClientStore();
 const toast = useToast();
-
-const isMobile = computed(() => useAppStore().isMobile);
 
 const coverStyles = [
 	'full',
@@ -232,10 +227,9 @@ async function createClient() {
 	}
 }
 
-function onPhotoDrop(e) {
-	const fromSection = state.gallery.sections.find(s => s.id === e.from.attributes['data-sectionid'].value);
-	const toSection = state.gallery.sections.find(s => s.id === e.to.attributes['data-sectionid'].value);
-	const photo = e.item._underlying_vm_;
+function onPhotoDrop(photo, fromListId, toListId) {
+	const fromSection = state.gallery.sections.find(s => s.id === fromListId);
+	const toSection = state.gallery.sections.find(s => s.id === toListId);
 
 	// mark photo for reassignment
 	if (fromSection.photosMovedIn?.some(p => p === photo.id)) {
@@ -276,7 +270,8 @@ function addToPortfolio(photos) {
 					<GhostInput v-model="state.gallery.name" placeholder="Gallery name..." />
 				</h2>
 				<div v-if="state.isSaving" class="flex align-items-center gap-2"><i class="pi pi-spinner pi-spin" />
-					Saving...</div>
+					Saving...
+				</div>
 				<small v-else-if="state.lastSaved"> All changes saved</small>
 			</div>
 			<div class="flex-grow-1"></div>
@@ -405,45 +400,15 @@ function addToPortfolio(photos) {
 					<Button icon="pi pi-trash" text @click="deleteSection(section)" />
 				</div>
 
-				<div v-if="section.photos.length">
-					<draggable v-model="section.photos" :animation="200" group="photos" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPhotoDrop" :data-sectionid="section.id">
-						<template #header>
-							<div key="add-photos" class="add-photos photo-grid-item" @click="openUploadToSection(section)">
-								<i class="pi pi-plus" />
-							</div>
-						</template>
-						<template #item="{ element: photo }">
-							<div v-if="!photo.marked_for_deletion" class="photo-grid-item" :data-photoid="photo.id">
-								<div class="photo-frame" :class="isMobile ? null : 'handle'">
-									<PhotoFrame :photo="photo" />
-								</div>
-								<div class="options">
-									<i v-show="isMobile" class="button pi pi-arrows-alt handle" />
-									<div class="flex-grow-1"></div>
-									<DropdownMenu
-										:model="[{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Add to Portfolio', command: () => addToPortfolio(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]">
-										<i class="button pi pi-ellipsis-v" />
-									</DropdownMenu>
-								</div>
-								<div class="filename">{{ photo.filename }}</div>
-							</div>
-						</template>
-					</draggable>
-
-					<div v-if="section.photos.length > 0"
-						class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4"
-						@click="section.expanded = !section.expanded"
-					>
-						<template v-if="!section.expanded">View all ({{ section.photos.length }}) <i class="pi pi-chevron-down" /></template>
-						<template v-else>View less <i class="pi pi-chevron-up" /></template>
-					</div>
-				</div>
-
-				<div v-else class="flex align-items-center gap-2 cursor-pointer add-photos"
-					@click="openUploadToSection(section)">
-					<i class="pi pi-plus" />
-					Add Photos
-				</div>
+				<PhotoGridDrag
+					v-model="section.photos"
+					:draggable="true"
+					:dragGroup="'gallerySections'"
+					:listId="section.id"
+					:onPhotoDrop="onPhotoDrop"
+					:handleAddPhotos="() => openUploadToSection(section)"
+					:photoOptions="(photo) => [{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Add to Portfolio', command: () => addToPortfolio(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]"
+				/>
 			</div>
 		</template>
 
@@ -620,122 +585,6 @@ function addToPortfolio(photos) {
 	}
 }
 
-.photo-grid {
-	padding-top: 10px;
-	padding-right: 20px;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-	grid-gap: 15px;
-	justify-items: center;
-	align-items: center;
-}
-
-.handle {
-	cursor: grab;
-
-	&:active {
-		cursor: grabbing;
-	}
-}
-
-
-.photo-grid-item {
-	position: relative;
-	max-width: 6rem;
-	padding: .5rem;
-	border: 1px solid transparent;
-	background: #fff;
-
-	&:hover {
-		background-color: $primary-thin;
-		border: 1px solid #eee;
-	}
-
-	&.sortable-ghost {
-		opacity: .4;
-		border: 1px solid lightgrey;
-		cursor: grabbing;
-	}
-
-	.removePhoto {
-		width: 1.5rem;
-		height: 1.5rem;
-		line-height: 1.5rem;
-		font-size: .7rem;
-		transform: translate(25%, -25%);
-		display: flex;
-		justify-content: center;
-		border-radius: 50%;
-		background: #555;
-		color: white;
-		cursor: pointer;
-
-		&:hover {
-			background: red;
-		}
-	}
-
-	.options {
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        z-index: 1;
-		height: 0;
-        justify-content: space-between;
-        display: none;
-		
-		.button {
-			display: inline-block;
-			background: #fffe;
-			width: 2em;
-			height: 2em;
-			line-height: 2em;
-			text-align: center;
-			cursor: pointer;
-		}
-	}
-
-	&:hover .options {
-		display: flex;
-	}
-}
-
-.add-photos {
-	cursor: pointer;
-	color: lightgrey;
-	border: 1px solid;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 5rem;
-	min-width: 5rem;
-
-	&:hover {
-		color: gray;
-	}
-
-	i {
-		font-size: 1.5rem;
-	}
-}
-
-.photo-frame {
-	width: 5rem;
-	height: 5rem;
-	margin-bottom: .5rem;
-}
-
-.filename {
-	font-size: .7em;
-	line-break: anywhere;
-	text-align: center;
-	width: 100%;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
 #uploadModal {
 	width: 800px;
 	max-width: 80vw;
@@ -747,32 +596,5 @@ function addToPortfolio(photos) {
 		overflow: hidden;
 		overflow-y: auto;
 	}
-}
-
-.drop-images {
-	width: 100%;
-	border: 2px dashed #aaa;
-	padding: 1em;
-}
-
-.drop-images.drag-over {
-	background-color: #f5f5f5;
-	border-color: blue;
-}
-
-
-.drop-images.drag-over * {
-	pointer-events: none;
-}
-
-.drop-images .drop-text {
-	text-align: center;
-	padding: 30px 50px;
-	cursor: pointer;
-}
-
-.drop-images .drop-text a {
-	color: blue;
-	font-weight: bold;
 }
 </style>
