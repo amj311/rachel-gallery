@@ -2,7 +2,6 @@
 import { computed, onBeforeMount, reactive, watch } from 'vue';
 import request from '@/services/request';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
 import { usePortfolioStore } from '../../../stores/portfolio.store';
 import Button from 'primevue/button';
 import ImageSelector from '../ImageFileSelector.vue';
@@ -54,15 +53,6 @@ function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
 }
 defineExpose({ open });
 
-const sectionOptions = computed(() => {
-	return portfolioStore.portfolio?.sections.reduce((options, section) => {
-		if (section.type === 'photo-wall') {
-			options.push({ label: section.name, value: section.id });
-		}
-		return options;
-	}, [] as any[]);
-});
-
 async function openGallery(galleryId) {
 	state.openGalleryId = galleryId;
 	const { data } = await request.get(`admin/gallery/${galleryId}`);
@@ -109,54 +99,46 @@ function sendPhotosToUploader() {
 
 <template>
 	<Dialog v-model:visible="state.isVisible">
-		<template #header>
-			<div>
-				Add Photos to Portfolio:&nbsp;
-				<Dropdown v-model="state.portfolioSectionId" :options="sectionOptions" optionLabel="label"
-					optionValue="value" placeholder="Select section" />
-			</div>
-		</template>
+		<template #header>Select Photos to Add</template>
 
-		<div>
-			<TabView>
-				<TabPanel :header="`Selected Photos (${allPhotos.length})`">
-					<PhotoGrid v-model="allPhotos" />
-				</TabPanel>
+		<TabView>
+			<TabPanel :header="`Selected Photos (${allPhotos.length})`">
+				<PhotoGrid v-model="allPhotos" />
+			</TabPanel>
 
-				<TabPanel header="Choose from Gallery">
-					<template v-if="state.openGalleryId">
+			<TabPanel header="Choose from Gallery">
+				<template v-if="state.openGalleryId">
 
-						<div class="gallery-header">
-							<i class="pi pi-arrow-left cursor-pointer" @click="closeGallery" />
-							<span>{{ state.galleryList.find(g => g.id === state.openGalleryId)!.name }}</span>
-						</div>
+					<div class="gallery-header">
+						<i class="pi pi-arrow-left cursor-pointer" @click="closeGallery" />
+						<span>{{ state.galleryList.find(g => g.id === state.openGalleryId)!.name }}</span>
+					</div>
 
-						<div v-if="state.openGalleryData">
-							<template v-for="section in state.openGalleryData.sections" :key="section.id">
-								<div>{{ section.name }}</div>
-								<PhotoGrid v-model="section.photos" @photoClick="toggleGalleryPhoto" :photoClasses="galleryPhotoClasses" />
-								<br /><br />
-							</template>
-						</div>
-						<div class="w-full p-5 flex justify-content-center" v-else><i class="pi pi-spinner pi-spin" /></div>
-					</template>
+					<div v-if="state.openGalleryData">
+						<template v-for="section in state.openGalleryData.sections" :key="section.id">
+							<div>{{ section.name }}</div>
+							<PhotoGrid v-model="section.photos" @photoClick="toggleGalleryPhoto" :photoClasses="galleryPhotoClasses" />
+							<br/><br/>
+						</template>
+					</div>
+					<div class="w-full p-5 flex justify-content-center" v-else><i class="pi pi-spinner pi-spin" /></div>
+				</template>
 
-					<template v-else>
-						<div class="gallery-grid">
-							<div class="gallery-option" v-for="gallery in state.galleryList" :key="gallery.id"  @click="openGallery(gallery.id)">
-								<div class="cover-small">
-									<GalleryCover :gallery="gallery" :preview="true" forceMode="desktop" />
-								</div>
+				<template v-else>
+					<div class="gallery-grid">
+						<div class="gallery-option" v-for="gallery in state.galleryList" :key="gallery.id"  @click="openGallery(gallery.id)">
+							<div class="cover-small">
+								<GalleryCover :gallery="gallery" :preview="true" forceMode="desktop" />
 							</div>
 						</div>
-					</template>
-				</TabPanel>
+					</div>
+				</template>
+			</TabPanel>
 
-				<TabPanel header="Upload">
-					<ImageSelector v-model="state.filePhotos" />
-				</TabPanel>
-			</TabView>
-		</div>
+			<TabPanel header="Upload">
+				<ImageSelector v-model="state.filePhotos" />
+			</TabPanel>
+		</TabView>
 
 		<template #footer>
 			<Button label="Cancel" @click="state.isVisible = false" text />
