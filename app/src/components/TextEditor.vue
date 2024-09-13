@@ -31,7 +31,7 @@ onMounted(() => {
 			toolbar: !props.readOnly && [
 				[{ 'header': [1, 2, 3, false] }, { 'font': [] }],
 
-				['bold', 'italic', 'underline', 'strike', { 'color': [ '#fac', 'green', 'blue' ] }],        // toggled buttons
+				['bold', 'italic', 'underline', 'strike', { 'color': [ '#000000', '#444444', '#666666', '#aaaaaa', '#cccccc', '#eeeeee', '#ffffff' ] }],
 
 				[{ 'align': [] }, { 'list': 'ordered'}, { 'list': 'bullet' }],
 				// [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
