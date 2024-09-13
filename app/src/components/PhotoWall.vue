@@ -13,7 +13,6 @@ const props = defineProps<{
 }>();
 
 const photos = computed(() => props.photos);
-const length = computed(() => photos.value.length);
 
 const state = reactive({
 	tiles: [] as {
@@ -130,7 +129,7 @@ const computeTiles = (() => {
 	state.height = Math.max(...(cols.map(col => col?.bottom || 0)));
 });
 
-watch(length, () => {
+watch(computed(() => JSON.stringify(photos.value)), () => {
 	computeTiles();
 });
 
