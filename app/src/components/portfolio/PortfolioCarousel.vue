@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import PhotoFrame from '@/components/PhotoFrame.vue';
-import { computed, onMounted, onUnmounted, reactive } from 'vue';
+import { onMounted, onUnmounted, reactive } from 'vue';
+
+const section = defineModel<any>();
 
 const props = defineProps<{
-	section: any,
+	editMode?: boolean,
 }>();
 
 const state = reactive({
@@ -13,7 +15,7 @@ const state = reactive({
 });
 
 async function goToNext() {
-	state.activePhotoIdx = (state.activePhotoIdx + 1) % props.section.photos.length;
+	state.activePhotoIdx = (state.activePhotoIdx + 1) % section.value.photos.length;
 }
 
 onMounted(() => {
@@ -25,7 +27,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div class="carousel-wrapper">
+	<div class="carousel-wrapper" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
+		<div v-if="section.photos.length === 0 && props.editMode" class="flex flex-column justify-content-center align-items-center h-full">
+			<i class="material-symbols-outlined text-7xl text-gray-400">overview_key</i>
+			Use the editor panel to add photos
+		</div>
 		<PhotoFrame v-for="photo in section.photos" v-show="state.activePhotoIdx === section.photos.indexOf(photo)" :key="photo.id" :photo="photo" :fill-method="'cover'" :size="'xl'" />
 	</div>
 </template>

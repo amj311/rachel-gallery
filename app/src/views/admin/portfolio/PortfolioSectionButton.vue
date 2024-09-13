@@ -8,12 +8,16 @@ const emit = defineEmits(['create']);
 
 
 <template>
-	<RefOpener :component="OverlayPanel">
+	<RefOpener :component="OverlayPanel" :closeOnClick="true">
 		<template #trigger>
 			<slot><Button outlined>&plus; Add Section</Button></slot>
 		</template>
 		<template #ref>
 			<div class="flex gap-1">
+				<div class="section-option" @click="emit('create', 'text')">
+					<div class="material-symbols-outlined">notes</div>
+					<div>Text</div>
+				</div>
 				<div class="section-option" @click="emit('create', 'photo-wall')">
 					<div class="material-symbols-outlined">dashboard_2</div>
 					<div>Photo Wall</div>
@@ -36,6 +40,7 @@ const emit = defineEmits(['create']);
 	border-radius: 5px;
 	padding: .5em;
 	text-align: center;
+	width: 7rem;
 
 	&:hover {
 		border-color: #eee;

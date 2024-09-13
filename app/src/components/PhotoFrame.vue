@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
 
 
@@ -14,7 +14,7 @@ if (!windowWithCache.photoCache) {
 	windowWithCache.photoCache = new Map();
 }
 
-const { photo, size = 'xs', watermark, fillMethod, position, showLoading } = defineProps<{
+const props = defineProps<{
 	photo: {
 		id: string,
 		googleFileId?: string,
@@ -23,11 +23,13 @@ const { photo, size = 'xs', watermark, fillMethod, position, showLoading } = def
 		dataUrl?: string
 	},
 	fillMethod?: 'cover' | 'contain',
-	position?: string,
+	position?: string | { x: number, y: number },
 	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
 	watermark?: boolean,
 	showLoading?: boolean
-}>()
+}>();
+
+const { photo, size = 'xs', watermark, fillMethod, showLoading } = props;
 
 const sizeWidths = {
 	xs: 100,
@@ -126,13 +128,25 @@ async function initPhoto() {
 }
 
 onMounted(initPhoto);
+
+const objectPosition = computed(() => {
+	if (!props.position) {
+		return 'center';
+	}
+	if (typeof props.position === 'string') {
+		return props.position;
+	}
+	else {
+		return `${props.position.x}% ${props.position.y}%`;
+	}
+});
 </script>
 
 <template>
 	<div class="photoframe">
 		<i class="loader pi pi-spinner pi-spin" />
-		<canvas ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
-		<canvas ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition: position || 'center' }"></canvas>
+		<canvas ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition }"></canvas>
+		<canvas ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition }"></canvas>
 		<i v-if="showLoading && state.isLoadingHiRes" class="loader top pi pi-spinner pi-spin" />
 	</div>
 </template>

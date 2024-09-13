@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router';
 import { reactive, onBeforeMount, watch, computed, ref } from 'vue';
 import request from '@/services/request';
-import { useUploaderStore } from './uploader/uploader.store';
+import { useUploaderStore } from '../../components/uploader/uploader.store';
 import GalleryCover from '@/components/GalleryCover.vue';
 import Calendar from 'primevue/calendar';
 import FocalPointInput from '@/components/FocalPointInput.vue';
@@ -20,9 +20,9 @@ import ShareModal from '@/components/GalleryAccessModal.vue';
 import { useToast } from 'primevue/usetoast';
 import { useClientStore } from '@/stores/client.store';
 import debounce from '@/utils/debounce';
-import PortfolioPhotoSelector from './portfolio/PortfolioPhotoSelector.vue';
-import ImageSelector from './ImageFileSelector.vue';
+import ImageSelector from '../../components/ImageFileSelector.vue';
 import PhotoGrid from '@/components/PhotoGrid.vue';
+import PortfolioPhotoSelector from '@/components/portfolio/PortfolioPhotoSelector.vue';
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -479,7 +479,7 @@ function addToPortfolio(photos) {
 </template>
 
 <style scoped lang="scss">
-@import '../../assets/colors.scss';
+@import '@/assets/colors.scss';
 
 .gallery-settings {
 	width: calc(100% - 700px);

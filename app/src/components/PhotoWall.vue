@@ -9,9 +9,11 @@ const isMobile = computed(() => useAppStore().isMobile);
 const wall = ref<HTMLDivElement>();
 const props = defineProps<{
 	photos: any[],
+	lazyLoad?: boolean,
 }>();
 
 const photos = computed(() => props.photos);
+const length = computed(() => photos.value.length);
 
 const state = reactive({
 	tiles: [] as {
@@ -128,7 +130,7 @@ const computeTiles = (() => {
 	state.height = Math.max(...(cols.map(col => col?.bottom || 0)));
 });
 
-watch(photos, () => {
+watch(length, () => {
 	computeTiles();
 });
 
@@ -141,12 +143,14 @@ onBeforeUnmount(() => {
 	window.removeEventListener('resize', computeTiles);
 });
 
+const lazyComponent = computed(() => props.lazyLoad ? DeferredContent : 'div' );
+
 </script>
 
 
 <template>
 	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }">
-		<DeferredContent>
+		<component :is="lazyComponent">
 			<template v-for="tile in state.tiles" :key="tile.photo.id">
 				<div v-if="tile.rect" class="photo-wall-item"
 					:style="{ width: tile.rect.width + 'px', height: tile.rect.height + 'px', top: tile.rect.top + 'px', left: tile.rect.left + 'px' }">
@@ -157,7 +161,7 @@ onBeforeUnmount(() => {
 					<div class="overlay"><slot :photo="tile.photo"></slot></div>
 				</div>
 			</template>
-		</DeferredContent>
+		</component>
 	</div>
 </template>
 

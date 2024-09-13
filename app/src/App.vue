@@ -48,7 +48,7 @@ const isDev = computed(() => {
 </template>
 
 
-<style scoped>
+<style scoped lang="scss">
 section {
 	min-height: calc(100vh - 17rem);
 }
@@ -74,5 +74,10 @@ footer {
 	color: #fff;
 	padding: 5px;
 	font-size: .8em;
+	z-index: 1000;
+
+	&:hover {
+		opacity: 0;
+	}
 }
 </style>

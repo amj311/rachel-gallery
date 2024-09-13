@@ -5,7 +5,7 @@ import { reactive } from 'vue';
 import { useUserStore } from '@/stores/user.store';
 import LoginForm from '@/components/LoginForm.vue';
 import request from '@/services/request';
-import UploaderWindow from './uploader/UploaderWindow.vue';
+import UploaderWindow from '../../components/uploader/UploaderWindow.vue';
 
 const router = useRouter();
 

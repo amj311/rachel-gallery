@@ -76,7 +76,7 @@ const numArchived = computed(() => state.galleries.filter(g => g.visibility === 
 			<div class="flex-grow-1"></div>
 			<div style="zoom: .9">
 				<Button v-if="numArchived" :text="!state.showArchived" :outlined="state.showArchived" @click="state.showArchived = !state.showArchived" :severity="state.showArchived ? 'danger' : 'secondary'">
-					{{ numArchived }} Archived
+					{{ numArchived }} Archived<template v-if="state.showArchived">&nbsp;&nbsp;<i class="pi pi-times" /></template>
 				</Button>
 				<DropdownMenu :model="clientOptions">
 					<Button text class="gap-2" icon="pi pi-user" :label="clientLabel" />

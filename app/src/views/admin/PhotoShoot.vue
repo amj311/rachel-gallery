@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { reactive, onBeforeMount, watch, computed } from 'vue';
 import request from '@/services/request';
 import PhotoFrame from '@/components/PhotoFrame.vue';
-import { useUploaderStore } from './uploader/uploader.store';
+import { useUploaderStore } from '../../components/uploader/uploader.store';
 import Calendar from 'primevue/calendar';
 import FocalPointInput from '@/components/FocalPointInput.vue';
 import Button from 'primevue/button';

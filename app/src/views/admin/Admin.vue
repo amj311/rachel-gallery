@@ -2,7 +2,7 @@
 import { RouterView } from 'vue-router';
 import { useUserStore } from '@/stores/user.store';
 import { useInquiriesStore } from '@/stores/inquiries.store';
-import UploaderWindow from './uploader/UploaderWindow.vue';
+import UploaderWindow from '../../components/uploader/UploaderWindow.vue';
 import NavBar from '@/components/NavBar.vue';
 import Badge from 'primevue/badge';
 

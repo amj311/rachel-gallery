@@ -14,7 +14,6 @@ const style = computed(() => styleOverride || gallery.coverStyle || 'full');
 const settings = computed(() => gallery.coverSettings || {});
 const isMobile = computed(() => forceMode === 'mobile' || (window.innerWidth < 768 && forceMode !== 'desktop'));
 const date = computed(() => gallery.date ? dayjs(gallery.date).format('MMM DD, YYYY') : null);
-const position = computed(() => settings.value.focalPoint ? `${settings.value.focalPoint.x}% ${settings.value.focalPoint.y}%` : undefined);
 const hasCover = computed(() => !!gallery.coverPhoto);
 
 // const windowState = ref(window);
@@ -44,7 +43,7 @@ onBeforeUnmount(() => {
 	<div :classList="['gallery-cover', style || 'full', isMobile ? 'mobile' : ''].join(' ')">
 		<template v-if="style === 'full'">
 			<div class="bg" :style="{ top: `${parallaxShift}px` }">
-				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="settings.focalPoint" />
 			</div>
 			<div class="filter"></div>
 			<div v-if="settings.border" class="border"></div>
@@ -55,7 +54,7 @@ onBeforeUnmount(() => {
 		</template>
 		<template v-if="style === 'half'">
 			<div class="bg">
-				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="settings.focalPoint" />
 			</div>
 			<div class="text-side">
 				<div class="title">{{ gallery.name }}</div>
@@ -64,7 +63,7 @@ onBeforeUnmount(() => {
 		</template>
 		<template v-if="style === 'overlay'">
 			<div class="bg">
-				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="position" />
+				<PhotoFrame v-if="hasCover" :key="gallery.coverPhoto.id" :photo="gallery.coverPhoto" :size="'xl'" :fillMethod="'cover'" :position="settings.focalPoint" />
 			</div>
 			<div class="text">
 				<div class="text-area">

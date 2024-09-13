@@ -89,7 +89,7 @@ const photoArray = computed(() => Array.from(images.value?.values() || []));
 </template>
 
 <style scoped lang="scss">
-@import '../../assets/colors.scss';
+@import '@/assets/colors.scss';
 
 .removePhoto {
 	position: absolute;

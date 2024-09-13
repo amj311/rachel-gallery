@@ -2,7 +2,7 @@
 import { computed, onBeforeMount, reactive, watch } from 'vue';
 import request from '@/services/request';
 import Dialog from 'primevue/dialog';
-import { usePortfolioStore } from '../../../stores/portfolio.store';
+import { usePortfolioStore } from '@/stores/portfolio.store';
 import Button from 'primevue/button';
 import ImageSelector from '../ImageFileSelector.vue';
 import TabView from 'primevue/tabview';
@@ -28,12 +28,13 @@ const allPhotos = computed(() => [
 	...state.galleryPhotos
 ]);
 
-onBeforeMount(async () => {
+async function loadGalleries() {
 	const { data } = await request.get('admin/gallery');
 	state.galleryList = data.data;
-})
+}
 
 function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
+
 	if (!portfolioStore.portfolio?.sections.length) {
 		portfolioStore.loadPortfolio();
 	}
@@ -50,6 +51,8 @@ function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
 	if (openGalleryId) {
 		openGallery(openGalleryId);
 	}
+
+	loadGalleries();
 }
 defineExpose({ open });
 

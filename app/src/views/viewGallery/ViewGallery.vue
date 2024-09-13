@@ -375,7 +375,7 @@ async function loadDownloadLink() {
 			<div class="sections-wrapper">
 				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
 					<div class="section-header">{{ section.name }}</div>
-					<PhotoWall :photos="section.photos">
+					<PhotoWall :photos="section.photos" :lazyLoad="true">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
 								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(allPhotos, photo)">

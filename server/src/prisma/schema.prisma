@@ -105,6 +105,7 @@ model PortfolioSection {
     photos Photo[]
     name   String
     order  Int
+	attributes Json @default("{}")
 }
 
 // Photos can be in either gallery sections or portfolio sections.
