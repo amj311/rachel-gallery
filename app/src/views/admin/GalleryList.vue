@@ -71,24 +71,26 @@ const numArchived = computed(() => state.galleries.filter(g => g.visibility === 
 
 <template>
 	<div>
-		<div class="flex align-items-center flex-wrap gap-3 mt-2 mb-4">
+		<div class="flex align-items-top flex-wrap gap-3 mt-2 mb-4">
 			<h1>Your Galleries</h1>
 			<div class="flex-grow-1"></div>
-			<div style="zoom: .9">
-				<Button v-if="numArchived" :text="!state.showArchived" :outlined="state.showArchived" @click="state.showArchived = !state.showArchived" :severity="state.showArchived ? 'danger' : 'secondary'">
-					{{ numArchived }} Archived<template v-if="state.showArchived">&nbsp;&nbsp;<i class="pi pi-times" /></template>
-				</Button>
-				<DropdownMenu :model="clientOptions">
-					<Button text class="gap-2" icon="pi pi-user" :label="clientLabel" />
-				</DropdownMenu>
-				<Button text class="gap-2">
-					<i @click="toggleSortOrder" :class="`pi pi-sort-amount-${ state.sortOrder === 'desc' ? 'up' : 'down'}`" />
-					<DropdownMenu :model="sortOptions">
-						<div>{{ state.sortBy }}</div>
+			<div class="flex flex-wrap-reverse justify-content-end flex-grow-1 align-items-center gap-2">
+				<div style="zoom: .9">
+					<Button v-if="numArchived" :text="!state.showArchived" :outlined="state.showArchived" @click="state.showArchived = !state.showArchived" :severity="state.showArchived ? 'danger' : 'secondary'">
+						{{ numArchived }} Archived<template v-if="state.showArchived">&nbsp;&nbsp;<i class="pi pi-times" /></template>
+					</Button>
+					<DropdownMenu :model="clientOptions">
+						<Button text class="gap-2" icon="pi pi-user" :label="clientLabel" />
 					</DropdownMenu>
-				</Button>
+					<Button text class="gap-2">
+						<i @click="toggleSortOrder" :class="`pi pi-sort-amount-${ state.sortOrder === 'desc' ? 'up' : 'down'}`" />
+						<DropdownMenu :model="sortOptions">
+							<div>{{ state.sortBy }}</div>
+						</DropdownMenu>
+					</Button>
+				</div>
+				<Button @click="createNewGallery" severity="primary">&plus; New Gallery</Button>
 			</div>
-			<Button @click="createNewGallery" severity="primary">&plus; New Gallery</Button>
 		</div>
 
 		<div v-if="state.isLoading"><i class="pi pi-spinner pi-spin" /> Loading...</div>
