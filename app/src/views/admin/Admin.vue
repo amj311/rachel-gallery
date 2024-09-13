@@ -21,11 +21,11 @@ inquiriesStore.loadInquiries()
 	<NavBar>
 		<div class="flex justify-content-end gap-3">
 			<RouterLink to="/admin">Galleries</RouterLink>
-			<div class="flex align-items-center">
+			<!-- <div class="flex align-items-center">
 				<RouterLink to="/admin/inquiries">Inquiries</RouterLink>
 				<Badge v-show="inquiriesStore.unread.length > 0" :value="inquiriesStore.unread.length" style="transform: scale(.8)" severity="danger"/>
 			</div>
-			<RouterLink to="/admin/shoots">Photoshoots</RouterLink>
+			<RouterLink to="/admin/shoots">Photoshoots</RouterLink> -->
 			<RouterLink to="/admin/portfolio">Portfolio</RouterLink>
 		</div>
 	</NavBar>
