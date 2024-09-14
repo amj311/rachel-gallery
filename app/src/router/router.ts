@@ -67,7 +67,7 @@ const routes: Array<RouteRecordRaw> = [
 			{
 				path: '/admin/shoots',
 				name: 'PhotoShoots',
-				component: () => import('@/views/admin/PhotoShoots.vue'),
+				component: () => import('@/views/admin/Photoshoots.vue'),
 
 				children: [
 					{
