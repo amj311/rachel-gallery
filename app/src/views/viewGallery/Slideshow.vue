@@ -225,7 +225,7 @@ onBeforeUnmount(() => {
 		height: calc(100% - 110px);
 		width: calc(100% - max(5%, 10px));
 
-		>div {
+		> div {
 			position: absolute;
 			width: 100%;
 			height: 100%;

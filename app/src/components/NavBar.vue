@@ -16,7 +16,7 @@ import UserMenu from '@/components/UserMenu.vue';
 
 <style lang="scss">
 .nav-bar {
-	position: sticky;
+	// position: sticky;
 	top: 0;
 	z-index: 10;
 	background-color: #fffd;

@@ -1,7 +1,5 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import request from '@/services/request';
-import { AuthService } from '@/services/authService';
 import { useRouter } from 'vue-router';
 
 const mobileBreakpoint = 600;
@@ -23,9 +21,17 @@ export const useAppStore = defineStore('app', () => {
 		setTitle("Rachel Florence Photo");
 	});
 
+	const emulateWindowResize = ref(0);
+	const triggerWindowResize = () => {
+		emulateWindowResize.value++;
+	}
+	window.addEventListener('resize', triggerWindowResize);
+
 	return {
 		mobileBreakpoint,
 		isMobile,
 		setTitle,
+		emulateWindowResize,
+		triggerWindowResize,
 	};
 });

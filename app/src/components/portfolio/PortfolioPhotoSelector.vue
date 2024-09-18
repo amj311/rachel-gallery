@@ -21,6 +21,7 @@ const state = reactive({
 	openGalleryData: null as any,
 	portfolioSectionId: '',
 	galleryList: [] as any[],
+	onImageUploaded: null as any,
 });
 
 const allPhotos = computed(() => [
@@ -33,7 +34,7 @@ async function loadGalleries() {
 	state.galleryList = data.data;
 }
 
-function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
+function open(galleryPhotos?, openGalleryId?, portfolioSectionId?, onImageUploaded?: (image) => void) {
 
 	if (!portfolioStore.portfolio?.sections.length) {
 		portfolioStore.loadPortfolio();
@@ -44,6 +45,7 @@ function open(galleryPhotos?, openGalleryId?, portfolioSectionId?) {
 	state.galleryPhotos.clear();
 	state.openGalleryId = '';
 	state.openGalleryData = null;
+	state.onImageUploaded = onImageUploaded;
 
 	state.isVisible = true;
 	state.galleryPhotos = new Set(galleryPhotos || []);
@@ -93,6 +95,7 @@ function sendPhotosToUploader() {
 		portfolioSectionId: state.portfolioSectionId,
 		onUploadComplete: (photo) => {
 			usePortfolioStore().portfolio!.sections.find(s => s.id === photo.portfolioSectionId)!.photos.push(photo);
+			state.onImageUploaded?.call(null, photo);
 		}
 	}))));
 	state.isVisible = false;

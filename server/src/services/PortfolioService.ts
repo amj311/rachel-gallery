@@ -37,6 +37,7 @@ export const PortfolioService = {
 					type: section.type,
 					order: section.order,
 					attributes: section.attributes,
+					anchorText: section.anchorText,
 					photos: {
 						update: section.photos.map((photo: any) => ({
 							where: {

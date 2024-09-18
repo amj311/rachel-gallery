@@ -56,8 +56,9 @@ const computeTiles = (() => {
 	state.tiles = [];
 
 	const fullWidth = wall.value!.clientWidth;
-	const numCols = isMobile.value ? 2 : 3;
-	const margin = isMobile.value ? 5 : fullWidth * .015;
+	const isSkinny = fullWidth < 600;
+	const numCols = isSkinny ? 2 : 3;
+	const margin = isSkinny ? 5 : fullWidth * .015;
 	const columnWidth = (fullWidth - (margin * (numCols - 1))) / numCols;
 	const lineMatchRange = fullWidth * .03;
 
@@ -134,13 +135,9 @@ watch(computed(() => JSON.stringify(photos.value)), () => {
 });
 
 onMounted(() => {
-	window.addEventListener('resize', computeTiles);
 	computeTiles();
 });
-
-onBeforeUnmount(() => {
-	window.removeEventListener('resize', computeTiles);
-});
+watch(computed(() => useAppStore().emulateWindowResize), computeTiles)
 
 const lazyComponent = computed(() => props.lazyLoad ? DeferredContent : 'div' );
 

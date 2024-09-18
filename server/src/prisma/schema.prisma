@@ -100,12 +100,13 @@ model GallerySection {
 }
 
 model PortfolioSection {
-    id     String  @id @default(uuid())
-    type   String
-    photos Photo[]
-    name   String
-    order  Int
-	attributes Json @default("{}")
+    id         String  @id @default(uuid())
+    type       String
+    photos     Photo[]
+    name       String
+    order      Int
+    attributes Json    @default("{}")
+    anchorText String?
 }
 
 // Photos can be in either gallery sections or portfolio sections.

@@ -1,46 +1,24 @@
 <script setup lang="ts">
 import { defineModel, onBeforeMount, ref } from 'vue';
-import request from '@/services/request';
-import { useToast } from 'primevue/usetoast';
 import PortfolioPhotoSelector from './PortfolioPhotoSelector.vue';
-import { usePortfolioStore } from '../../stores/portfolio.store';
-import PhotoGrid from '@/components/PhotoGrid.vue';
+import Button from 'primevue/button';
+import EditBackground from './EditBackground.vue';
+import * as Drag from 'vuedraggable';
+import InputText from 'primevue/inputtext';
+import { useToast } from 'primevue/usetoast';
+import request from '@/services/request';
 
 const toast = useToast();
-const portfolioStore = usePortfolioStore();
 
 const section = defineModel<any>();
 
-async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
-	if (!skipConfirm && !confirm('Are you sure you want to delete this photo?')) return;
-	try {
-		await request.delete('admin/photo/' + photo.id);
-		const deleteFromSection = portfolioStore.portfolio!.sections.find(s => s.id === photo.portfolioSectionId);
-		deleteFromSection.photos = deleteFromSection.photos.filter(p => p.id !== photo.id);
-		if (!skipAlert) {
-			toast.add({ severity: 'success', summary: 'Success', detail: 'Photo deleted', life: 3000 });
-		}
-	}
-	catch (error) {
-		console.error(error);
-		console.log("Failed to delete photo.");
-		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete photo. Try again later', life: 3000 });
-	}
-}
-
-function onPhotoDrop() {
-	section.value.photos.forEach((p, i) => p.order = i);
-}
-
-const photoSelector: any = ref(null);
-function openUploadToSection(sectionId) {
-	photoSelector.value!.open(null, null, sectionId);
+function onImageChange(image, pane) {
+	pane.backgroundPhotoId = image?.id;
 }
 
 onBeforeMount(() => {
 	const defaultAttributes = {
-		backgroundColor: '#ffffff',
-		backgroundOpacity: 100,
+		panes: [],
 	};
 
 	for (const attr in defaultAttributes) {
@@ -49,29 +27,63 @@ onBeforeMount(() => {
 		}
 	}
 })
+
+function onPaneDrop() {
+	section.value.attributes.panes.forEach((p, i) => p.order = i);
+}
+
+function addPane() {
+	section.value.attributes.panes.push({
+		id: Math.random().toString(36).substring(7),
+		text: null,
+		backgroundPhotoId: null
+	});
+}
+
+async function deletePane(pane) {
+	if (!confirm('Are you sure you want to delete this pane?')) return;
+	try {
+		if (pane.backgroundPhotoId) {
+			await request.delete('admin/photo/' + pane.backgroundPhotoId);
+			section.value.photos = section.value.photos.filter(p => p.id !== pane.backgroundPhotoId);
+		}
+		section.value.attributes.panes = section.value.attributes.panes.filter(p => p.id !== pane.id);
+	}
+	catch (error) {
+		console.error(error);
+		console.log("Failed to delete photo.");
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete photo. Try again later', life: 3000 });
+	}
+}
 </script>
 
 
 <template>
-	<div class="settings-grid mb-3">
-		<label>Background color</label>
-		<div>
-			<input type="color" value="#fff" v-model="section.attributes.backgroundColor" />
-		</div>
-	</div>
-	<div>
-		<PhotoGrid
-			v-model="section.photos"
-			:collapsible="true"
-			:draggable="true"
-			:dragGroup="section.id"
-			:listId="section.id"
-			:onPhotoDrop="onPhotoDrop"
-			:handleAddPhotos="() => openUploadToSection(section.id)"
-			:photoOptions="(photo) => [{ label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]"
-		/>
-	</div>
+	<Drag v-model="section.attributes.panes" :animation="200" :group="'carousel_' + section.id" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPaneDrop">
+		<template #item="{ element: pane, index }">
+			<div class="flex gap-2 mb-4">
+				<div>
+					<Button text class="pt-2 cursor-move handle h-2rem" icon="pi pi-sort" size="small" />
+					<Button text icon="pi pi-trash" size="small" @click="() => deletePane(pane)" />
+				</div>
+				<div>
+					<div class="settings-grid">
+						<label>Text</label>
+						<div><InputText v-model="pane.text" size="small" /></div>
+						<EditBackground
+							v-model="section.attributes.panes[index]"
+							:section="section"
+							:backgroundImage="section.photos.find(p => p.id === pane.backgroundPhotoId)"
+							@imageChange="(image) => onImageChange(image, pane)"
+						/>
+					</div>
+				</div>
+			</div>
+		</template>
+	</Drag>
 
+	<Button text @click="addPane">&plus;&nbsp;Add Pane</Button>
+	
 	<PortfolioPhotoSelector ref="photoSelector" />
 </template>
 

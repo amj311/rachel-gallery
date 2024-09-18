@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
+import { RouterLink, RouterView } from 'vue-router';
 import { useUserStore } from './stores/user.store';
 import Toast from 'primevue/toast';
 import watermarkImage from '@/assets/images/watermark.png'
@@ -7,6 +7,7 @@ import { onBeforeUnmount } from 'vue';
 import { ref } from 'vue';
 import LoadSplash from './components/LoadSplash.vue';
 import { computed } from 'vue';
+import LoginModal from './components/LoginModal.vue';
 
 const userStore = useUserStore();
 const sessionInterval = setInterval(userStore.loadSessionData, 60000);
@@ -24,6 +25,8 @@ const isDev = computed(() => {
 	return process.env.NODE_ENV === 'development';
 })
 
+const showLogin = ref(false);
+
 </script>
 
 
@@ -39,7 +42,12 @@ const isDev = computed(() => {
 				<div class="flex align-items-center justify-content-center gap-2"><i class="pi pi-instagram"></i> <a href="https://www.instagram.com/r.florencephoto/" target="_blank">@r.florencephoto</a></div>
 				<div><i class="fa fa-copyright"></i> {{ new Date().getFullYear() }} All Rights Reserved</div>
 			</div>
+			<div>
+				<a class="text-link" @click="showLogin = true">Sign In</a>
+			</div>
 		</footer>
+
+		<LoginModal v-if="showLogin" :closeable="true" @close="showLogin = false" />
 	</div>
 
 	<div class="dev-banner" v-if="isDev">

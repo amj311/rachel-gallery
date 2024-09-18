@@ -403,10 +403,12 @@ function addToPortfolio(photos) {
 					</div>
 				</div>
 				<div class="cover-preview-wrapper mobile">
+					<div class="mobile-detail">
+						<div class="faux-button" />
+					</div>
 					<div class="cover-preview">
 						<GalleryCover :gallery="state.gallery" forceMode="mobile" :preview="true" />
 					</div>
-					<div class="faux-button" />
 				</div>
 			</div>
 		</div>
@@ -537,7 +539,7 @@ function addToPortfolio(photos) {
 
 		&.mobile {
 			padding: 10px;
-			padding-top: 16px;
+			padding-top: 0px;
 			padding-bottom: 16px;
 			position: absolute;
 			top: 117px;
@@ -547,11 +549,14 @@ function addToPortfolio(photos) {
 				position: static;
 			}
 
+			.mobile-detail {
+				display: flex;
+				width: 100%;
+				justify-content: center;
+				padding: 6px;
+			}
+
 			.faux-button {
-				position: absolute;
-				top: 6px;
-				left: 50%;
-				transform: translateX(-50%);
 				border: 2px solid grey;
 				border-radius: 2px;
 				width: 15px;

@@ -310,14 +310,6 @@ export default (route, _, done) => {
 
 
 	// PORTFOLIO
-	route.get('/portfolio', async (request, reply) => {
-		const data = await PortfolioService.getPortfolio();
-		return {
-			success: true,
-			data: data,
-		}
-	})
-
 	route.put('/portfolio', async (request, reply) => {
 		const data = request.body;
 		await PortfolioService.updatePortfolio(data);

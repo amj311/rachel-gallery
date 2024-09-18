@@ -25,7 +25,7 @@ export const usePortfolioStore = defineStore('Portfolio', {
 		async loadPortfolio() {
 			try {
 				this.isLoading = true;
-				const { data } = await request.get('/admin/portfolio')
+				const { data } = await request.get('/portfolio')
 				this.portfolio = data.data;
 			}
 			catch (e) {

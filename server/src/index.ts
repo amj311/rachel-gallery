@@ -11,6 +11,7 @@ import firebaseAuthMiddleware, { firebaseConfig } from "./services/FirebaseServi
 import inquiryRoute from "./routes/inquiry.route";
 import path from "path";
 import { createReadStream } from "fs";
+import portfolioRoute from "./routes/portfolio.route";
 
 const app = Fastify({
 	logger: false
@@ -34,6 +35,7 @@ app.get('/api/firebase-config', () => {
 // public routes
 app.register(galleryRoute, { prefix: '/api/gallery' });
 app.register(inquiryRoute, { prefix: '/api/inquiry' });
+app.register(portfolioRoute, { prefix: '/api/portfolio' });
 
 app.addHook('preValidation', firebaseAuthMiddleware);
 
