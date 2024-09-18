@@ -244,7 +244,7 @@ watch(previewSize, () => {
 		}
 
 		.editor-wrapper {
-			max-height: calc(100vh - 15rem);
+			max-height: calc(100vh - 10rem);
 			padding-right: .5em;
 			overflow-y: auto;
 		}

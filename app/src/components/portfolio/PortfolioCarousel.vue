@@ -5,6 +5,10 @@ import { defineComponent, onBeforeUnmount } from 'vue';
 import { ref } from 'vue';
 import { computed, onMounted, reactive } from 'vue';
 
+const speeds = {
+	'Fast': 5000,
+	'Slow': 10000,
+}
 
 const PaneComponent = defineComponent({
 	name: 'PaneComponent',
@@ -110,7 +114,7 @@ function resetAfterSwap() {
 
 function play() {
 	// This can be a timeout instead of an interval because goToNext calls play again
-	state.playingTimer = setTimeout(goToNext, 10000) as any;
+	state.playingTimer = setTimeout(goToNext, speeds[section.value.attributes.speed]) as any;
 }
 function stop() {
 	clearTimeout(state.playingTimer);
@@ -206,7 +210,7 @@ onBeforeUnmount(() => {
 				</div>
 			</div>
 
-			<div class="controls">
+			<div class="controls" v-if="section.attributes.showControls">
 				<Button text @click="() => goToPrev()" icon="pi pi-chevron-left" />
 				<Button text @click="() => goToNext()" icon="pi pi-chevron-right" />
 			</div>

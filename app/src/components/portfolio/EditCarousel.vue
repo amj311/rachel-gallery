@@ -4,9 +4,11 @@ import PortfolioPhotoSelector from './PortfolioPhotoSelector.vue';
 import Button from 'primevue/button';
 import EditBackground from './EditBackground.vue';
 import * as Drag from 'vuedraggable';
-import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
 import { useToast } from 'primevue/usetoast';
 import request from '@/services/request';
+import ToggleButton from 'primevue/togglebutton';
+import Dropdown from 'primevue/dropdown';
 
 const toast = useToast();
 
@@ -19,6 +21,8 @@ function onImageChange(image, pane) {
 onBeforeMount(() => {
 	const defaultAttributes = {
 		panes: [],
+		showControls: true,
+		speed: 'Slow'
 	};
 
 	for (const attr in defaultAttributes) {
@@ -59,17 +63,27 @@ async function deletePane(pane) {
 
 
 <template>
+	<div class="settings-grid">
+		<label>Controls</label>
+		<div><ToggleButton v-model="section.attributes.showControls" onLabel="On" offLabel="Off" style="zoom: .9" /></div>
+
+		<label>Speed</label>
+		<div><Dropdown v-model="section.attributes.speed" :options="['Slow', 'Fast']" style="zoom: .9" /></div>
+	</div>
+	
+
+	<div class="my-3 text-gray-500">Panes</div>
 	<Drag v-model="section.attributes.panes" :animation="200" :group="'carousel_' + section.id" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPaneDrop">
 		<template #item="{ element: pane, index }">
-			<div class="flex gap-2 mb-4">
-				<div>
-					<Button text class="pt-2 cursor-move handle h-2rem" icon="pi pi-sort" size="small" />
+			<div class="pane-wrapper flex gap-2 pb-4 mb-4">
+				<div class="w-3rem pt-2">
+					<Button text class="cursor-move handle h-2rem" icon="pi pi-sort" size="small" />
 					<Button text icon="pi pi-trash" size="small" @click="() => deletePane(pane)" />
 				</div>
 				<div>
 					<div class="settings-grid">
 						<label>Text</label>
-						<div><InputText v-model="pane.text" size="small" /></div>
+						<div><Textarea v-model="pane.text" size="small" autoResize rows="1" /></div>
 						<EditBackground
 							v-model="section.attributes.panes[index]"
 							:section="section"
@@ -90,6 +104,11 @@ async function deletePane(pane) {
 <style scoped lang="scss">
 @import '@/assets/colors.scss';
 
+.pane-wrapper {
+	&:not(:last-child) {
+		border-bottom: 1px solid #eed;
+	}
+}
 
 .settings-grid {
 	display: grid;
