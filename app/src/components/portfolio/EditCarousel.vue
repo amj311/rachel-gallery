@@ -22,7 +22,8 @@ onBeforeMount(() => {
 	const defaultAttributes = {
 		panes: [],
 		showControls: true,
-		speed: 'Slow'
+		speed: 'Slow',
+		animation: 'Fade',
 	};
 
 	for (const attr in defaultAttributes) {
@@ -69,6 +70,9 @@ async function deletePane(pane) {
 
 		<label>Speed</label>
 		<div><Dropdown v-model="section.attributes.speed" :options="['Slow', 'Fast']" style="zoom: .9" /></div>
+
+		<label>Animation</label>
+		<div><Dropdown v-model="section.attributes.animation" :options="['Fade', 'Slide', 'None']" style="zoom: .9" /></div>
 	</div>
 	
 

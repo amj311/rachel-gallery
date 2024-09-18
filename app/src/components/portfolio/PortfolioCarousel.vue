@@ -74,8 +74,8 @@ function uiSwap(action) {
 }
 
 async function goToNext(animate = true) {
-	if (animate) {
-		state.animationClass = 'slideNext';
+	if (animate && section.value.attributes.animation !== 'None') {
+		state.animationClass = 'transitionNext';
 		await new Promise(r => setTimeout(r, animationTime));
 	}
 	if (panes.value?.length) {
@@ -88,8 +88,8 @@ async function goToNext(animate = true) {
 }
 
 async function goToPrev(animate = true) {
-	if (animate) {
-		state.animationClass = 'slidePrev';
+	if (animate && section.value.attributes.animation !== 'None') {
+		state.animationClass = 'transitionPrev';
 		await new Promise(r => setTimeout(r, animationTime));
 	}
 	if (panes.value?.length) {
@@ -198,14 +198,14 @@ onBeforeUnmount(() => {
 				<i class="material-symbols-outlined text-7xl text-gray-400">overview_key</i>
 				Use the editor panel to add panes
 			</div>
-			<div v-else class="panes-wrapper" :class="{ [state.animationClass]: true }">
-				<div class="prev">
+			<div v-else class="panes-wrapper" :class="{ [state.animationClass]: true, ['animate-' + section.attributes.animation]: true }">
+				<div class="prev" v-if="section.attributes.animation !== 'None'">
 					<PaneComponent :key="prevPane.id" :pane="prevPane" :backgroundImage="section.photos.find(p => p.id === prevPane.backgroundPhotoId)" />
 				</div>
 				<div class="active">
 					<PaneComponent :key="activePane.id" :pane="activePane" :backgroundImage="section.photos.find(p => p.id === activePane.backgroundPhotoId)" />
 				</div>
-				<div class="next">
+				<div class="next" v-if="section.attributes.animation !== 'None'">
 					<PaneComponent :key="nextPane.id" :pane="nextPane" :backgroundImage="section.photos.find(p => p.id === nextPane.backgroundPhotoId)" />
 				</div>
 			</div>
@@ -255,45 +255,79 @@ onBeforeUnmount(() => {
 			height: 100%;
 		}
 
-		.prev {
-			// transform: translateX(calc(-100% + var(--swipe-delta)));
-			opacity: 0;
-		}
-
-		.next {
-			// transform: translateX(calc(100% + var(--swipe-delta)));
-			opacity: 0;
-		}
-
-		.active {
-			// transform: translateX(var(--swipe-delta));
-		}
-
-		&.slideNext {
-			.next {
-				// transform: translateX(0);
-				opacity: 1;
-				transition: 800ms linear;
-			}
-
-			.active {
-				// transform: translateX(-100%);
-				opacity: 0;
-				transition: 100ms linear;
-			}
-		}
-
-		&.slidePrev {
+		// SLIDE ANIMATION
+		&.animate-Slide {
 			.prev {
-				// transform: translateX(0);
-				opacity: 1;
-				transition: 800ms linear;
+				transform: translateX(calc(-100% + var(--swipe-delta)));
+			}
+
+			.next {
+				transform: translateX(calc(100% + var(--swipe-delta)));
 			}
 
 			.active {
-				// transform: translateX(100%);
+				transform: translateX(var(--swipe-delta));
+			}
+
+			&.transitionNext {
+				.next {
+					transform: translateX(0);
+					transition: 500ms ease;
+				}
+
+				.active {
+					transform: translateX(-100%);
+					transition: 500ms ease;
+				}
+			}
+
+			&.transitionPrev {
+				.prev {
+					transform: translateX(0);
+					transition: 500ms ease;
+				}
+
+				.active {
+					transform: translateX(100%);
+					transition: 500ms ease;
+				}
+			}
+		}
+
+
+		// FADE ANIMATION
+		&.animate-Fade {
+			.prev, .next {
 				opacity: 0;
-				transition: 100ms linear;
+			}
+
+			.active {
+				opacity: 1;
+			}
+
+
+			&.transitionNext {
+				.next {
+					opacity: 1;
+					transition: 800ms linear;
+				}
+
+				.active {
+					opacity: 0;
+					transition: 100ms linear;
+				}
+			}
+
+			&.transitionPrev {
+				.prev {
+					opacity: 1;
+					transition: 800ms linear;
+				}
+
+				.active {
+					opacity: 0;
+					transition: 100ms linear;
+				}
 			}
 		}
 	}
