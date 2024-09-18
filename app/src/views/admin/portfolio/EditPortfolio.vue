@@ -290,7 +290,7 @@ watch(previewSize, () => {
 
 .nav-section {
 	position: relative;
-	z-index: 5;
+	z-index: 3;
 	margin-bottom: 3px;
 }
 
