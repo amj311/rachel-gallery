@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import PhotoFrame from '@/components/PhotoFrame.vue';
+import { useAppStore } from '@/stores/app.store';
 import Button from 'primevue/button';
-import { defineComponent, onBeforeUnmount } from 'vue';
+import { defineComponent, onBeforeUnmount, watch } from 'vue';
 import { ref } from 'vue';
 import { computed, onMounted, reactive } from 'vue';
 
@@ -44,6 +45,7 @@ const state = reactive({
 	activePaneIdx: 0,
 	playingTimer: 0,
 	animationClass: '',
+	isSkinny: false,
 });
 
 const activePane = computed(() => panes.value[state.activePaneIdx]);
@@ -61,7 +63,18 @@ onMounted(async () => {
 	carousel.value!.addEventListener('scroll', preventScroll);
 
 	play();
+	computeSkinny();
 })
+
+watch(computed(() => useAppStore().emulateWindowResize), () => {
+	computeSkinny();
+})
+
+
+function computeSkinny() {
+	state.isSkinny = carousel.value!.clientWidth < 600;
+}
+
 
 const animationTime = 500;
 let lastUiSwapTime = 0;
@@ -191,7 +204,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div ref="carousel" class="carousel-wrapper" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
+	<div ref="carousel" class="carousel-wrapper" :class="{ 'skinny': state.isSkinny }" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
 		<div class="spreader" />
 		<div class="content">
 			<div v-if="panes.length === 0 && props.editMode" class="flex flex-column justify-content-center align-items-center h-full">
@@ -210,7 +223,7 @@ onBeforeUnmount(() => {
 				</div>
 			</div>
 
-			<div class="controls" v-if="section.attributes.showControls">
+			<div class="controls" v-if="section.attributes.showControls && panes.length > 1 && !state.isSkinny">
 				<Button text @click="() => goToPrev()" icon="pi pi-chevron-left" />
 				<Button text @click="() => goToNext()" icon="pi pi-chevron-right" />
 			</div>
@@ -372,6 +385,11 @@ onBeforeUnmount(() => {
 		text-shadow: 0 0 4px #0008;
 		line-height: 1.2;
 	}
+}
+
+.carousel-wrapper.skinny .pane .text {
+	width: 100%;
+	text-align: center;
 }
 
 .controls {

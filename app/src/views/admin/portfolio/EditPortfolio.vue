@@ -256,7 +256,7 @@ watch(previewSize, () => {
 	max-width: 450px;
 
 	.section, .nav-section {
-		zoom: .9;
+		zoom: .85; // approximate the rem shift for mobile screens
 	}
 }
 
