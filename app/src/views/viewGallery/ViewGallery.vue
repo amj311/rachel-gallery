@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onMounted, computed, watch } from 'vue';
+import { reactive, onBeforeMount, computed, watch } from 'vue';
 import request from '@/services/request';
 import Slideshow from './Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
@@ -97,7 +97,7 @@ const canView = computed(() => {
 
 const authMode = ref('login');
 
-onMounted(() => {
+onBeforeMount(() => {
 	loadGallery();
 });
 

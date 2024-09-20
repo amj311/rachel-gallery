@@ -47,8 +47,8 @@ const showLogin = ref(false);
 					<a class="text-link" @click="showLogin = true">Sign In</a>
 				</template>
 				<template v-else>
-					<RouterLink v-if="userStore.currentUser.isClient" class="text-link" to="">Your Galleries</RouterLink>
-					<RouterLink v-if="userStore.currentUser.isAdmin" class="text-link" to="/admin">Admin</RouterLink>
+					<RouterLink v-if="userStore.currentUser?.isClient" class="text-link" to="">Your Galleries</RouterLink>
+					<RouterLink v-if="userStore.currentUser?.isAdmin" class="text-link" to="/admin">Admin</RouterLink>
 					<RouterLink class="text-link" to="/logout">Sign Out</RouterLink>
 				</template>
 			</div>
