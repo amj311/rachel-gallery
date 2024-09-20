@@ -154,7 +154,7 @@ function sendPhotosToUploader() {
 </template>
 
 <style scoped lang="scss">
-@import '@/assets/colors.scss';
+@import '@/assets/colors.module.scss';
 
 :deep(.p-tabview-panels) {
     height: calc(100vh - 22em);

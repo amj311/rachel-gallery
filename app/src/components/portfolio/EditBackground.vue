@@ -85,7 +85,7 @@ function openUploadToSection(sectionId) {
 </template>
 
 <style scoped lang="scss">
-@import '@/assets/colors.scss';
+@import '@/assets/colors.module.scss';
 
 .settings-grid {
 	display: grid;

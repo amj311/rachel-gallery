@@ -116,7 +116,7 @@ function goToSection(section) {
 </template>
 
 <style scoped lang="scss">
-@import '@/assets/colors.scss';
+@import '@/assets/colors.module.scss';
 .home-nav-wrapper {
 	top: 0;
 	left: 0;

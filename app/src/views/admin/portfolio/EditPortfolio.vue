@@ -209,7 +209,7 @@ watch(previewSize, () => {
 </template>
 
 <style scoped lang="scss">
-@import '@/assets/colors.scss';
+@import '@/assets/colors.module.scss';
 
 .panes-wrapper {
 	display: flex;

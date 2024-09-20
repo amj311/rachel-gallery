@@ -88,7 +88,7 @@ function onDrop(e) {
 </template>
 
 <style scoped lang="scss">
-@import '@/assets/colors.scss';
+@import '@/assets/colors.module.scss';
 
 .photo-grid {
 	height: 9rem;

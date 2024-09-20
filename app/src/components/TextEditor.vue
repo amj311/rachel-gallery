@@ -2,6 +2,7 @@
 import Quill from 'quill';
 import "quill/dist/quill.snow.css";
 import { onMounted, reactive, ref } from 'vue';
+import colors from '@/assets/colors.module.scss';
 
 const text = defineModel<string>();
 const initialText = text.value;
@@ -23,6 +24,11 @@ const state = reactive({
 onMounted(() => {
 	if (state.quill) return;
 
+	const textColors = [
+		'#000000', '#444444', '#666666', '#aaaaaa', '#cccccc', '#eeeeee', '#ffffff',
+		colors.primary, colors.primaryThin, colors.primaryDark,
+	];
+
 	const quill = new Quill('#'+id, {
 		theme: 'snow',
 		placeholder: props.placeholder,
@@ -31,7 +37,7 @@ onMounted(() => {
 			toolbar: !props.readOnly && [
 				[{ 'header': [1, 2, 3, false] }, { 'font': [] }],
 
-				['bold', 'italic', 'underline', 'strike', { 'color': [ '#000000', '#444444', '#666666', '#aaaaaa', '#cccccc', '#eeeeee', '#ffffff' ] }],
+				['bold', 'italic', 'underline', 'strike', { 'color': textColors }],
 
 				[{ 'align': [] }, { 'list': 'ordered'}, { 'list': 'bullet' }],
 				// [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
