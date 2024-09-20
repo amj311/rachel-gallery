@@ -17,7 +17,7 @@ defineEmits(['close']);
 		<div v-if="closeable" class="close-button" @click="() => $emit('close')"><i class="pi pi-times" /></div>
 		<img :src="watermarkImage" width="100" />
 		<h3>{{ message }}</h3>
-		<LoginForm />
+		<LoginForm @authenticated="() => $emit('close')" />
 	</div>
 </template>
 

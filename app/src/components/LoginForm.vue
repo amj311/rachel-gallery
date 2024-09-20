@@ -7,6 +7,8 @@ import Button from 'primevue/button';
 
 const userStore = useUserStore();
 
+const emit = defineEmits(['authenticated']);
+
 const state = reactive({
 	givenName: '',
 	familyName: '',
@@ -27,6 +29,7 @@ async function loginWithEmail() {
 	try {
 		state.isLoading = true;
 		await AuthService.signInWithEmail(state.email, state.password);
+		emit('authenticated');		
 	}
 	catch (error: any) {
 		userStore.loginError = error.message;
@@ -39,6 +42,7 @@ async function createEmailUser() {
 	try {
 		state.isLoading = true;
 		await AuthService.createEmailUser(state.email, state.password, state.givenName, state.familyName);
+		emit('authenticated');
 	}
 	catch (error: any) {
 		userStore.loginError = error.message;
@@ -50,6 +54,7 @@ async function createEmailUser() {
 async function loginWithGoogle() {
 	try {
 		await AuthService.signInWithGoogle();
+		emit('authenticated');
 	}
 	catch (error: any) {
 		userStore.loginError = error.message;

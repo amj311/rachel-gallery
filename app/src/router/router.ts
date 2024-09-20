@@ -10,11 +10,14 @@ const routes: Array<RouteRecordRaw> = [
 		component: () => import('@/views/Home.vue'),
 		async beforeEnter(to, from, next) {
 			await AuthService.signOut();
-			return next('');
+			return next({
+				name: "Home",
+			});
 		}
 	},
 	{
 		path: '',
+		name: "Home",
 		component: Home,
 		// beforeEnter(to, from, next) {
 		// 	const redirect = sessionStorage.getItem('redirectPath');

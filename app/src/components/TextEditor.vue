@@ -26,7 +26,7 @@ onMounted(() => {
 
 	const textColors = [
 		'#000000', '#444444', '#666666', '#aaaaaa', '#cccccc', '#eeeeee', '#ffffff',
-		colors.primary, colors.primaryThin, colors.primaryDark,
+		colors.primaryDark, colors.primary, colors.primaryThin,
 	];
 
 	const quill = new Quill('#'+id, {

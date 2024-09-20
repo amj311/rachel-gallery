@@ -334,7 +334,9 @@ async function loadDownloadLink() {
 		</div>
 
 		<div v-if="canView">
-			<NavBar>
+			<NavBar sticky>
+				<template #logo>{{ state.gallery.name }}</template>
+
 				<div class="flex align-items-center">
 					<div>
 

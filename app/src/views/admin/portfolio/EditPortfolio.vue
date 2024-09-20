@@ -236,7 +236,7 @@ watch(previewSize, () => {
 
 	.settings-pane {
 		min-width: 370px;
-		max-width: 400px;
+		max-width: 370px;
 
 		.sticky {
 			position: sticky;

@@ -42,8 +42,15 @@ const showLogin = ref(false);
 				<div class="flex align-items-center justify-content-center gap-2"><i class="pi pi-instagram"></i> <a href="https://www.instagram.com/r.florencephoto/" target="_blank">@r.florencephoto</a></div>
 				<div><i class="fa fa-copyright"></i> {{ new Date().getFullYear() }} All Rights Reserved</div>
 			</div>
-			<div>
-				<a class="text-link" @click="showLogin = true">Sign In</a>
+			<div class="flex flex-column gap-3 text-center">
+				<template v-if="!userStore.isLoggedIn">
+					<a class="text-link" @click="showLogin = true">Sign In</a>
+				</template>
+				<template v-else>
+					<RouterLink v-if="userStore.currentUser.isClient" class="text-link" to="">Your Galleries</RouterLink>
+					<RouterLink v-if="userStore.currentUser.isAdmin" class="text-link" to="/admin">Admin</RouterLink>
+					<RouterLink class="text-link" to="/logout">Sign Out</RouterLink>
+				</template>
 			</div>
 		</footer>
 

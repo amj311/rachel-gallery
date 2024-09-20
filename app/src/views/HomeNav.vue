@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePortfolioStore } from '@/stores/portfolio.store';
-import { computed, onBeforeMount, onMounted, onUnmounted, reactive, watch } from 'vue';
+import { computed, onBeforeMount, onMounted, reactive, watch } from 'vue';
 import { useAppStore } from '@/stores/app.store';
 
 const portfolioStore = usePortfolioStore();
@@ -19,7 +19,10 @@ const state = reactive({
 	rightLinks: [] as any[],
 	menuLinks: [] as any[],
 	showMenu: false,
+	navWidth: 0,
 })
+
+const isSkinny = computed(() => state.navWidth < 600);
 
 function computeLinkPlacement() {
 	if (!portfolioStore.portfolio) return;
@@ -42,6 +45,7 @@ function computeLinkPlacement() {
 	const logoWidth = logoEl?.getBoundingClientRect().width ?? 0;
 	const navEl = document.querySelector('.home-nav-wrapper');
 	const navWidth = navEl?.getBoundingClientRect().width ?? 0;
+	state.navWidth = navWidth;
 	const linkArea = navWidth - logoWidth;
 	const visibleLinks = [...links];
 	const maxLinks = Math.floor(linkArea / minWidth);
@@ -107,7 +111,7 @@ function goToSection(section) {
 				<i v-else class="pi pi-times text-lg" />
 			</div>
 		</div>
-		<div class="dropdown-menu" :class="{ 'show': state.showMenu, 'mobile': isMobile }" v-if="state.menuLinks?.length > 0" @click="state.showMenu = false">
+		<div class="dropdown-menu" :class="{ 'show': state.showMenu, 'skinny': isMobile || isSkinny }" v-if="state.menuLinks?.length > 0" @click="state.showMenu = false">
 			<div class="p-4 flex flex-column gap-4 align-items-center">
 				<div v-for="link in state.menuLinks" :key="link.label" class="link" @click="goToSection(link.section)">{{ link.label }}</div>
 			</div>
@@ -197,11 +201,11 @@ function goToSection(section) {
 		max-height: 100vh;
 	}
 
-	&.mobile {
-		min-width: 100vw;
+	&.skinny {
+		min-width: 100%;
 	}
 
-	&.mobile.show {
+	&.skinny.show {
 		padding-top: 1em;
 	}
 }

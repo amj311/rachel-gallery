@@ -1,26 +1,33 @@
 <script setup lang="ts">
 import UserMenu from '@/components/UserMenu.vue';
+
+defineProps<{
+	sticky?: boolean
+}>();
+
 </script>
 
 <template>
-	<div class="nav-bar">
+	<div class="nav-bar" :class="{ 'sticky': sticky }">
 		<div class="nav-row">
-			<div class="logo" @click="$router.push('/')">RACHEL FLORENCE<br/>PHOTO</div>
+			<div class="logo"><slot name="logo"><div @click="$router.push('/')">RACHEL FLORENCE<br/>PHOTO</div></slot></div>
 			<div class="flex-grow-1">
 				<slot></slot>
 			</div>
-			<UserMenu />
 		</div>
 	</div>
 </template>
 
 <style lang="scss">
 .nav-bar {
-	// position: sticky;
-	top: 0;
 	z-index: 10;
 	background-color: #fffd;
 	backdrop-filter: blur(10px);
+
+	&.sticky {
+		position: sticky;
+		top: 0;
+	}
 
 	.nav-row {
 		display: flex;
@@ -34,6 +41,7 @@ import UserMenu from '@/components/UserMenu.vue';
 			line-height: 1.2;
 			font-size: .8rem;
 			letter-spacing: 2px;
+			text-transform: uppercase;
 			user-select: none;
 			cursor: pointer;
 		}
