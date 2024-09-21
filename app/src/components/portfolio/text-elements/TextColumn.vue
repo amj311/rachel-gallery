@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { defineModel, computed, onBeforeMount } from 'vue';
-import EditBackground from './EditBackground.vue';
+import TextEditor from '@/components/TextEditor.vue';
 
-const section = defineModel<any>();
-const backgroundImage = computed(() => section.value.photos[0]);
+const col = defineModel<any>();
+
+const props = defineProps<{
+	editMode?: boolean,
+}>();
 
 onBeforeMount(() => {
 	const defaultAttributes = {
@@ -17,23 +20,16 @@ onBeforeMount(() => {
 	};
 
 	for (const attr in defaultAttributes) {
-		if (section.value.attributes[attr] === undefined) {
-			section.value.attributes[attr] = defaultAttributes[attr];
+		if (col.value[attr] === undefined) {
+			col.value[attr] = defaultAttributes[attr];
 		}
 	}
 })
-
-function onImageChange(image) {
-	section.value.photos[0] = image;
-}
-
 </script>
 
 <template>
 	<div>
-		<div class="settings-grid">
-			<EditBackground v-model="section.attributes" :section="section" :backgroundImage="backgroundImage" @imageChange="onImageChange" />
-		</div>
+		<TextEditor v-model="col.text" :discreet="true" :readOnly="!props.editMode" :placeholder="'Write your text here'" />
 	</div>
 </template>
 

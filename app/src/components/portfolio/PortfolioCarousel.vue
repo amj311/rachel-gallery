@@ -14,6 +14,7 @@ const speeds = {
 const PaneComponent = defineComponent({
 	name: 'PaneComponent',
 	components: {
+		// eslint-disable-next-line vue/no-unused-components
 		PhotoFrame,
 	},
 	props: {
@@ -27,7 +28,7 @@ const PaneComponent = defineComponent({
 					<PhotoFrame :key="backgroundImage.id" :photo="backgroundImage" :size="'xl'" :fillMethod="'cover'" :position="pane.focalPoint" />
 				</div>
 			</div>
-			<div class="text"><div class="section-max-width pr-3">{{ pane.text }}</div></div>
+			<div class="text"><div class="section-max-width"><div class="pr-8">{{ pane.text }}</div></div></div>
 		</div>
 	`,
 })

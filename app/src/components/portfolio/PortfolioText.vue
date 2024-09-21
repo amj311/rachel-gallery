@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import TextEditor from '../TextEditor.vue';
 import PhotoFrame from '../PhotoFrame.vue';
+import Column from './text-elements/Column.vue';
 
 const section = defineModel<any>();
 
@@ -20,8 +20,8 @@ const props = defineProps<{
 				<PhotoFrame :key="backgroundImage.id" :photo="backgroundImage" :size="'xl'" :fillMethod="'cover'" :position="section.attributes.focalPoint" />
 			</div>
 		</div>
-		<div class="text-wrapper section-max-width">
-			<TextEditor v-model="section.attributes.text" :discreet="true" :readOnly="!props.editMode" :placeholder="'Write your text here'" />
+		<div class="content py-7 section-max-width">
+			<Column :editMode="props.editMode" v-model="section.attributes" :canAddColumns="['text']" />
 		</div>
 	</div>
 </template>
@@ -34,12 +34,9 @@ const props = defineProps<{
 	position: relative;
 	/* height: calc(100vh - 80px); 100% of the viewport height adjusted for navbar height */
 
-	.text-wrapper {
+	.content {
 		position: relative;
 		width: 100%;
-		// margin: auto auto;
-		// max-width: 800px;
-		padding: 2em;
 	}
 
 	.backdrop {

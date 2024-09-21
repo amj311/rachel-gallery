@@ -24,19 +24,19 @@ const sectionTypes = {
 		name: 'Text',
 		icon: 'notes',
 		editor: EditText,
-		preview: PortfolioText,
+		component: PortfolioText,
 	},
 	'photo-wall': {
 		name: 'Photo Wall',
 		icon: 'dashboard_2',
 		editor: EditPhotoWall,
-		preview: PortfolioPhotoWall,
+		component: PortfolioPhotoWall,
 	},
 	'carousel': {
 		name: 'Carousel',
 		icon: 'overview_key',
 		editor: EditCarousel,
-		preview: PortfolioCarousel,
+		component: PortfolioCarousel,
 	}
 }
 
@@ -153,7 +153,7 @@ watch(previewSize, () => {
 
 								<div class="section-preview-wrapper" :class="{ 'selected': state.selectedSection === section }">
 									<div class="section" @click="state.selectedSection = section" :id="`section-${section.id}`">
-										<component :key="section.id" :is="sectionTypes[section.type].preview" v-model="portfolioStore.portfolio!.sections[index]" :editMode="true" />
+										<component :key="section.id" :is="sectionTypes[section.type].component" v-model="portfolioStore.portfolio!.sections[index]" :editMode="true" />
 									</div>
 
 									<div class="section-toolbar-wrapper">

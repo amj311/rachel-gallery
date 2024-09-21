@@ -88,7 +88,7 @@ onMounted(() => {
 		position: absolute;
 		top: 0;
 		left: 0;
-		// right: 0;
+		min-width: 20rem;
 		transform: translateY(calc(-100%));	
 		z-index: 10;
 		background: #fff;
