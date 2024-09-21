@@ -22,7 +22,6 @@ import { Buffer } from 'buffer';
 import JSZip from 'jszip';
 import { ref } from 'vue';
 import { useAppStore } from '@/stores/app.store';
-import InputNumber from 'primevue/inputnumber';
 import OverlayPanel from 'primevue/overlaypanel';
 import RefOpener from '@/components/RefOpener.vue';
 

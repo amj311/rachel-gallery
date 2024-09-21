@@ -27,7 +27,7 @@ const PaneComponent = defineComponent({
 					<PhotoFrame :key="backgroundImage.id" :photo="backgroundImage" :size="'xl'" :fillMethod="'cover'" :position="pane.focalPoint" />
 				</div>
 			</div>
-			<div class="text">{{ pane.text }}</div>
+			<div class="text"><div class="section-max-width pr-3">{{ pane.text }}</div></div>
 		</div>
 	`,
 })
@@ -223,15 +223,19 @@ onBeforeUnmount(() => {
 				</div>
 			</div>
 
-			<div class="controls" v-if="section.attributes.showControls && panes.length > 1 && !state.isSkinny">
-				<Button text @click="() => goToPrev()" icon="pi pi-chevron-left" />
-				<Button text @click="() => goToNext()" icon="pi pi-chevron-right" />
+			<div class="controls-wrapper">
+				<div class="controls section-max-width text-right" v-if="section.attributes.showControls && panes.length > 1 && !state.isSkinny">
+					<Button text @click="() => goToPrev()" icon="pi pi-chevron-left" />
+					<Button text @click="() => goToNext()" icon="pi pi-chevron-right" />
+				</div>
 			</div>
 		</div>
 	</div>
 </template>
 
 <style lang="scss">
+@import './portfolio.scss';
+
 :root {
 	--swipe-delta: 0px;
 }
@@ -373,10 +377,9 @@ onBeforeUnmount(() => {
 
 	.text {
 		position: absolute;
-		bottom: 0;
+		bottom: 3rem;
 		left: 0;
-		width: calc(100% - 4rem);
-		padding: 3rem;
+		right: 0;
 		color: #fff;
 		z-index: 1;
 		font-size: 2rem;
@@ -392,13 +395,12 @@ onBeforeUnmount(() => {
 	text-align: center;
 }
 
-.controls {
+.controls-wrapper {
 	position: absolute;
-	bottom: 1rem;
-	right: 1rem;
-	transform: translate(-50%, -50%);
+	left: 0;
+	right: 0;
+	bottom: 3rem;
 	z-index: 1;
-	
 
 	.p-button {
 		color: #fff;

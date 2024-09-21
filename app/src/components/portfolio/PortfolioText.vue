@@ -20,13 +20,15 @@ const props = defineProps<{
 				<PhotoFrame :key="backgroundImage.id" :photo="backgroundImage" :size="'xl'" :fillMethod="'cover'" :position="section.attributes.focalPoint" />
 			</div>
 		</div>
-		<div class="text-wrapper">
+		<div class="text-wrapper section-max-width">
 			<TextEditor v-model="section.attributes.text" :discreet="true" :readOnly="!props.editMode" :placeholder="'Write your text here'" />
 		</div>
 	</div>
 </template>
 
 <style scoped lang="scss">
+@import './portfolio.scss';
+
 .text-section {
 	width: 100%;
 	position: relative;
@@ -35,8 +37,8 @@ const props = defineProps<{
 	.text-wrapper {
 		position: relative;
 		width: 100%;
-		margin: auto auto;
-		max-width: 800px;
+		// margin: auto auto;
+		// max-width: 800px;
 		padding: 2em;
 	}
 
