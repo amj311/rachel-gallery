@@ -46,13 +46,13 @@ const columns = {
 	text: {
 		type: 'text',
 		label: 'Text',
-		icon: 'notes',
+		icon: 'pi pi-align-left',
 		component: TextColumn,
 	},
 	'photo-frame': {
 		type: 'photo-frame',
 		label: 'Photo Frame',
-		icon: 'image',
+		icon: 'pi pi-image',
 		component: PhotoColumn,
 	},
 };
@@ -60,9 +60,14 @@ const columns = {
 const AddColButton = defineComponent({
 	name: 'AddColButton',
 	props: ['options'],
+	data: () => ({
+		columns,
+	}),
 	template: /*html*/`
 		<div class="add-col-button">
-			<div v-for="(opt, i) in options" class="add-col-option" :key="i" @click="$emit('selected', opt)">{{ opt }}</div>
+			<div v-for="(opt, i) in options" class="add-col-option flex align-items-center cursor-pointer" :key="i" @click="$emit('selected', opt)">
+				<i :class="columns[opt].icon" />&nbsp;&nbsp;{{ columns[opt].label }}
+			</div>
 		</div>
 	`,
 })
