@@ -35,10 +35,10 @@ function computeLinkPlacement() {
 		return links;
 	}, []) ?? [];
 
-	links.push({
-		label: 'Clients',
-		to: '/admin',
-	});
+	// links.push({
+	// 	label: 'Clients',
+	// 	to: '/admin',
+	// });
 
 	const minWidth = links.reduce((a, b) => a + b.label.length, 0) * 3.5;
 	const logoEl = document.querySelector('.logo');
