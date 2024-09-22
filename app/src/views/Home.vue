@@ -5,7 +5,7 @@ import { computed, onBeforeMount, onUnmounted, reactive } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
 import PortfolioPhotoWall from '@/components/portfolio/PortfolioPhotoWall.vue';
 import PortfolioCarousel from '@/components/portfolio/PortfolioCarousel.vue';
-import PortfolioText from '@/components/portfolio/PortfolioText.vue';
+import PortfolioText from '@/components/portfolio/PortfolioTextGrid.vue';
 import { useAppStore } from '@/stores/app.store';
 import HomeNav from './HomeNav.vue';
 

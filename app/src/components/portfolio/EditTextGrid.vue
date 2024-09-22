@@ -3,7 +3,7 @@ import { defineModel, computed, onBeforeMount } from 'vue';
 import EditBackground from './EditBackground.vue';
 
 const section = defineModel<any>();
-const backgroundImage = computed(() => section.value.photos[0]);
+const backgroundImage = computed(() => section.value.photos.find(() => section.value.attributes.backgroundPhotoId));
 
 onBeforeMount(() => {
 	const defaultAttributes = {
@@ -24,7 +24,7 @@ onBeforeMount(() => {
 })
 
 function onImageChange(image) {
-	section.value.photos[0] = image;
+	section.value.attributes.backgroundPhotoId = image.id;
 }
 
 </script>

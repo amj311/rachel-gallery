@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineModel, computed, onBeforeMount } from 'vue';
 import TextEditor from '@/components/TextEditor.vue';
+import ColumnWrapper from './ColumnWrapper.vue';
 
 const col = defineModel<any>();
 
@@ -28,9 +29,11 @@ onBeforeMount(() => {
 </script>
 
 <template>
-	<div>
+	<ColumnWrapper :editMode="props.editMode" :options="[]">
+		<div>
 		<TextEditor v-model="col.text" :discreet="true" :readOnly="!props.editMode" :placeholder="'Write your text here'" />
 	</div>
+	</ColumnWrapper>
 </template>
 
 <style scoped lang="scss">

@@ -10,7 +10,7 @@ const props = defineProps<{
 </script>
 
 <template>
-	<div class="py-7" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
+	<div class="py-6" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
 		<div v-if="section.photos.length === 0 && props.editMode" class="flex flex-column justify-content-center align-items-center py-8">
 			<i class="material-symbols-outlined text-7xl text-gray-400">dashboard_2</i>
 			Use the editor panel to add photos

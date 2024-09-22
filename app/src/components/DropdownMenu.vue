@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import Menu from 'primevue/menu';
+import TieredMenu from 'primevue/tieredmenu';
 import { ref } from 'vue';
 
-const menu = ref<InstanceType<typeof Menu>>();
+const menu = ref<InstanceType<typeof TieredMenu>>();
 const props = defineProps<{
 	disabled?: boolean
 	style?: any
@@ -16,9 +16,9 @@ function openMenu(event) {
 
 <template>
 	<span @click="openMenu" v-bind="{ ...$props, ...$attrs }"><slot></slot></span>
-	<Menu ref="menu" id="overlay_menu" :popup="true" v-bind="$attrs">
+	<TieredMenu ref="menu" id="overlay_menu" :popup="true" v-bind="$attrs">
 		<template #start><slot name="start"></slot></template>
-	</Menu>
+	</TieredMenu>
 </template>
 
 <style scoped>

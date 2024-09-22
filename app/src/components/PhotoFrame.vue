@@ -29,7 +29,7 @@ const props = defineProps<{
 	showLoading?: boolean
 }>();
 
-const { photo, size = 'xs', watermark, fillMethod, showLoading } = props;
+const { photo, size = 'xs', watermark, showLoading } = props;
 
 const sizeWidths = {
 	xs: 100,
