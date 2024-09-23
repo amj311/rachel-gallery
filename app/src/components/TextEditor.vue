@@ -21,6 +21,55 @@ const state = reactive({
 	quill: null,
 })
 
+
+const fonts = [
+	{
+		value: '',
+		label: 'Default',
+		family: 'sans-serif',
+	},
+	{
+		value: 'timesNewRoman',
+		label: 'Times New Roman',
+		family: 'Times New Roman',
+	},
+	{
+		value: 'arial',
+		label: 'Arial',
+		family: 'Arial',
+	},
+	{
+		value: 'parisienne',
+		label: 'Parisienne',
+		family: 'Parisienne',
+		link: 'https://fonts.googleapis.com/css2?family=Parisienne&display=swap',
+	},
+];
+
+let Font: any = Quill.import('formats/font');
+Font.whitelist = fonts.map(font => font.value);
+Quill.register(Font, true);
+
+const fontLinks = fonts.reduce((html, font) => {
+	if (font.link) {
+		html += `<link rel="stylesheet" href="${font.link}">`;
+	}
+	return html;
+}, '');
+
+const fontCss = fonts.reduce((html, font) => html + /*css*/`
+.ql-picker.ql-font .ql-picker-label[data-value='${font.value}']::before,
+.ql-picker.ql-font .ql-picker-item[data-value='${font.value}']::before
+{
+	content: '${font.label}';
+	font-family: ${font.family};
+}
+
+.ql-font-${font.value} {
+	font-family: ${font.family};
+}
+`, '');
+
 onMounted(() => {
 	if (state.quill) return;
 
@@ -35,7 +84,7 @@ onMounted(() => {
 		readOnly: props.readOnly,
 		modules: {
 			toolbar: !props.readOnly && [
-				[{ 'header': [1, 2, 3, false] }, { 'font': [] }],
+				[{ 'header': [1, 2, 3, false] }, { 'font': fonts.map(font => font.value) }],
 
 				['bold', 'italic', 'underline', 'strike', { 'color': textColors }],
 
@@ -62,6 +111,8 @@ onMounted(() => {
 </script>
 
 <template>
+	<div v-html="fontLinks" />
+	<div v-html="'<style>'+fontCss+'</style>'" />
 	<div class="text-editor" :class="{ 'discreet': props.discreet, 'read-only': props.readOnly, ...props.classes }">
 		<div :id="id" v-html="initialText"></div>
 	</div>
@@ -104,7 +155,7 @@ onMounted(() => {
 	}
 
 	:deep(.ql-container) {
-		border: 0;
+		border: 0 !important;
 	}
 
 	&:hover:not(.read-only) {
@@ -117,4 +168,6 @@ onMounted(() => {
 		padding: 0;
 	}
 }
+
+
 </style>
