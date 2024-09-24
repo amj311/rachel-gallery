@@ -40,7 +40,7 @@ function onDrop(e) {
 <template>
 	<div :class="{ expanded: state.expanded }">
 		<div v-if="photos && photos.length">
-			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" :data-listid="listId">
+			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" :data-listid="listId" :scroll-sensitivity="100" :force-fallback="true">
 				<template #header v-if="handleAddPhotos">
 					<div key="add-photos" class="add-photos photo-grid-item" @click="handleAddPhotos">
 						<i class="pi pi-plus" />

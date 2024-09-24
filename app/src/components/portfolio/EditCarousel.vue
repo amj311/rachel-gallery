@@ -77,7 +77,7 @@ async function deletePane(pane) {
 	
 
 	<div class="my-3 text-gray-500">Panes</div>
-	<Drag v-model="section.attributes.panes" :animation="200" :group="'carousel_' + section.id" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPaneDrop">
+	<Drag v-model="section.attributes.panes" :animation="200" :group="'carousel_' + section.id" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onPaneDrop" :scroll-sensitivity="100" :force-fallback="true">
 		<template #item="{ element: pane, index }">
 			<div class="pane-wrapper flex gap-2 pb-4 mb-4">
 				<div class="w-3rem pt-2">
