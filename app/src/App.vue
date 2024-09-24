@@ -8,6 +8,7 @@ import { ref } from 'vue';
 import LoadSplash from './components/LoadSplash.vue';
 import { computed } from 'vue';
 import LoginModal from './components/LoginModal.vue';
+import { useAppStore } from './stores/app.store';
 
 const userStore = useUserStore();
 const sessionInterval = setInterval(userStore.loadSessionData, 60000);
@@ -32,26 +33,29 @@ const showLogin = ref(false);
 
 <template>
 	<LoadSplash v-if="waitingForAuth || !userStore.hasLoadedSessionData" />
-	<div v-else>
+	<div v-else :class="{ mobile: useAppStore().isMobile }">
 		<section><RouterView /></section>
 		<Toast></Toast>
-		<footer class="flex align-items-top flex-wrap justify-content-center gap-8 p-8">
-			<img :src="watermarkImage" width="100" />
-			<div class="flex-grow-1 flex flex-column gap-3 text-center">
-				<div>Photos by Rachel Florence Photo</div>
-				<div class="flex align-items-center justify-content-center gap-2"><i class="pi pi-instagram"></i> <a href="https://www.instagram.com/r.florencephoto/" target="_blank">@r.florencephoto</a></div>
-				<div><i class="fa fa-copyright"></i> {{ new Date().getFullYear() }} All Rights Reserved</div>
-			</div>
-			<div class="flex flex-column gap-3 text-center">
+		<footer>
+			<div class="text-center flex-inline flex-column align-items-center gap-3">
 				<template v-if="!userStore.isLoggedIn">
-					<a class="text-link" @click="showLogin = true">Sign In</a>
+					<div>Returning client?</div>
+					<a class="text-link font-bold" @click="showLogin = true">Sign In</a>
 				</template>
 				<template v-else>
-					<div>Hello, {{ userStore.currentUser?.givenName }}!</div>
-					<RouterLink v-if="userStore.currentUser?.isClient" class="text-link" to="">Your Galleries</RouterLink>
-					<RouterLink v-if="userStore.currentUser?.isAdmin" class="text-link" to="/admin">Admin</RouterLink>
+					<div class="font-bold">Hello, {{ userStore.currentUser?.givenName }}!</div>
+					<div class="flex flex-wrap column-gap-3 justify-content-center">
+						<RouterLink v-if="userStore.currentUser?.isClient" class="text-link" to="">Your Galleries</RouterLink>
+						<RouterLink v-if="userStore.currentUser?.isAdmin" class="text-link" to="/admin">Admin</RouterLink>
+					</div>
 					<RouterLink class="text-link" to="/logout">Sign Out</RouterLink>
 				</template>
+			</div>
+			<div class="justify-content-center"><RouterLink to="/"><img :src="watermarkImage" width="150" height="150" /></RouterLink></div>
+			<div class="text-center flex-inline flex-column align-items-center gap-3">
+				<div>Photos by Rachel Florence Photo</div>
+				<div class="flex align-items-center justify-content-center gap-2"><i class="pi pi-instagram"></i> <a class="text-link font-bold" href="https://www.instagram.com/r.florencephoto/" target="_blank">@r.florencephoto</a></div>
+				<div><i class="fa fa-copyright"></i> {{ new Date().getFullYear() }} All Rights Reserved</div>
 			</div>
 		</footer>
 
@@ -71,14 +75,32 @@ section {
 
 footer {
 	background: #ece6de;
+	padding: 5rem 2rem;
 
-	a {
+	> div {
+		width: 33%;
+		box-sizing: border-box;
+		display: inline-flex;
+		vertical-align: middle;
+	}
+
+	.text-link {
 		color: inherit !important;
 		text-decoration: none;
-		font-weight: bold;
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 }
 
+
+.mobile {
+	footer > div {
+		display: flex;
+		width: 100%;
+		padding: 2rem;
+	}
+}
 
 .dev-banner {
 	position: fixed;
@@ -96,4 +118,5 @@ footer {
 		opacity: 0;
 	}
 }
+
 </style>

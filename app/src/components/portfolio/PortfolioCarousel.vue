@@ -394,6 +394,11 @@ onBeforeUnmount(() => {
 .carousel-wrapper.skinny .pane .text {
 	width: 100%;
 	text-align: center;
+
+	.section-max-width > div {
+		padding: 0 !important;
+	}
+
 }
 
 .controls-wrapper {

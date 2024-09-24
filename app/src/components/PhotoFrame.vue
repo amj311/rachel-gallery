@@ -22,6 +22,7 @@ const props = defineProps<{
 		height: number,
 		dataUrl?: string
 	},
+	fixedRatio?: boolean,
 	fillMethod?: 'cover' | 'contain',
 	position?: string | { x: number, y: number },
 	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
@@ -143,7 +144,7 @@ const objectPosition = computed(() => {
 </script>
 
 <template>
-	<div class="photoframe">
+	<div class="photoframe" :style="{ 'aspect-ratio': fixedRatio ? `${photo.width}/${photo.height}` : undefined }">
 		<i class="loader pi pi-spinner pi-spin" />
 		<canvas ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition }"></canvas>
 		<canvas ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition }"></canvas>

@@ -90,7 +90,7 @@ const options = computed(() => ([
 	<ColumnWrapper :editMode="props.editMode" :options="options">
 		<div class="photo-col">
 			<div v-if="!photo && props.editMode" class="add-photo" @click="selectPhoto"><i class="pi pi-image text-2xl" />Add Image</div>
-			<PhotoFrame v-else-if="photo" :key="photo.id" :photo="photo" :fillMethod="col.fillMethod" :position="col.position" />
+			<PhotoFrame v-else-if="photo" :key="photo.id" :photo="photo" :fillMethod="col.fillMethod" :position="col.position" size="lg" fixedRatio />
 		</div>
 	</ColumnWrapper>
 </template>
