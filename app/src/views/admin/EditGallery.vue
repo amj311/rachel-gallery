@@ -543,7 +543,9 @@ function photoOptions(photo) {
 				<Button severity="primary" v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
 					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.size }})</Button>
 			</div>
-			<ImageSelector v-model="state.imagesToUpload" />
+			<div class="body">
+				<ImageSelector v-model="state.imagesToUpload" />
+			</div>
 		</div>
 
 		<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
@@ -708,10 +710,10 @@ function photoOptions(photo) {
 	width: 800px;
 	max-width: 80vw;
 	padding: 1em;
-	z-index: 2;
+	z-index: 10;
 
-	.grid-wrapper {
-		max-height: 50vh;
+	.body {
+		max-height: min(calc(100vh - 10rem), 75vh);
 		overflow: hidden;
 		overflow-y: auto;
 	}

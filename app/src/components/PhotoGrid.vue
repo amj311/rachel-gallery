@@ -112,7 +112,6 @@ function onDrop(e) {
 .photo-grid {
 	padding-top: 10px;
 	padding-bottom: 5px;
-	padding-right: 20px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
 	column-gap: 5px;
@@ -178,6 +177,10 @@ function onDrop(e) {
 		height: 0;
 		display: flex;
         justify-content: space-between;
+
+		> *:not(.force-visible) {
+			visibility: hidden;
+		}
 		
 		:deep(.button) {
 			display: inline-block;
@@ -187,15 +190,11 @@ function onDrop(e) {
 			line-height: 2em;
 			text-align: center;
 			cursor: pointer;
-
-			&:not(.force-visible) {
-				display: none;
-			}
 		}
 	}
 
-	&:hover .options :deep(.button) {
-		display: block;
+	&:hover .options > * {
+		visibility: visible;
 	}
 }
 
