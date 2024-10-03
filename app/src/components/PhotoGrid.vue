@@ -206,7 +206,7 @@ function onDrop(e) {
 	justify-content: center;
 	align-items: center;
 	min-width: 5rem;
-	aspect-ratio: 1;s
+	height: 5rem;
 
 	&:hover {
 		color: gray;

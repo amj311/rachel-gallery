@@ -158,7 +158,7 @@ function doScrollEffect() {
 	const viewTop = window.scrollY;
 	const viewBottom = window.scrollY + window.innerHeight;
 
-	const loadBuffer = window.innerHeight * 0.5;
+	const loadBuffer = window.innerHeight * 3;
 	const loadTop = viewTop - loadBuffer;
 	const loadBottom = viewBottom + loadBuffer;
 
