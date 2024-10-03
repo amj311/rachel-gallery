@@ -25,6 +25,7 @@ import PhotoGrid from '@/components/PhotoGrid.vue';
 import PortfolioPhotoSelector from '@/components/portfolio/PortfolioPhotoSelector.vue';
 import Snackbar from '@/components/Snackbar.vue';
 import DropdownMenu from '@/components/DropdownMenu.vue';
+import SelectButton from 'primevue/selectbutton';
 
 type Photo = any;
 
@@ -54,6 +55,7 @@ const state = reactive({
 	isCreatingClient: false,
 	showAddToPortfolio: false,
 	selectedSet: new Set<Photo>(),
+	sectionPhotoSize: 'md' as 'sm' | 'md' | 'lg',
 });
 
 onBeforeMount(async () => {
@@ -471,9 +473,18 @@ function photoOptions(photo) {
 			</div>
 		</div>
 
+		<div class="flex align-items-center gap-3">
+			<h2>Sections</h2>
+			<SelectButton v-model="state.sectionPhotoSize" :options="['sm', 'md', 'lg']" style="zoom: .8">
+				<template #option="slotProps">
+					<i :class="`text-${slotProps.option} pi pi-table flex align-items-center`" style="min-height: 1.8rem"></i>
+				</template>
+			</SelectButton>
+			<div class="flex-grow-1"></div>
+		</div>
 		<template v-for="(section, index) in state.gallery.sections" :key="section.id">
 			<div v-if="!section.marked_for_deletion" class="my-6 section" :class="{ expanded: section.expanded }">
-				<div class="flex align-items-center py-2">
+				<div class="flex align-items-center py-2 sticky top-0 z-5 bg-white">
 					<h3>
 						<GhostInput v-model="section.name" placeholder="Section name..." />
 					</h3>
@@ -497,6 +508,7 @@ function photoOptions(photo) {
 					:onPhotoDrop="onPhotoDrop"
 					:handleAddPhotos="() => openUploadToSection(section)"
 					:photoOptions="photoOptions"
+					:size="state.sectionPhotoSize"
 				/>
 			</div>
 		</template>

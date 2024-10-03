@@ -13,22 +13,24 @@ const props = defineProps<{
 	photoOptions?: (photo) => any[],
 	onPhotoClick?: (photo) => void,
 	photoClasses?: (photo) => any,
-	selectable?: boolean,
-	isSelected?: (photo) => boolean,
-	onToggleSelected?: (photo) => void,
 	handleAddPhotos?: () => void,
 	collapsible?: boolean,
+	size?: 'sm' | 'md' | 'lg',
 
 	// dragging options
 	draggable?: boolean,
 	onPhotoDrop?: (photo, fromListId, toListId) => void,
 	dragGroup?: string,
 	listId?: string,
+
+	// selecting options
+	selectable?: boolean,
+	isSelected?: (photo) => boolean,
+	onToggleSelected?: (photo) => void,
 }>();
 
 const state = reactive({
 	expanded: props.collapsible ? false : true,
-	size: 'sm' as 'sm' | 'md' | 'lg',
 });
 
 function onMove(e) {
@@ -36,7 +38,7 @@ function onMove(e) {
 }
 function onDrop(e) {
 	document.body.classList.remove('dragging');
-	
+
 	const fromListId = e.from.attributes['data-listid'].value;
 	const toListId = e.to.attributes['data-listid'].value;
 	const photo = e.item._underlying_vm_;
@@ -47,7 +49,7 @@ function onDrop(e) {
 </script>
 
 <template>
-	<div :class="{ expanded: state.expanded }">
+	<div :class="{ expanded: state.expanded, [props.size || 'sm']: true }">
 		<div v-if="photos && photos.length" >
 			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" @move="onMove" :data-listid="listId" :scroll-sensitivity="100" :force-fallback="true">
 				<template #header v-if="handleAddPhotos">
@@ -63,7 +65,7 @@ function onDrop(e) {
 						@click="onPhotoClick?.call(null, photo)"
 					>
 						<div class="photo-frame" :class="(draggable && !isMobile) ? 'handle' : null">
-							<PhotoFrame :photo="photo" />
+							<PhotoFrame :key="photo.id + size" :photo="photo" :size="size as any || 'sm'" />
 						</div>
 						<div class="options">
 							<div v-show="selectable" class="button" :class="{ 'force-visible': isSelected?.call(null, photo) }">
@@ -107,17 +109,14 @@ function onDrop(e) {
 	overflow: hidden;
 }
 
-.expanded .photo-grid {
-	height: auto;
-}
-
 .photo-grid {
 	padding-top: 10px;
 	padding-bottom: 5px;
 	padding-right: 20px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-	grid-gap: 15px;
+	column-gap: 5px;
+	row-gap: 15px;
 	justify-items: center;
 	align-items: center;
 }
@@ -152,6 +151,22 @@ function onDrop(e) {
 		opacity: .4;
 		border: 1px solid lightgrey;
 		cursor: grabbing;
+	}
+
+	.photo-frame {
+		width: 5rem;
+		height: 5rem;
+		margin-bottom: .5rem;
+	}
+
+	.filename {
+		font-size: .7em;
+		line-break: anywhere;
+		text-align: center;
+		width: 100%;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
 
 	.options {
@@ -191,8 +206,8 @@ function onDrop(e) {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	height: 5rem;
 	min-width: 5rem;
+	aspect-ratio: 1;s
 
 	&:hover {
 		color: gray;
@@ -203,20 +218,48 @@ function onDrop(e) {
 	}
 }
 
-.photo-frame {
-	width: 5rem;
-	height: 5rem;
-	margin-bottom: .5rem;
+
+.md {
+	.photo-grid {
+		height: 10.5rem;
+	}
+
+	.photo-grid {
+		grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+	}
+
+	.photo-grid-item {
+		max-width: 8rem;
+
+		.photo-frame {
+			width: 7rem;
+			height: 7rem;
+		}
+	}
 }
 
-.filename {
-	font-size: .7em;
-	line-break: anywhere;
-	text-align: center;
-	width: 100%;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+.lg {
+	.photo-grid {
+		height: 12.5rem;
+	}
+
+	.photo-grid {
+		grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+	}
+
+	.photo-grid-item {
+		max-width: 10rem;
+
+		.photo-frame {
+			width: 9rem;
+			height: 9rem;
+		}
+	}
+}
+
+
+.expanded .photo-grid {
+	height: auto;
 }
 
 </style>
