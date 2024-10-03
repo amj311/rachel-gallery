@@ -1,12 +1,18 @@
-export default function debounce(func: (...args: any[]) => void, wait: number, beforeDebounce?: (...args: any[]) => any) {
-	let timeout: ReturnType<typeof setTimeout> | null = null
+type DebounceOptions = {
+	beforeDebounce?: (...args: any[]) => any,
+	doFirst?: boolean,
+	allowInterval?: boolean,
+}
+export default function debounce(action: (...args: any[]) => void, wait: number, options: DebounceOptions = {}) {
+	let activeTimeout: ReturnType<typeof setTimeout> | null = null;
+	let lastFinish = 0;
 
 	return (...args: any[]) => {
 		let ignore;
 		let cancel;
 	
-		if (beforeDebounce) {
-			const flags = beforeDebounce(...args) || {};
+		if (options.beforeDebounce) {
+			const flags = options.beforeDebounce(...args) || {};
 			({cancel, ignore} = flags);
 		}
 
@@ -15,11 +21,28 @@ export default function debounce(func: (...args: any[]) => void, wait: number, b
 			return;
 		}
 
-		if (timeout) {
-			clearTimeout(timeout);
+		if (cancel) {
+			clearTimeout(activeTimeout || 0);
+			return;
 		}
 
-		// if cancel, don't run the final function
-		if (!cancel) timeout = setTimeout(func, wait);
+		// Reset wait time if not doing interval
+		if (activeTimeout && !options.allowInterval) {
+			clearTimeout(activeTimeout);
+		}
+		// Do first if it has been a while since the last debounce
+		if (options.doFirst && !activeTimeout && Date.now() - lastFinish > wait) {
+			action(...args);
+		}
+
+		// Set timeout if there is not currently one
+		// if not doing interval, reset the wait time, otherwise let it continue
+		if (!activeTimeout || !options.allowInterval) {
+			activeTimeout = setTimeout(() => {
+				action(...args);
+				activeTimeout = null;
+				lastFinish = Date.now();
+			}, wait);
+		}
 	};
 }

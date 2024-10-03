@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import DeferredContent from 'primevue/deferredcontent';
 import { useAppStore } from '@/stores/app.store';
+import debounce from '@/utils/debounce';
 
 const isMobile = computed(() => useAppStore().isMobile);
 
@@ -18,6 +19,8 @@ const state = reactive({
 	tiles: [] as {
 		photo: any,
 		rect: ImageRect,
+		isInView?: boolean,
+		shouldLoad?: boolean,
 	}[],
 	height: 0,
 });
@@ -133,31 +136,71 @@ const computeTiles = (() => {
 watch(computed(() => JSON.stringify(photos.value)), () => {
 	computeTiles();
 });
-
+watch(computed(() => useAppStore().emulateWindowResize), computeTiles)
 onMounted(() => {
 	computeTiles();
+	if (props.lazyLoad) {
+		doScrollEffect();
+	}
 });
-watch(computed(() => useAppStore().emulateWindowResize), computeTiles)
 
-const lazyComponent = computed(() => props.lazyLoad ? DeferredContent : 'div' );
+const ScrollDebounceTime = 1000;
+const scrollDebounce = debounce(doScrollEffect, ScrollDebounceTime, { allowInterval: true });
+if (props.lazyLoad) {
+	window.addEventListener('scroll', scrollDebounce);
+	onUnmounted(() => {
+		window.removeEventListener('scroll', scrollDebounce);
+	})
+}
+
+function doScrollEffect() {
+	const wallRect = wall.value!.getBoundingClientRect();
+	const viewTop = window.scrollY;
+	const viewBottom = window.scrollY + window.innerHeight;
+
+	const loadBuffer = window.innerHeight * 0.5;
+	const loadTop = viewTop - loadBuffer;
+	const loadBottom = viewBottom + loadBuffer;
+
+	const unloadBuffer = window.innerHeight * 3;
+	const unloadTop = viewTop - unloadBuffer;
+	const unloadBottom = viewBottom + unloadBuffer;
+
+	const wallTop = wallRect.top + window.scrollY;
+	const wallBottom = wallTop + state.height;
+
+	// Abort early if entire wall is not in view
+	if (wallTop > loadBottom || wallBottom < loadTop) {
+		return;
+	}
+	
+	for (const tile of state.tiles) {
+		const tileTop = tile.rect.top + wallTop;
+		const tileBottom = tile.rect.bottom + wallTop;
+		if (tileTop < loadBottom && tileBottom > loadTop) {
+			tile.shouldLoad = true;
+		}
+		if (!(tileTop < unloadBottom && tileBottom > unloadTop)) {
+			tile.shouldLoad = false;
+		}
+	}
+}
 
 </script>
 
 
 <template>
-	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }">
-		<component :is="lazyComponent">
-			<template v-for="tile in state.tiles" :key="tile.photo.id">
-				<div v-if="tile.rect" class="photo-wall-item"
-					:style="{ width: tile.rect.width + 'px', height: tile.rect.height + 'px', top: tile.rect.top + 'px', left: tile.rect.left + 'px' }">
-					<div class="photo-frame">
-						<PhotoFrame :photo="tile.photo" :size="tile.rect.isDouble ? 'lg' : 'md'"
-							:watermark="true" :fillMethod="'cover'" />
-					</div>
-					<div class="overlay"><slot :photo="tile.photo"></slot></div>
+	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }" :class="{ 'lazyload': lazyLoad }">
+		<template v-for="tile in state.tiles" :key="tile.photo.id">
+			<div v-if="tile.rect" class="photo-wall-item"
+				:style="{ width: tile.rect.width + 'px', height: tile.rect.height + 'px', top: tile.rect.top + 'px', left: tile.rect.left + 'px' }">
+				<div class="photo-frame">
+					<PhotoFrame v-if="!lazyLoad || tile.shouldLoad" :photo="tile.photo" :size="tile.rect.isDouble ? 'lg' : 'md'"
+						:watermark="true" :fillMethod="'cover'" />
 				</div>
-			</template>
-		</component>
+				<div class="overlay"><slot :photo="tile.photo"></slot></div>
+			</div>
+		</template>
 	</div>
 </template>
 

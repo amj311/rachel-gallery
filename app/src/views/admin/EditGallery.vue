@@ -84,7 +84,7 @@ onBeforeMount(async () => {
 
 
 const saveDebounceTime = 1000;
-const debounceGallery = debounce(updateGallery, saveDebounceTime, () => state.isSaving = true);
+const debounceGallery = debounce(updateGallery, saveDebounceTime, { beforeDebounce: () => state.isSaving = true });
 
 // handle change detection and autosave
 const galleryState = computed(() => JSON.stringify(state.gallery));
