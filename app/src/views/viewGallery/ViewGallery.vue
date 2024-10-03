@@ -24,6 +24,7 @@ import { ref } from 'vue';
 import { useAppStore } from '@/stores/app.store';
 import OverlayPanel from 'primevue/overlaypanel';
 import RefOpener from '@/components/RefOpener.vue';
+import Snackbar from '@/components/Snackbar.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -438,16 +439,19 @@ async function loadDownloadLink() {
 				</div>
 			</div>
 
-			<div class="selection-bar modal low-right-modal" v-if="state.selectedIds.size > 0">
-				<div class="flex align-items-center gap-2">
-					<i :class="state.selectedIds.size === 1 ? 'pi pi-image' : 'pi pi-images'" />
-					<div>{{ state.selectedIds.size }} photo{{ state.selectedIds.size === 1 ? '' : 's' }} selected</div>
-				</div>
-				<div class="flex-grow-1"></div>
-				<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button
-						icon="pi pi-download" text /></DropdownMenu>
-				<Button icon="pi pi-times" text @click="state.selectedIds.clear()" />
-			</div>
+			<Snackbar v-if="state.selectedIds.size > 0" closeable @close="state.selectedIds.clear()">
+				<template #content>
+					<div class="flex align-items-center gap-2">
+						<i :class="state.selectedIds.size === 1 ? 'pi pi-image' : 'pi pi-images'" />
+						<div>{{ state.selectedIds.size }} photo{{ state.selectedIds.size === 1 ? '' : 's' }} selected</div>
+					</div>
+				</template>
+				<template #actions>
+					<div class="flex-grow-1"></div>
+					<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button
+							icon="pi pi-download" text /></DropdownMenu>
+				</template>
+			</Snackbar>
 
 			<div class="pending-download modal low-right-modal flex align-items-center gap-3"
 				v-if="state.pendingDownload">
@@ -719,18 +723,6 @@ async function loadDownloadLink() {
 			overflow-x: hidden;
 		}
 	}
-}
-
-.low-right-modal.modal {
-	bottom: 10px;
-	top: auto;
-	left: auto;
-	right: 10px;
-	transform: none;
-	width: 300px;
-	display: flex;
-	align-items: center;
-	padding: .5em 1em;
 }
 
 #viewGallery.isMobile {

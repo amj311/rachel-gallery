@@ -10,6 +10,10 @@ html {
   font-weight: normal;
 } */
 
+body.dragging {
+	cursor: grab !important;
+	user-select: none;
+}
 
 .modal {
 	position: fixed;

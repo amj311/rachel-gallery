@@ -23,6 +23,10 @@ import debounce from '@/utils/debounce';
 import ImageSelector from '../../components/ImageFileSelector.vue';
 import PhotoGrid from '@/components/PhotoGrid.vue';
 import PortfolioPhotoSelector from '@/components/portfolio/PortfolioPhotoSelector.vue';
+import Snackbar from '@/components/Snackbar.vue';
+import DropdownMenu from '@/components/DropdownMenu.vue';
+
+type Photo = any;
 
 const router = useRouter();
 const uploaderStore = useUploaderStore();
@@ -49,6 +53,7 @@ const state = reactive({
 	newClient: { name: '', email: '' } as any,
 	isCreatingClient: false,
 	showAddToPortfolio: false,
+	selectedSet: new Set<Photo>(),
 });
 
 onBeforeMount(async () => {
@@ -172,6 +177,24 @@ async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
 	}
 }
 
+async function deletePhotos(photos) {
+	try {
+		await Promise.all(photos.map(p => deletePhoto(p, true, true)));
+	}
+	catch (error) {
+		console.error(error);
+		console.log("Failed to delete photos.");
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete photos. Try again later', life: 3000 });
+	}
+}
+
+async function deleteSelectedPhotos() {
+	if (!confirm('Are you sure you want to delete these photos')) return;
+
+	await deletePhotos([...state.selectedSet]);
+	state.selectedSet.clear();
+}
+
 async function deleteSection(section) {
 	if (!confirm('Are you sure you want to delete this section?')) {
 		return;
@@ -232,6 +255,28 @@ function onPhotoDrop(photo, fromListId, toListId) {
 	const toSection = state.gallery.sections.find(s => s.id === toListId);
 
 	// mark photo for reassignment
+	updatePhotosMoved(photo, fromSection, toSection);
+	
+	// update all photos with current order
+	for (const section of [fromSection, toSection]) {
+		for (const i in section.photos) {
+			section.photos[i].order = parseInt(i);
+		}
+	}
+}
+
+function movePhotosToSection(photos, toSection) {
+	for (const photo of photos) {
+		const fromSection = state.gallery.sections.find(s => s.id === photo.gallerySectionId);
+		fromSection.photos = fromSection.photos.filter(p => p.id !== photo.id);
+		toSection.photos.push(photo);
+		updatePhotosMoved(photo, fromSection, toSection);
+	}
+}
+
+function updatePhotosMoved(photo, fromSection, toSection) {
+	photo.gallerySectionId = toSection.id;
+
 	if (fromSection.photosMovedIn?.some(p => p === photo.id)) {
 		fromSection.photosMovedIn = fromSection.photosMovedIn.filter(p => p !== photo.id);
 	}
@@ -243,7 +288,7 @@ function onPhotoDrop(photo, fromListId, toListId) {
 	}
 	if (!toSection.photosMovedIn) toSection.photosMovedIn = [photo.id];
 	else toSection.photosMovedIn.push(photo.id);
-	
+		
 	// update all photos with current order
 	for (const section of [fromSection, toSection]) {
 		for (const i in section.photos) {
@@ -268,11 +313,24 @@ async function deleteGallery() {
 	}
 }
 
-const photoSelector: any = ref(null);
-function addToPortfolio(photos) {
-	photoSelector.value!.open([photos], state.galleryId);
+function toggleSelected(photo) {
+	if (state.selectedSet.has(photo)) {
+		state.selectedSet.delete(photo);
+	} else {
+		state.selectedSet.add(photo);
+	}
 }
 
+function photoOptions(photo) {
+	return [
+		{ label: 'Make cover', command: () => assignCoverPhoto(photo) },
+		{
+			label: 'Move to section',
+			items: state.gallery.sections.filter(s => s.id !== photo.gallerySectionId).map(s => ({ label: s.name, command: () => movePhotosToSection([photo], s) })),
+		},
+		{ label: 'Delete', command: () => deletePhoto(photo), class: 'danger' },
+	];
+}
 </script>
 
 
@@ -419,6 +477,7 @@ function addToPortfolio(photos) {
 					<h3>
 						<GhostInput v-model="section.name" placeholder="Section name..." />
 					</h3>
+					<div class="text-gray-500">{{  section.photos.length }} {{  section.photos.length === 1 ? 'photo' : 'photos' }}</div>
 					<div class="flex-grow-1"></div>
 					<Button v-if="index > 0" @click="swapSections(index, index - 1)" icon="pi pi-chevron-up" text />
 					<Button v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"
@@ -431,10 +490,13 @@ function addToPortfolio(photos) {
 					:collapsible="true"
 					:draggable="true"
 					:dragGroup="'gallerySections'"
+					:selectable="true"
+					:isSelected="(photo) => state.selectedSet.has(photo)"
+					@toggleSelected="toggleSelected"
 					:listId="section.id"
 					:onPhotoDrop="onPhotoDrop"
 					:handleAddPhotos="() => openUploadToSection(section)"
-					:photoOptions="(photo) => [{ label: 'Make Cover', command: () => assignCoverPhoto(photo) }, { label: 'Add to Portfolio', command: () => addToPortfolio(photo) }, { label: 'Delete', command: () => deletePhoto(photo), class: 'danger' }]"
+					:photoOptions="photoOptions"
 				/>
 			</div>
 		</template>
@@ -473,6 +535,21 @@ function addToPortfolio(photos) {
 		</div>
 
 		<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
+
+		<Snackbar v-if="state.selectedSet.size" closeable @close="state.selectedSet.clear()">
+			<template #content>
+				<div class="flex align-items-center gap-2">
+					<i :class="state.selectedSet.size === 1 ? 'pi pi-image' : 'pi pi-images'" />
+					<div>{{ state.selectedSet.size }} photo{{ state.selectedSet.size === 1 ? '' : 's' }} selected</div>
+				</div>
+			</template>
+			<template #actions>
+				<Button icon="pi pi-trash" text @click="deleteSelectedPhotos" />
+				<DropdownMenu :model="state.gallery.sections.map(section => ({ label: section.name, command: () => { movePhotosToSection([...state.selectedSet], section); state.selectedSet.clear() } }))">
+					<Button icon="pi pi-folder" text />
+				</DropdownMenu>
+			</template>
+		</Snackbar>
 
 		<PortfolioPhotoSelector
 			ref="photoSelector"

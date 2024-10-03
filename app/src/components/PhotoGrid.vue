@@ -13,6 +13,9 @@ const props = defineProps<{
 	photoOptions?: (photo) => any[],
 	onPhotoClick?: (photo) => void,
 	photoClasses?: (photo) => any,
+	selectable?: boolean,
+	isSelected?: (photo) => boolean,
+	onToggleSelected?: (photo) => void,
 	handleAddPhotos?: () => void,
 	collapsible?: boolean,
 
@@ -25,9 +28,15 @@ const props = defineProps<{
 
 const state = reactive({
 	expanded: props.collapsible ? false : true,
+	size: 'sm' as 'sm' | 'md' | 'lg',
 });
 
+function onMove(e) {
+	document.body.classList.add('dragging');
+}
 function onDrop(e) {
+	document.body.classList.remove('dragging');
+	
 	const fromListId = e.from.attributes['data-listid'].value;
 	const toListId = e.to.attributes['data-listid'].value;
 	const photo = e.item._underlying_vm_;
@@ -39,8 +48,8 @@ function onDrop(e) {
 
 <template>
 	<div :class="{ expanded: state.expanded }">
-		<div v-if="photos && photos.length">
-			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" :data-listid="listId" :scroll-sensitivity="100" :force-fallback="true">
+		<div v-if="photos && photos.length" >
+			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" @move="onMove" :data-listid="listId" :scroll-sensitivity="100" :force-fallback="true">
 				<template #header v-if="handleAddPhotos">
 					<div key="add-photos" class="add-photos photo-grid-item" @click="handleAddPhotos">
 						<i class="pi pi-plus" />
@@ -50,13 +59,16 @@ function onDrop(e) {
 					<div
 						v-if="!photo.marked_for_deletion"
 						class="photo-grid-item"
-						:class="photoClasses?.call(null, photo)"
+						:class="{ 'selected': isSelected?.call(null, photo), ...photoClasses?.call(null, photo)}"
 						@click="onPhotoClick?.call(null, photo)"
 					>
 						<div class="photo-frame" :class="(draggable && !isMobile) ? 'handle' : null">
 							<PhotoFrame :photo="photo" />
 						</div>
 						<div class="options">
+							<div v-show="selectable" class="button" :class="{ 'force-visible': isSelected?.call(null, photo) }">
+								<input type="checkbox" :checked="isSelected?.call(null, photo)" @click="() => onToggleSelected?.call(null, photo)" />
+							</div>
 							<i v-show="draggable && isMobile" class="button pi pi-arrows-alt handle" />
 							<div class="flex-grow-1"></div>
 							<slot name="options" :photo="photo">
@@ -101,6 +113,7 @@ function onDrop(e) {
 
 .photo-grid {
 	padding-top: 10px;
+	padding-bottom: 5px;
 	padding-right: 20px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
@@ -124,10 +137,15 @@ function onDrop(e) {
 	padding: .5rem;
 	border: 1px solid transparent;
 	background: #fff;
+	border-radius: 3px;
 
 	&:hover {
-		background-color: $primary-thin;
-		border: 1px solid #eee;
+		outline: 1px solid #dde;
+		box-shadow: 0 0 5px 0 #0005;
+	}
+
+	&.selected {
+		outline: 2px solid #dde;
 	}
 
 	&.sortable-ghost {
@@ -143,8 +161,8 @@ function onDrop(e) {
         left: 0;
         z-index: 1;
 		height: 0;
+		display: flex;
         justify-content: space-between;
-        display: none;
 		
 		:deep(.button) {
 			display: inline-block;
@@ -154,11 +172,15 @@ function onDrop(e) {
 			line-height: 2em;
 			text-align: center;
 			cursor: pointer;
+
+			&:not(.force-visible) {
+				display: none;
+			}
 		}
 	}
 
-	&:hover .options {
-		display: flex;
+	&:hover .options :deep(.button) {
+		display: block;
 	}
 }
 
