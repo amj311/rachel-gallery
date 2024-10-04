@@ -19,7 +19,7 @@ const state = reactive({
 	tiles: [] as {
 		photo: any,
 		rect: ImageRect,
-		isInView?: boolean,
+		// isAnimating?: boolean,
 		shouldLoad?: boolean,
 	}[],
 	height: 0,
@@ -171,6 +171,7 @@ function scrollEffect() {
 	const unloadBottom = viewBottom + unloadBuffer;
 
 	const animateBuffer = 0;
+	const animateTop = viewBottom - animateBuffer;
 	const animateBottom = viewBottom + animateBuffer;
 
 	// Abort early if entire wall is not in view
@@ -187,9 +188,7 @@ function scrollEffect() {
 		if (!(tileTop < unloadBottom && tileBottom > unloadTop)) {
 			tile.shouldLoad = false;
 		}
-		if (tileTop < animateBottom) {
-			tile.isInView = true;
-		}
+		// tile.isAnimating = (tileTop < animateBottom && tileTop > animateTop);
 	}
 }
 
@@ -199,7 +198,7 @@ function scrollEffect() {
 <template>
 	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }" :class="{ 'lazyload': lazyLoad, 'animate': animate }">
 		<template v-for="tile in state.tiles" :key="tile.photo.id">
-			<div v-if="tile.rect" class="photo-wall-item" :class="{ 'in-view': tile.isInView }"
+			<div v-if="tile.rect" class="photo-wall-item">
 				:style="{ width: tile.rect.width + 'px', height: tile.rect.height + 'px', top: tile.rect.top + 'px', left: tile.rect.left + 'px' }">
 				<div class="photo-frame">
 					<PhotoFrame v-if="!lazyLoad || tile.shouldLoad" :photo="tile.photo" :size="tile.rect.isDouble ? 'lg' : 'md'"
@@ -240,15 +239,17 @@ function scrollEffect() {
 		}
 	}
 
-	&.animate {
-		.photo-wall-item {
-			transition: 500ms ease;
-			opacity: 1;
-		}
-		.photo-wall-item:not(.in-view) {
-			opacity: 0;
-			transform: translateY(30px);
-		}
+	// &.animate {
+	// 	.photo-wall-item {
+	// 		opacity: 1;
+	// 	}
+	// 	.photo-wall-item.animating {
+	// 		transition: 500ms ease;
+	// 	}
+	// 	.photo-wall-item:not(.in-view) {
+	// 		opacity: 0;
+	// 		transform: translateY(30px);
+	// 	}
 	}
 }
 </style>
