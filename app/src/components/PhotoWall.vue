@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
-import DeferredContent from 'primevue/deferredcontent';
 import { useAppStore } from '@/stores/app.store';
 import debounce from '@/utils/debounce';
-
-const isMobile = computed(() => useAppStore().isMobile);
 
 const wall = ref<HTMLDivElement>();
 const props = defineProps<{
 	photos: any[],
 	lazyLoad?: boolean,
+	animate?: boolean,
 }>();
+
+const doScrollEffects = computed(() => props.animate || props.lazyLoad);
 
 const photos = computed(() => props.photos);
 
@@ -133,8 +133,8 @@ const computeTiles = (() => {
 	state.height = Math.max(...(cols.map(col => col?.bottom || 0)));
 
 	// Recompute visible photos
-	if (props.lazyLoad) {
-		doScrollEffect();
+	if (doScrollEffects.value) {
+		scrollEffect();
 	}
 });
 
@@ -146,19 +146,21 @@ onMounted(() => {
 	computeTiles();
 });
 
-const ScrollDebounceTime = 1000;
-const scrollDebounce = debounce(doScrollEffect, ScrollDebounceTime, { allowInterval: true });
-if (props.lazyLoad) {
+const ScrollDebounceTime = 750;
+const scrollDebounce = debounce(scrollEffect, ScrollDebounceTime, { allowInterval: true });
+if (doScrollEffects.value) {
 	window.addEventListener('scroll', scrollDebounce);
 	onUnmounted(() => {
 		window.removeEventListener('scroll', scrollDebounce);
 	})
 }
 
-function doScrollEffect() {
+function scrollEffect() {
 	const wallRect = wall.value!.getBoundingClientRect();
 	const viewTop = window.scrollY;
 	const viewBottom = window.scrollY + window.innerHeight;
+	const wallTop = wallRect.top + window.scrollY;
+	const wallBottom = wallTop + state.height;
 
 	const loadBuffer = window.innerHeight * 3;
 	const loadTop = viewTop - loadBuffer;
@@ -168,8 +170,8 @@ function doScrollEffect() {
 	const unloadTop = viewTop - unloadBuffer;
 	const unloadBottom = viewBottom + unloadBuffer;
 
-	const wallTop = wallRect.top + window.scrollY;
-	const wallBottom = wallTop + state.height;
+	const animateBuffer = 0;
+	const animateBottom = viewBottom + animateBuffer;
 
 	// Abort early if entire wall is not in view
 	if (wallTop > loadBottom || wallBottom < loadTop) {
@@ -185,6 +187,9 @@ function doScrollEffect() {
 		if (!(tileTop < unloadBottom && tileBottom > unloadTop)) {
 			tile.shouldLoad = false;
 		}
+		if (tileTop < animateBottom) {
+			tile.isInView = true;
+		}
 	}
 }
 
@@ -192,9 +197,9 @@ function doScrollEffect() {
 
 
 <template>
-	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }" :class="{ 'lazyload': lazyLoad }">
+	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }" :class="{ 'lazyload': lazyLoad, 'animate': animate }">
 		<template v-for="tile in state.tiles" :key="tile.photo.id">
-			<div v-if="tile.rect" class="photo-wall-item"
+			<div v-if="tile.rect" class="photo-wall-item" :class="{ 'in-view': tile.isInView }"
 				:style="{ width: tile.rect.width + 'px', height: tile.rect.height + 'px', top: tile.rect.top + 'px', left: tile.rect.left + 'px' }">
 				<div class="photo-frame">
 					<PhotoFrame v-if="!lazyLoad || tile.shouldLoad" :photo="tile.photo" :size="tile.rect.isDouble ? 'lg' : 'md'"
@@ -205,6 +210,8 @@ function doScrollEffect() {
 		</template>
 	</div>
 </template>
+
+
 
 <style scoped lang="scss">
 .photo-wall {
@@ -230,6 +237,17 @@ function doScrollEffect() {
 			> * {
 				pointer-events: all;
 			}
+		}
+	}
+
+	&.animate {
+		.photo-wall-item {
+			transition: 500ms ease;
+			opacity: 1;
+		}
+		.photo-wall-item:not(.in-view) {
+			opacity: 0;
+			transform: translateY(30px);
 		}
 	}
 }
