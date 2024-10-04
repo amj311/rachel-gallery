@@ -19,22 +19,19 @@ const routes: Array<RouteRecordRaw> = [
 		path: '',
 		name: "Home",
 		component: Home,
-		// beforeEnter(to, from, next) {
-		// 	const redirect = sessionStorage.getItem('redirectPath');
-		// 	if (useUserStore().currentUser && redirect) {
-		// 		sessionStorage.removeItem('redirectPath');
-		// 		return next(redirect as string);
-		// 	}
-		// 	next();
-		// }
+	},
 
-		children: [
-			{
-				path: '/inquiry',
-				name: "Inquiry",
-				component: () => import('@/views/NewInquiry.vue'),
-			},
-		],
+	{
+		path: '/inquiry',
+		name: "Inquiry",
+		component: () => import('@/views/NewInquiry.vue'),
+	},
+
+
+	{
+		path: '/my-galleries',
+		name: "MyGalleries",
+		component: () => import('@/views/MyGalleries.vue'),
 	},
 
 	{

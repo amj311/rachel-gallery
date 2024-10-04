@@ -7,6 +7,7 @@ import sharp from "sharp";
 import JSZip from "jszip";
 // import { DownloadService } from "../services/DownloadService";
 import axios from "axios";
+import { UserService } from "../services/UserService";
 
 export default (route, _, done) => {
 
@@ -59,6 +60,37 @@ export default (route, _, done) => {
 			success: true,
 			data: gallery,
 			viewAuth,
+		}
+	})
+
+
+	// public route for pulling galleries a user has access to
+	route.get('/user/:userId', async (request, reply) => {
+		const { userId } = request.params;
+
+		const user = await UserService.getUserById(userId);
+		if (!user) {
+			throw Error('User not found');
+		}
+
+		const galleries = await GalleryService.getGalleryList({
+			OR: [
+				{
+					shareEmails: {
+						has: user.email,
+					},
+				},
+				{
+					Client: {
+						email: user.email
+					}
+				},
+			],
+		});
+
+		return {
+			success: true,
+			data: galleries
 		}
 	})
 

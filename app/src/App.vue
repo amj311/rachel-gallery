@@ -45,7 +45,7 @@ const showLogin = ref(false);
 				<template v-else>
 					<div class="font-bold">Hello, {{ userStore.currentUser?.givenName }}!</div>
 					<div class="flex flex-wrap column-gap-3 justify-content-center">
-						<RouterLink v-if="userStore.currentUser?.isClient" class="text-link" to="">Your Galleries</RouterLink>
+						<RouterLink v-if="userStore.currentUser?.isClient" class="text-link" to="/my-galleries">Your Galleries</RouterLink>
 						<RouterLink v-if="userStore.currentUser?.isAdmin" class="text-link" to="/admin">Admin</RouterLink>
 					</div>
 					<RouterLink class="text-link" to="/logout">Sign Out</RouterLink>

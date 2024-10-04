@@ -8,6 +8,7 @@ import InputText from 'primevue/inputtext';
 import { computed, reactive, ref } from 'vue';
 import request from '@/services/request';
 import { useToast } from 'primevue/usetoast';
+import InternalWrapper from './InternalWrapper.vue';
 
 const userStore = useUserStore();
 const toast = useToast();
@@ -67,73 +68,75 @@ async function sendInquiry() {
 </script>
 
 <template>
-	<div v-if="!hasSentInquiry">
-		<h1>Let's capture your special moments together!</h1>
+	<InternalWrapper>
+		<div v-if="!hasSentInquiry">
+			<h1>Let's capture your special moments together!</h1>
 
-		<div class="flex flex-column gap-3">
-			<div>
-				<h3>Tell me about yourself</h3>
-				<div class="row-grid">
-					<div><label>Name *</label></div>
-					<div><InputText v-model="inquiry.name" placeholder="Name" :invalid="errors.name" @input="() => errors.name && validate()" /></div>
-
-					<div><label>Email *</label></div>
-					<div><InputText v-model="inquiry.email" placeholder="Email" :invalid="errors.email" @input="() => errors.email && validate()" /></div>
-
-					<div><label>Phone</label></div>
-					<div><InputText v-model="inquiry.phone" placeholder="Phone" /></div>
-				</div>
-			</div>
-
-			<div>
-				<h3>How can I help?</h3>
+			<div class="flex flex-column gap-3">
 				<div>
-					<Editor v-model="inquiry.message" editorStyle="min-height: 6rem" :class="{ 'invalid': errors.message }" @text-change="() => errors.message && validate()">
-						<template v-slot:toolbar>
-							<span class="ql-formats">
-								<button class="ql-bold"></button>
-								<button class="ql-italic"></button>
-								<button class="ql-underline"></button>
-							</span>
-							<span class="ql-formats">
-								<button class="ql-list" value="ordered"></button>
-								<button class="ql-list" value="bullet"></button>
-							</span>
-							<span class="ql-formats">
-								<button class="ql-link"></button>
-								<button class="ql-image"></button>
-							</span>
-						</template>
-					</Editor>
-				</div>
-			</div>
+					<h3>Tell me about yourself</h3>
+					<div class="row-grid">
+						<div><label>Name *</label></div>
+						<div><InputText v-model="inquiry.name" placeholder="Name" :invalid="errors.name" @input="() => errors.name && validate()" /></div>
 
-			<div>
-				<h3>Additional helpful details</h3>
-				<div class="flex flex-wrap column-gap-5 row-gap-2">
-					<div class="row-grid">
-						<label>Date</label>
-						<Calendar v-model="inquiry.date" :minDate="new Date()" />
-						<label>Number of people</label>
-						<InputNumber v-model="inquiry.peopleQty" :min="1" />
-					</div>
-					<div class="row-grid">
-						<label>Occasion</label>
-						<InputText v-model="inquiry.occasion" />
-						<label>Location</label>
-						<InputText v-model="inquiry.location" />
+						<div><label>Email *</label></div>
+						<div><InputText v-model="inquiry.email" placeholder="Email" :invalid="errors.email" @input="() => errors.email && validate()" /></div>
+
+						<div><label>Phone</label></div>
+						<div><InputText v-model="inquiry.phone" placeholder="Phone" /></div>
 					</div>
 				</div>
-			</div>
-			
-			<div class="mt-6">
-				<Button label="Send" @click="sendInquiry" :loading="isSending" />
+
+				<div>
+					<h3>How can I help?</h3>
+					<div>
+						<Editor v-model="inquiry.message" editorStyle="min-height: 6rem" :class="{ 'invalid': errors.message }" @text-change="() => errors.message && validate()">
+							<template v-slot:toolbar>
+								<span class="ql-formats">
+									<button class="ql-bold"></button>
+									<button class="ql-italic"></button>
+									<button class="ql-underline"></button>
+								</span>
+								<span class="ql-formats">
+									<button class="ql-list" value="ordered"></button>
+									<button class="ql-list" value="bullet"></button>
+								</span>
+								<span class="ql-formats">
+									<button class="ql-link"></button>
+									<button class="ql-image"></button>
+								</span>
+							</template>
+						</Editor>
+					</div>
+				</div>
+
+				<div>
+					<h3>Additional helpful details</h3>
+					<div class="flex flex-wrap column-gap-5 row-gap-2">
+						<div class="row-grid">
+							<label>Date</label>
+							<Calendar v-model="inquiry.date" :minDate="new Date()" />
+							<label>Number of people</label>
+							<InputNumber v-model="inquiry.peopleQty" :min="1" />
+						</div>
+						<div class="row-grid">
+							<label>Occasion</label>
+							<InputText v-model="inquiry.occasion" />
+							<label>Location</label>
+							<InputText v-model="inquiry.location" />
+						</div>
+					</div>
+				</div>
+				
+				<div class="mt-6">
+					<Button label="Send" @click="sendInquiry" :loading="isSending" />
+				</div>
 			</div>
 		</div>
-	</div>
-	<div v-else>
-		<h1>Thank you!</h1>
-	</div>
+		<div v-else>
+			<h1>Thank you!</h1>
+		</div>
+	</InternalWrapper>
 </template>
 
 <style scoped>
