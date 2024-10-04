@@ -198,7 +198,7 @@ function scrollEffect() {
 <template>
 	<div class="photo-wall" ref="wall" :style="{ height: state.height + 'px' }" :class="{ 'lazyload': lazyLoad, 'animate': animate }">
 		<template v-for="tile in state.tiles" :key="tile.photo.id">
-			<div v-if="tile.rect" class="photo-wall-item">
+			<div v-if="tile.rect" class="photo-wall-item"
 				:style="{ width: tile.rect.width + 'px', height: tile.rect.height + 'px', top: tile.rect.top + 'px', left: tile.rect.left + 'px' }">
 				<div class="photo-frame">
 					<PhotoFrame v-if="!lazyLoad || tile.shouldLoad" :photo="tile.photo" :size="tile.rect.isDouble ? 'lg' : 'md'"
@@ -250,6 +250,6 @@ function scrollEffect() {
 	// 		opacity: 0;
 	// 		transform: translateY(30px);
 	// 	}
-	}
+	// }
 }
 </style>
