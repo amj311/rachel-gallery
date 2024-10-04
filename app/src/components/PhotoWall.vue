@@ -131,6 +131,11 @@ const computeTiles = (() => {
 		});
 	})
 	state.height = Math.max(...(cols.map(col => col?.bottom || 0)));
+
+	// Recompute visible photos
+	if (props.lazyLoad) {
+		doScrollEffect();
+	}
 });
 
 watch(computed(() => JSON.stringify(photos.value)), () => {
@@ -139,9 +144,6 @@ watch(computed(() => JSON.stringify(photos.value)), () => {
 watch(computed(() => useAppStore().emulateWindowResize), computeTiles)
 onMounted(() => {
 	computeTiles();
-	if (props.lazyLoad) {
-		doScrollEffect();
-	}
 });
 
 const ScrollDebounceTime = 1000;
