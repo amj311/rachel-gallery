@@ -10,7 +10,7 @@ defineProps<{
 <template>
 	<div class="nav-bar" :class="{ 'sticky': sticky }">
 		<div class="nav-row">
-			<div class="logo"><slot name="logo"><div @click="$router.push('/')">RACHEL FLORENCE<br/>PHOTO</div></slot></div>
+			<div class="logo font-serif font-600"><slot name="logo"><div @click="$router.push('/')">RACHEL FLORENCE<br/>PHOTO</div></slot></div>
 			<div class="flex-grow-1">
 				<slot></slot>
 			</div>
