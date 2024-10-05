@@ -92,17 +92,13 @@ function goToSection(section) {
 </script>
 
 <template>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true">
-	<!-- <link href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap" rel="stylesheet"> -->
-
 	<div class="home-nav-wrapper">
 		<div class="link-side">
 			<div v-for="link in state.leftLinks" :key="link.label" class="link" @click="goToSection(link.section)">{{ link.label }}</div>
 		</div>
 		<div class="logo"><div class="logo-inner">
-			<div>RACHEL FLORENCE</div>
-			<div class="logo-cursive">Photography</div>
+			<div class="font-serif">RACHEL FLORENCE</div>
+			<div class="logo-cursive font-cursive">Photography</div>
 		</div></div>
 		<div class="link-side">
 			<div v-for="link in state.rightLinks" :key="link.label" class="link" @click="goToSection(link.section)">{{ link.label }}</div>
@@ -126,13 +122,12 @@ function goToSection(section) {
 	left: 0;
 	right: 0;
 	z-index: 1;
-	padding: 1.25em 0;
 	background: #fff;
 	/* background: linear-gradient(to bottom, #ffffff 66%, rgba(0,0,0,0) 100%); */
 
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
-	align-items: center;
+	align-items: top;
 	position: relative;
 }
 
@@ -141,8 +136,8 @@ function goToSection(section) {
 	font-family: serif;
 	font-size: 1em;
 	letter-spacing: .3em;
-	margin-top: -2.25em;
-	margin-bottom: -4em;
+	margin-bottom: -5em;
+    height: min-content;
 	background: #fff;
 	padding: .5em;
 	z-index: 1;
@@ -156,7 +151,6 @@ function goToSection(section) {
 
 	.logo-cursive {
 		color: $primary;
-		font-family: 'Parisienne', cursive;
 		font-size: 1.8em;
 		line-height: .5;
 		letter-spacing: normal;
@@ -166,6 +160,7 @@ function goToSection(section) {
 .link-side {
 	display: flex;
 	justify-content: space-evenly;
+	padding: 1.25em 0;
 }
 
 

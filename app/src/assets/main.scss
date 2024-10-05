@@ -168,3 +168,21 @@ body.dragging {
 		text-decoration: underline;
 	}
 }
+
+.font-serif {
+	font-family: "Cormorant", serif !important;
+	font-optical-sizing: auto;
+}
+
+.font-cursive {
+	font-family: 'Parisienne', cursive !important;
+	font-optical-sizing: auto;
+}
+
+.font-300 {
+	font-weight: 300 !important;
+}
+
+.font-400 {
+	font-weight: 400 !important;
+}
