@@ -139,7 +139,7 @@ function goToSection(section) {
 .logo {
 	text-align: center;
 	font-family: serif;
-	font-size: 1.2em;
+	font-size: 1em;
 	letter-spacing: .3em;
 	margin-top: -2.25em;
 	margin-bottom: -4em;
