@@ -20,11 +20,8 @@ const hasCover = computed(() => !!gallery.coverPhoto);
 const parallaxShift = ref(0);
 
 const updateWindow = () => {
-	// windowState.value = window;
-	// console.log(windowState.value.scrollY);
 	parallaxShift.value = Math.max(0, window.scrollY * 0.7);
 }
-
 
 onMounted(() => {
 	if (!preview) {
