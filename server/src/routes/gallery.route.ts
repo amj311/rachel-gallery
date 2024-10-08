@@ -86,6 +86,7 @@ export default (route, _, done) => {
 					}
 				},
 			],
+			visibility: { in: ['public', 'published'] },
 		});
 
 		return {
