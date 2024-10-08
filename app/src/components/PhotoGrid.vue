@@ -33,6 +33,10 @@ const state = reactive({
 	expanded: props.collapsible ? false : true,
 });
 
+const visiblePhotos = computed(() => {
+	return state.expanded ? photos.value : photos.value!.slice(0, 10);
+});
+
 function onMove(e) {
 	document.body.classList.add('dragging');
 }
@@ -59,7 +63,7 @@ function onDrop(e) {
 				</template>
 				<template #item="{ element: photo }">
 					<div
-						v-if="!photo.marked_for_deletion"
+						v-if="!photo.marked_for_deletion && visiblePhotos?.includes(photo)"
 						class="photo-grid-item"
 						:class="{ 'selected': isSelected?.call(null, photo), ...photoClasses?.call(null, photo)}"
 						@click="onPhotoClick?.call(null, photo)"
@@ -85,11 +89,12 @@ function onDrop(e) {
 			</Drag>
 
 			<div v-if="collapsible && photos.length > 0"
-				class="flex align-items-center justify-content-center gap-2 cursor-pointer pt-4"
-				@click="state.expanded = !state.expanded"
+				class="flex align-items-center justify-content-center gap-2 pt-4"
 			>
-				<template v-if="!state.expanded">View all ({{ photos.length }}) <i class="pi pi-chevron-down" /></template>
-				<template v-else>View less <i class="pi pi-chevron-up" /></template>
+				<div class="cursor-pointer" @click="state.expanded = !state.expanded">
+					<template v-if="!state.expanded">View all ({{ photos.length }}) <i class="pi pi-chevron-down" /></template>
+					<template v-else>View less <i class="pi pi-chevron-up" /></template>
+				</div>
 			</div>
 		</div>
 
