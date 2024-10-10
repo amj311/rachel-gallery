@@ -178,7 +178,7 @@ function toggleSelected(photo) {
 const selectedPhotos = computed(() => Array.from(state.selectedIds).map(id => allPhotos.value.find(p => p.id === id)));
 
 
-function scrollDown() {
+function scrollToTop() {
 	if (canView.value) {
 		const cover = document.getElementById('cover');
 		window.scrollTo(0, cover!.offsetTop + cover!.offsetHeight);
@@ -317,7 +317,7 @@ async function loadDownloadLink() {
 <template>
 	<LoadSplash v-if="!state.gallery" />
 	<div v-else id="viewGallery" :class="{ isMobile }">
-		<div id="cover" @click="scrollDown">
+		<div id="cover" @click="scrollToTop">
 			<GalleryCover :gallery="state.gallery" />
 			<div v-if="canView" class="down-pointer"><i class="pi pi-chevron-down" /></div>
 		</div>
@@ -335,12 +335,9 @@ async function loadDownloadLink() {
 
 		<div v-if="canView">
 			<NavBar sticky>
-				<template #logo>{{ state.gallery.name }}</template>
+				<template #logo><div @click="scrollToTop">{{ state.gallery.name }}</div></template>
 
 				<div class="flex align-items-center">
-					<div>
-
-					</div>
 					<div class="flex-grow-1"></div>
 					<div class="flex">
 						<Button icon="pi pi-heart" text @click="state.showFavoritesModal = true"

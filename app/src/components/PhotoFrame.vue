@@ -18,8 +18,8 @@ const props = defineProps<{
 	photo: {
 		id: string,
 		googleFileId?: string,
-		width: number,
-		height: number,
+		width?: number,
+		height?: number,
 		dataUrl?: string
 	},
 	fixedRatio?: boolean,
@@ -44,27 +44,45 @@ const sizeWidths = {
 const usingSize = Math.min(sizeWidths[size], Math.max(window.innerWidth, window.innerHeight) * 2);
 
 const state = reactive({
-	canvasW: usingSize,
-	canvasH: photo.height * (usingSize / photo.width),
+	canvasW: 0,
+	canvasH: 0,
 	isLoadingHiRes: false,
+	isLoading: false,
+	loadingError: null as any | null,
 })
 
+function setCanvasSize(width, height) {
+	state.canvasW = usingSize;
+	state.canvasH = height * (usingSize / width);
+}
+
+setCanvasSize(photo.width || 100, photo.height || 100);
+
 async function loadImage(src) {
+	let returningImage;
 	const isWeb = typeof src === 'string' && src.startsWith('http');
 	if (isWeb && windowWithCache.photoCache.has(src)) {
-		return windowWithCache.photoCache.get(src)!
+		returningImage = windowWithCache.photoCache.get(src)!
 	}
-	const img = new Image();
-	await new Promise((res) => {
-		img.referrerPolicy = "no-referrer";
-		img.addEventListener("load", res);
-		img.src = src;
-	});
-	if (isWeb) {
-		windowWithCache.photoCache.set(src, img);
-		setTimeout(() => windowWithCache.photoCache.delete(src), 1000 * 60 * 5);
+	else {
+		const img = new Image();
+		await new Promise((res, rej) => {
+			img.referrerPolicy = "no-referrer";
+			img.addEventListener("load", res);
+			img.addEventListener("error", rej);
+			img.src = src;
+		});
+		if (isWeb) {
+			windowWithCache.photoCache.set(src, img);
+			setTimeout(() => windowWithCache.photoCache.delete(src), 1000 * 60 * 5);
+		}
+		returningImage = img;
 	}
-	return img;
+	// get dimensions from if not already known
+	if (!photo.width || !photo.height) {
+		setCanvasSize(returningImage.width, returningImage.height);
+	}
+	return returningImage;
 }
 
 async function drawImage(source) {
@@ -107,25 +125,39 @@ async function drawWatermark() {
 }
 
 async function initPhoto() {
-	const isGooglePhoto = Boolean(photo.googleFileId);
-	const needsInitialLoad = isGooglePhoto && usingSize > sizeWidths['sm'];
+	try {
+		state.isLoading = true;
+		const isGooglePhoto = Boolean(photo.googleFileId);
+		const needsInitialLoad = isGooglePhoto && usingSize > sizeWidths['sm'];
 
-	if (watermark) {
-		drawWatermark();
+		if (needsInitialLoad) {
+			state.isLoadingHiRes = true;
+			await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['xs']}`);
+			await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['sm']}`);
+		}
+		
+		await drawImage(isGooglePhoto ?
+			`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`
+			:
+			photo.dataUrl
+		);
+		state.isLoadingHiRes = false;
+
+		if (watermark) {
+			drawWatermark();
+		}
+
+		state.loadingError = null;
 	}
-
-	if (needsInitialLoad) {
-		state.isLoadingHiRes = true;
-		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['xs']}`);
-		await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['sm']}`);
+	catch (e) {
+		console.error(e);
+		state.loadingError = e;
+	}
+	finally {
+		state.isLoading = false;
+		state.isLoadingHiRes = false;
 	}
 	
-	await drawImage(isGooglePhoto ?
-		`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`
-		:
-		photo.dataUrl
-	);
-	state.isLoadingHiRes = false;
 }
 
 onMounted(initPhoto);
@@ -145,10 +177,13 @@ const objectPosition = computed(() => {
 
 <template>
 	<div class="photoframe" :style="{ 'aspect-ratio': fixedRatio ? `${photo.width}/${photo.height}` : undefined }">
-		<i class="loader pi pi-spinner pi-spin" />
+		<div class="state-icons">
+			<i v-if="state.isLoading" class="pi pi-spinner pi-spin" />
+			<i v-if="state.loadingError" class="pi pi-exclamation-triangle" />
+		</div>
 		<canvas ref="canvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition }"></canvas>
 		<canvas ref="waterCanvas" :width="state.canvasW" :height="state.canvasH" :style="{ objectFit: fillMethod || 'contain', objectPosition }"></canvas>
-		<i v-if="showLoading && state.isLoadingHiRes" class="loader top pi pi-spinner pi-spin" />
+		<!-- <i v-if="showLoading && state.isLoadingHiRes" class="loader top pi pi-spinner pi-spin" /> -->
 	</div>
 </template>
 
@@ -167,16 +202,11 @@ const objectPosition = computed(() => {
 	pointer-events: none;
 	user-select: none;
 }
-.loader {
+.state-icons {
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+    top: calc(50% - .5rem);
+    left: calc(50% - .5rem);
 	font-size: 1rem;
 	color: #555;
-
-	&.top {
-		color: white;
-	}
 }
 </style>

@@ -27,6 +27,7 @@ inquiriesStore.loadInquiries()
 			</div>
 			<RouterLink to="/admin/shoots">Photoshoots</RouterLink> -->
 			<RouterLink to="/admin/portfolio">Portfolio</RouterLink>
+			<RouterLink to="/admin/storage">Storage</RouterLink>
 		</div>
 	</NavBar>
 

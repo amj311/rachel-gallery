@@ -94,6 +94,12 @@ const routes: Array<RouteRecordRaw> = [
 				name: 'EditPortfolio',
 				component: () => import('@/views/admin/portfolio/EditPortfolio.vue'),
 			},
+
+			{
+				path: '/admin/storage',
+				name: 'Storage',
+				component: () => import('@/views/admin/Storage.vue'),
+			},
 		]
 	},
 	

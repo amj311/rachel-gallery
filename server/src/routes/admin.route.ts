@@ -17,8 +17,11 @@ export default (route, _, done) => {
 
 
 
+	/**
+	 * GOOGLE DRIVE
+	 */
+
 	route.get('/token' , async (request, reply) => {
-		// await GoogleDriveService._getClient();
 		const driveData = await GoogleDriveService.loadDriveInfo();
 		// const userInfo = await GoogleDriveService.getUserInfo();
 		return {
@@ -28,7 +31,23 @@ export default (route, _, done) => {
 		};
 	})
 
+	route.get('/storage', async (request, reply) => {
+		const pagination = {
+			pageSize: request.query?.pageSize || 100,
+			nextPageToken: request.query?.nextPageToken || undefined,
+		};
+		const filters = {}; // TODO
+		const driveData = await GoogleDriveService.getAllPhotos(pagination, filters);
+		return {
+			success: true,
+			data: driveData
+		}
+	})
 
+
+	/**
+	 * USERS
+	 */
 
 	route.get('/users', async (request, reply) => {
 		const data = await UserService.getAllUsers();
@@ -58,6 +77,9 @@ export default (route, _, done) => {
 
 
 
+	/**
+	 * GALLERIES
+	 */
 
 	// list all galleries
 	route.get('/gallery', async (request, reply) => {
@@ -129,6 +151,8 @@ export default (route, _, done) => {
 			success: true,
 		}
 	})
+
+	/** PHOTOS */
 
 	// Upload a photo to a gallery or portfolio section
 	route.post('/photo', async (request, reply) => {
