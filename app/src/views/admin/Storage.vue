@@ -488,8 +488,11 @@ function fileWarning(file: File) {
 
 								<label>Folder</label>
 								<div>
-									{{ onlySelected.googleFile.parents[0] }}
-									<a class="text-link" :href="'https://drive.google.com/drive/folders/' + onlySelected.googleFile.parents?.[0]" target="_blank"><i class="pi pi-external-link" /></a>
+									<div v-if="onlySelected.googleFile.parents?.[0]">
+										{{ onlySelected.googleFile.parents?.[0] }}
+										<a class="text-link" :href="'https://drive.google.com/drive/folders/' + onlySelected.googleFile.parents?.[0]" target="_blank"><i class="pi pi-external-link" /></a>
+									</div>
+									<div v-else>None</div>
 								</div>
 							</template>
 
