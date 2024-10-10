@@ -489,7 +489,7 @@ function fileWarning(file: File) {
 								<label>Folder</label>
 								<div>
 									{{ onlySelected.googleFile.parents[0] }}
-									<a class="text-link" :href="'https://drive.google.com/drive/folders/' + onlySelected.googleFile.parents[0]" target="_blank"><i class="pi pi-external-link" /></a>
+									<a class="text-link" :href="'https://drive.google.com/drive/folders/' + onlySelected.googleFile.parents?.[0]" target="_blank"><i class="pi pi-external-link" /></a>
 								</div>
 							</template>
 
