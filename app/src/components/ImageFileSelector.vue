@@ -21,7 +21,6 @@ async function handleFiles(files) {
 
 function processImageFile(file) {
 	const photo = {
-		id: 'temp_' + Math.random().toString(36).substring(2, 9),
 		blob: file,
 		filename: file.name,
 		size: file.size,

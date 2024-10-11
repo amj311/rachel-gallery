@@ -150,7 +150,7 @@ async function initPhoto() {
 		state.loadingError = null;
 	}
 	catch (e) {
-		console.error(e);
+		console.log("Failed to load photo", e);
 		state.loadingError = e;
 	}
 	finally {
@@ -176,7 +176,7 @@ const objectPosition = computed(() => {
 </script>
 
 <template>
-	<div class="photoframe" :style="{ 'aspect-ratio': fixedRatio ? `${photo.width}/${photo.height}` : undefined }">
+	<div class="photoframe" :style="{ 'aspect-ratio': fixedRatio ? `${photo.width}/${photo.height}` : undefined, backgroundColor: state.loadingError ? '#f5f5fa' : undefined }">
 		<div class="state-icons">
 			<i v-if="state.isLoading" class="pi pi-spinner pi-spin" />
 			<i v-if="state.loadingError" class="pi pi-exclamation-triangle" />

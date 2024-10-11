@@ -325,6 +325,7 @@ function fileUsedBy(file: File) {
 	if (file.dbPhoto.PortfolioSection) {
 		return 'Portfolio';
 	}
+	return null;
 }
 
 function rangeFromDates(dates) {
@@ -338,7 +339,9 @@ function rangeFromDates(dates) {
 	return minFormat + ' - ' + maxFormat;
 }
 
-const previewPhotoStack = computed(() => [...allSelected.value].reverse().slice(0, 5))
+const previewPhotoStack = computed(() => [...allSelected.value].reverse().slice(0, 5));
+
+const selectedOrphanedPhotos = computed(() => allSelected.value.filter(f => !fileUsedBy(f)));
 
 function fileWarning(file: File) {
 	if (!fileUsedBy(file)) return {
@@ -449,13 +452,11 @@ function fileWarning(file: File) {
 					:class="{ 'open': allSelected.length && !state.preventOpenDrawer }"
 				>
 					<div class="drawer-content">
-						<h3>{{ allSelected.length === 1 ? onlySelected.googleFile.name : `${allSelected.length}
-							Selected` }}
-						</h3>
+						<h3 class="word-break">{{ allSelected.length === 1 ? onlySelected.googleFile.name : `${allSelected.length} Selected` }}</h3>
 						<div
 							class="w-full h-20rem"
 							style="position: relative"
-						>
+						> 
 							<div
 								v-for="file, index in previewPhotoStack"
 								:key="file.googleFileId"
@@ -488,7 +489,7 @@ function fileWarning(file: File) {
 
 								<label>Folder</label>
 								<div>
-									<div v-if="onlySelected.googleFile.parents?.[0]">
+									<div v-if="onlySelected.googleFile.parents?.[0]" class="word-break">
 										{{ onlySelected.googleFile.parents?.[0] }}
 										<a class="text-link" :href="'https://drive.google.com/drive/folders/' + onlySelected.googleFile.parents?.[0]" target="_blank"><i class="pi pi-external-link" /></a>
 									</div>
@@ -497,23 +498,31 @@ function fileWarning(file: File) {
 							</template>
 
 							<label>Size</label>
-							<div>{{ formatBytes(allSelected.reduce((a, b) => a + Number(b.googleFile.quotaBytesUsed),
-								0)) }}
-							</div>
+							<div>{{ formatBytes(allSelected.reduce((a, b) => a + Number(b.googleFile.quotaBytesUsed), 0)) }}</div>
 
 							<label>Created</label>
-							<div>{{ rangeFromDates(allSelected.map(f => f.googleFile.createdTime)) }}
-							</div>
+							<div>{{ rangeFromDates(allSelected.map(f => f.googleFile.createdTime)) }}</div>
 
 							<label>Modified</label>
-							<div>{{ rangeFromDates(allSelected.map(f => f.googleFile.modifiedTime)) }}
-							</div>
+							<div>{{ rangeFromDates(allSelected.map(f => f.googleFile.modifiedTime)) }}</div>
 
 							<label>Owner</label>
 							<div>{{ Array.from(new Set(allSelected.flatMap(f => [...f.googleFile.owners.map(o => o.displayName)]))).join(', ') }}
 							</div>
-
 						</div>
+
+						<template v-if="selectedOrphanedPhotos.length">
+							<h3 class="mt-3 mb-2">Handle orphaned photos:</h3>
+							<Button outlined class="align-items-center gap-2" size="small">
+								<i class="pi pi-images text-sm" />
+								Assign to gallery
+							</Button>
+							&nbsp;
+							<Button outlined severity="danger" class="align-items-center gap-2" size="small">
+								<i class="pi pi-trash text-sm" />
+								Delete
+							</Button>
+						</template>
 					</div>
 				</div>
 			</div>
