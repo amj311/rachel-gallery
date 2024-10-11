@@ -95,6 +95,8 @@ function goToSection(section) {
 	<div class="home-nav-wrapper">
 		<div class="link-side">
 			<div v-for="link in state.leftLinks" :key="link.label" class="link" @click="goToSection(link.section)">{{ link.label }}</div>
+			<!-- Maintain height when no links are present -->
+			<div v-if="state.leftLinks?.length === 0" class="link">&nbsp;</div>
 		</div>
 		<div class="logo"><div class="logo-inner">
 			<div class="font-serif">RACHEL FLORENCE</div>
