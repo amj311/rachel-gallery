@@ -213,13 +213,13 @@ onBeforeUnmount(() => {
 				Use the editor panel to add panes
 			</div>
 			<div v-else class="panes-wrapper" :class="{ [state.animationClass]: true, ['animate-' + section.attributes.animation]: true }">
-				<div class="prev" v-if="section.attributes.animation !== 'None'">
+				<div class="prev" v-if="prevPane && section.attributes.animation !== 'None'">
 					<PaneComponent :key="prevPane.id" :pane="prevPane" :backgroundImage="section.photos.find(p => p.id === prevPane.backgroundPhotoId)" />
 				</div>
-				<div class="active">
+				<div class="active" v-if="activePane">
 					<PaneComponent :key="activePane.id" :pane="activePane" :backgroundImage="section.photos.find(p => p.id === activePane.backgroundPhotoId)" />
 				</div>
-				<div class="next" v-if="section.attributes.animation !== 'None'">
+				<div class="next" v-if="nextPane && section.attributes.animation !== 'None'">
 					<PaneComponent :key="nextPane.id" :pane="nextPane" :backgroundImage="section.photos.find(p => p.id === nextPane.backgroundPhotoId)" />
 				</div>
 			</div>
