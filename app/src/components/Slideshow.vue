@@ -182,7 +182,7 @@ function preventScroll(e) {
 		<div id="topBar">
 			<div class="flex justify-content-start"></div>
 			<div class="flex justify-content-center"></div>
-			<div class="flex align-items-center justify-content-end">
+			<div class="flex align-items-center justify-content-end" style="zoom: .9">
 				<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" size="large" />
 				<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" size="large" />
 				<Button text @click="close" icon="pi pi-times" size="large" />
@@ -199,7 +199,7 @@ function preventScroll(e) {
 				<PhotoFrame :key="nextPhoto.id" :photo="nextPhoto" :watermark="true" :size="'xl'" />
 			</div>
 		</div>
-		<div id="bottomBar">
+		<div id="bottomBar" style="zoom: .9">
 			<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" size="large" />
 			<div class="flex align-items-center"><slot :photo="activePhoto"></slot></div>
 			<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" size="large" />
