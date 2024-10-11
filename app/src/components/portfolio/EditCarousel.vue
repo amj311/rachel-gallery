@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { defineModel, onBeforeMount, ref } from 'vue';
-import PortfolioPhotoSelector from './PortfolioPhotoSelector.vue';
 import Button from 'primevue/button';
 import EditBackground from './EditBackground.vue';
 import * as Drag from 'vuedraggable';
@@ -101,8 +100,6 @@ async function deletePane(pane) {
 	</Drag>
 
 	<Button text @click="addPane">&plus;&nbsp;Add Pane</Button>
-	
-	<PortfolioPhotoSelector ref="photoSelector" />
 </template>
 
 <style scoped lang="scss">
