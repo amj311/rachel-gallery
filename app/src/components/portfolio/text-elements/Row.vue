@@ -14,29 +14,15 @@ const props = defineProps<{
 	editMode?: boolean,
 	// maxColumns: number,
 	canAddColumns?: Array<any>,
-	photoManager: any;
+	sectionEditor: any;
 }>();
 
 const state = reactive({
-	isSkinny: false,
 	draggingEl: null as any,
 	draggingColLeft: null as any,
 	draggingColRight: null as any,
 	columnRefs: {} as any,
 });
-
-onMounted(() => {
-	computeSkinny();
-})
-watch(computed(() => useAppStore().emulateWindowResize), () => {
-	computeSkinny();
-})
-
-function computeSkinny() {
-	const gridEl = document.getElementById(GRID_ID)!;
-	state.isSkinny = gridEl!.clientWidth < 600;
-}
-
 
 const GRID_ID = 'grid_' + Math.random().toString(36).substring(7);
 const GRID_COLS = 12;
@@ -159,7 +145,7 @@ function adjustColSpan(delta) {
 </script>
 
 <template>
-	<div class="text-row">
+	<div class="text-row" :class="{ 'skinny': sectionEditor.isSkinny }">
 		<div v-if="editMode && props.canAddColumns?.length && row.columns.length < MAX_COLS" class="add-col left">
 			<RefOpener closeOnClick :component="OverlayPanel">
 				<template #trigger><Button text size="small"><template #icon><span class="material-symbols-outlined">add_column_left</span></template></Button></template>
@@ -167,14 +153,14 @@ function adjustColSpan(delta) {
 			</RefOpener>
 		</div>
 
-		<div :id="GRID_ID" class="col-grid" :class="{ 'skinny': state.isSkinny }" :style="{ 'grid-gap': gridGap }">
+		<div :id="GRID_ID" class="col-grid" :class="{ 'skinny': sectionEditor.isSkinny }" :style="{ 'grid-gap': gridGap }">
 			<div v-for="(col, i) in row.columns" class="col-cell" :key="col.id" :style="{ 'grid-column': `span ${col.span || GRID_COLS}` }">
-				<div v-if="i > 0 && editMode && !state.isSkinny" class="col-adjuster" :style="{ 'width': `${gridGap}` }" @mousedown="(event) => setupDragEvents(event, row.columns[i - 1], col)">
+				<div v-if="i > 0 && editMode && !sectionEditor.isSkinny" class="col-adjuster" :style="{ 'width': `${gridGap}` }" @mousedown="(event) => setupDragEvents(event, row.columns[i - 1], col)">
 					<div class="col-adjuster-border"></div>
 					<div class="col-adjuster-handle"><i class="pi pi-ellipsis-v text-xs pointer-events-none" /></div>
 				</div>
 				<div class="col-content">
-					<component :ref="(el) => state.columnRefs[col.id] = el" :is="columns[col.type].component" v-model="row.columns[i]" :editMode="props.editMode" :photoManager="props.photoManager" @remove="() => removeColumn(col)" />
+					<component :ref="(el) => state.columnRefs[col.id] = el" :is="columns[col.type].component" v-model="row.columns[i]" :editMode="props.editMode" :sectionEditor="props.sectionEditor" @remove="() => removeColumn(col)" />
 				</div>
 			</div>
 		</div>
@@ -193,28 +179,58 @@ function adjustColSpan(delta) {
 .text-row {
 	display: flex;
 	flex-direction: row;
+
+	.add-col {
+		display: flex;
+		align-items: center;
+		opacity: 0;
+		transition: 300ms ease;
+		width: 3rem;
+		justify-content: center;
+
+		&.left {
+			margin-left: -3rem;
+		}
+		&.right {
+			margin-right: -3rem;
+		}
+
+		&:hover {
+			width: 5rem;
+			opacity: 1;
+		}
+	}
+
+	&.skinny {
+		flex-direction: column;
+
+
+		.add-col {
+			opacity: 0;
+			transition: 300ms ease;
+			width: 100%;
+			height: 3rem;
+			justify-content: center;
+
+			&.left {
+				margin-left: 0;
+				margin-top: -3rem
+			}
+			&.right {
+				margin-right: 0;
+				margin-bottom: -3rem
+			}
+
+			&:hover {
+				width: 100%;
+				height: 5rem;
+				opacity: 1;
+			}
+		}
+	}
+
 }
 
-.add-col {
-    display: flex;
-    align-items: center;
-    opacity: 0;
-	transition: 300ms ease;
-	width: 3rem;
-	justify-content: center;
-
-	&.left {
-		margin-left: -3rem;
-	}
-	&.right {
-		margin-right: -3rem;
-	}
-
-	&:hover {
-		width: 5rem;
-		opacity: 1;
-	}
-}
 
 .col-grid {
 	display: grid;

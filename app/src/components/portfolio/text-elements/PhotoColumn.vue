@@ -8,11 +8,10 @@ import ColumnWrapper from './ColumnWrapper.vue';
 const col = defineModel<any>();
 
 const props = defineProps<{
-	editMode?: boolean,
-	photoManager: any;
+	sectionEditor: any,
 }>();
 
-const photo = computed(() => props.photoManager.getPhotoById(col.value.backgroundPhotoId));
+const photo = computed(() => props.sectionEditor.getPhotoById(col.value.backgroundPhotoId));
 
 onBeforeMount(() => {
 	const defaultAttributes = {
@@ -28,7 +27,7 @@ onBeforeMount(() => {
 })
 
 function selectPhoto() {
-	props.photoManager.openPhotoSelector((photo) => {
+	props.sectionEditor.openPhotoSelector((photo) => {
 		col.value.backgroundPhotoId = photo.id;
 	});
 }
@@ -75,21 +74,21 @@ const options = computed(() => ([
 			},
 		]
 	},
-	{
+	photo.value && {
 		label: 'Remove photo',
 		async command() {
-			await props.photoManager.deletePhoto(photo.value);
+			await props.sectionEditor.deletePhoto(photo.value);
 			col.value.backgroundPhotoId = null;
 		}
 	},
-]));
+].filter(Boolean)));
 
 </script>
 
 <template>
-	<ColumnWrapper :editMode="props.editMode" :options="options">
+	<ColumnWrapper :editMode="props.sectionEditor.editMode" :options="options">
 		<div class="photo-col">
-			<div v-if="!photo && props.editMode" class="add-photo" @click="selectPhoto"><i class="pi pi-image text-2xl" />Add Image</div>
+			<div v-if="!photo && props.sectionEditor.editMode" class="add-photo" @click="selectPhoto"><i class="pi pi-image text-2xl" />Add Image</div>
 			<PhotoFrame v-else-if="photo" :key="photo.id" :photo="photo" :fillMethod="col.fillMethod" :position="col.position" size="lg" fixedRatio />
 		</div>
 	</ColumnWrapper>

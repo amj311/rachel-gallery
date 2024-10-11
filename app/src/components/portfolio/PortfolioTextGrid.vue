@@ -1,34 +1,44 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import PhotoFrame from '../PhotoFrame.vue';
 import Column from './text-elements/Column.vue';
 import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import request from '@/services/request';
 import PortfolioPhotoSelector from './PortfolioPhotoSelector.vue';
+import { onMounted } from 'vue';
+import { watch } from 'vue';
+import { useAppStore } from '@/stores/app.store';
 
 const toast = useToast();
 
 const section = defineModel<any>();
+const sectionRef = ref<HTMLDivElement>();
 
 const props = defineProps<{
 	editMode?: boolean,
 }>();
 
+const isSkinny = ref(false);
 
-async function deletePhoto(photo, skipConfirm = false, skipAlert = false) {
-	if (!skipConfirm && !confirm('Are you sure you want to delete this photo?')) return;
-	
-}
+onMounted(() => {
+	computeSkinny();
+})
+watch(computed(() => useAppStore().emulateWindowResize), () => {
+	computeSkinny();
+})
 
-function onPhotoDrop() {
-	section.value.photos.forEach((p, i) => p.order = i);
+function computeSkinny() {
+	const gridEl = sectionRef.value;
+	isSkinny.value = gridEl!.clientWidth < 600;
 }
 
 const photoSelector: any = ref(null);
 
+const SectionEditor = reactive({
+	editMode: props.editMode,
+	isSkinny,
 
-const PhotoManager = {
 	getPhotoById(id) {
 		return section.value.photos.find(photo => photo.id === id);
 	},
@@ -52,22 +62,22 @@ const PhotoManager = {
 	async openPhotoSelector(cb: (photo: any) => void) {
 		photoSelector.value!.open(null, null, section.value.id, cb);
 	}
-}
+})
 
-const backgroundImage = computed(() => PhotoManager.getPhotoById(section.value.attributes.backgroundPhotoId));
+const backgroundImage = computed(() => SectionEditor.getPhotoById(section.value.attributes.backgroundPhotoId));
 
 
 </script>
 
 <template>
-	<div class="text-section" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
+	<div ref="sectionRef" class="text-section" :style="{ 'background-color': section.attributes.backgroundColor || '#fff' }">
 		<div v-if="backgroundImage" class="backdrop" :style="{ 'opacity': section.attributes.backgroundOpacity / 100 || '1' }">
 			<div class="photo-frame">
 				<PhotoFrame :key="backgroundImage.id" :photo="backgroundImage" :size="'xl'" :fillMethod="'cover'" :position="section.attributes.focalPoint" />
 			</div>
 		</div>
 		<div class="content py-6 section-max-width">
-			<Column :editMode="props.editMode" v-model="section.attributes" :canAddColumns="['text', 'photo-frame']" :photoManager="PhotoManager" />
+			<Column :editMode="props.editMode" v-model="section.attributes" :canAddColumns="['text', 'photo-frame']" :sectionEditor="SectionEditor" />
 		</div>
 	</div>
 	<PortfolioPhotoSelector ref="photoSelector" />

@@ -6,7 +6,7 @@ import ColumnWrapper from './ColumnWrapper.vue';
 const col = defineModel<any>();
 
 const props = defineProps<{
-	editMode?: boolean,
+	sectionEditor?: any,
 }>();
 
 onBeforeMount(() => {
@@ -29,9 +29,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-	<ColumnWrapper :editMode="props.editMode" :options="[]">
+	<ColumnWrapper :editMode="props.sectionEditor.editMode" :options="[]">
 		<div>
-		<TextEditor v-model="col.text" :discreet="true" :readOnly="!props.editMode" :placeholder="'Write your text here'" />
+		<TextEditor v-model="col.text" :discreet="true" :readOnly="!props.sectionEditor.editMode" :placeholder="'Write your text here'" />
 	</div>
 	</ColumnWrapper>
 </template>
