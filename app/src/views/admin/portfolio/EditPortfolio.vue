@@ -92,7 +92,7 @@ async function updatePortfolio() {
 async function createNewSection(type: string, order?: number) {
 	const { data } = await request.post('admin/portfolio/section', { type });
 	// todo insert in correct order and update all
-	const idx = order || portfolioStore.portfolio!.sections.length;
+	const idx = order ?? portfolioStore.portfolio!.sections.length;
 	portfolioStore.portfolio!.sections.splice(idx, 0, data.data);
 	portfolioStore.portfolio!.sections.forEach((section, idx) => {
 		section.order = idx;
