@@ -1,38 +1,73 @@
 <script setup lang="ts">
-import { reactive, onBeforeMount, onBeforeUnmount, computed, ref } from 'vue';
+import { reactive, onBeforeMount, onBeforeUnmount, computed, ref, watch } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import Button from 'primevue/button';
-import { useAppStore } from '@/stores/app.store';
+import { useRouter } from 'vue-router';
 
-const { photos, firstPhoto, onClose } = defineProps<{
-	photos: any[],
-	firstPhoto: any,
-	onClose: () => void
+const router = useRouter();
+
+const props = defineProps<{
+	onClose?: () => void
 }>()
 
 const state = reactive({
+	photos: [] as any[],
 	activePhotoIdx: 0,
 	playingTimer: 0,
 	animationClass: '',
 });
 
-const activePhoto = computed(() => photos[state.activePhotoIdx]);
+const showSlideshow = computed(() => router.currentRoute.value.query.slideshow === 'true' && state.photos.length > 0);
+watch(showSlideshow, () => {
+	if (showSlideshow.value) {
+		setupListeners();
+	} else {
+		clearTimeout(state.playingTimer);
+		removeListeners();
+	}
+})
+
+
+function open(photos: [], firstPhoto?: any) {
+	state.photos = photos;
+	if (firstPhoto) {
+		state.activePhotoIdx = state.photos.findIndex(p => p.id === firstPhoto.id);
+	}
+	setupListeners();
+	router.push({ query: { slideshow: 'true' } });
+}
+
+function close() {
+	clearTimeout(state.playingTimer);
+	removeListeners();
+	router.back();
+	props.onClose?.call(null)
+}
+
+defineExpose({open, close});
+
+const activePhoto = computed(() => state.photos[state.activePhotoIdx]);
 const isPlaying = computed(() => state.playingTimer !== 0);
-const nextPhoto = computed(() => photos[(state.activePhotoIdx + 1) % photos.length]);
-const prevPhoto = computed(() => photos[(state.activePhotoIdx - 1 + photos.length) % photos.length]);
+const nextPhoto = computed(() => state.photos[(state.activePhotoIdx + 1) % state.photos.length]);
+const prevPhoto = computed(() => state.photos[(state.activePhotoIdx - 1 + state.photos.length) % state.photos.length]);
 
 const initialScroll = window.scrollY;
 
-onBeforeMount(async () => {
-	if (firstPhoto) {
-		state.activePhotoIdx = photos.findIndex(p => p.id === firstPhoto.id);
-	}
+function setupListeners() {
 	window.addEventListener('keydown', handleKeydown);
 	window.addEventListener('touchstart', handleTouchStart);
 	window.addEventListener('touchmove', handleTouchMove);
 	window.addEventListener('touchend', handleTouchEnd);
 	window.addEventListener('scroll', preventScroll);
-})
+}
+function removeListeners() {
+	window.removeEventListener('keydown', handleKeydown);
+	window.removeEventListener('touchstart', handleTouchStart);
+	window.removeEventListener('touchmove', handleTouchMove);
+	window.removeEventListener('touchend', handleTouchEnd);
+	window.removeEventListener('scroll', preventScroll);
+}
+
 
 const animationTime = 500;
 let lastUiSwapTime = 0;
@@ -49,7 +84,7 @@ async function goToNext(animate = true) {
 		state.animationClass = 'slideNext';
 		await new Promise(r => setTimeout(r, animationTime));
 	}
-	state.activePhotoIdx = (state.activePhotoIdx + 1) % photos.length;
+	state.activePhotoIdx = (state.activePhotoIdx + 1) % state.photos.length;
 	resetAfterSwap();
 }
 
@@ -58,7 +93,7 @@ async function goToPrev(animate = true) {
 		state.animationClass = 'slidePrev';
 		await new Promise(r => setTimeout(r, animationTime));
 	}
-	state.activePhotoIdx = (state.activePhotoIdx - 1 + photos.length) % photos.length;
+	state.activePhotoIdx = (state.activePhotoIdx - 1 + state.photos.length) % state.photos.length;
 	resetAfterSwap();
 }
 
@@ -97,7 +132,7 @@ function handleKeydown(e) {
 		uiSwap(goToNext);
 	} else if (e.key === 'Escape') {
 		e.preventDefault();
-		onClose();
+		close();
 	} else if (e.key === ' ' && !isPlaying.value) {
 		e.preventDefault();
 		play();
@@ -138,27 +173,19 @@ function preventScroll(e) {
 	});
 }
 
-onBeforeUnmount(() => {
-	clearTimeout(state.playingTimer);
-	window.removeEventListener('keydown', handleKeydown);
-	window.removeEventListener('touchstart', handleTouchStart);
-	window.removeEventListener('touchmove', handleTouchMove);
-	window.removeEventListener('touchend', handleTouchEnd);
-	window.removeEventListener('scroll', preventScroll);
-});
 
 </script>
 
 
 <template>
-	<div id="Slideshow">
+	<div id="Slideshow" v-if="showSlideshow">
 		<div id="topBar">
 			<div class="flex justify-content-start"></div>
 			<div class="flex justify-content-center"></div>
 			<div class="flex align-items-center justify-content-end">
 				<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" size="large" />
 				<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" size="large" />
-				<Button text @click="onClose" icon="pi pi-times" size="large" />
+				<Button text @click="close" icon="pi pi-times" size="large" />
 			</div>
 		</div>
 		<div :class="{ 'photo-frame': true, [state.animationClass]: true }">

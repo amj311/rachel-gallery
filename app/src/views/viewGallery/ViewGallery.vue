@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router';
 import { reactive, onBeforeMount, computed, watch } from 'vue';
 import request from '@/services/request';
-import Slideshow from './Slideshow.vue';
+import Slideshow from '../../components/Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
 import LoginModal from '@/components/LoginModal.vue';
 import NavBar from '@/components/NavBar.vue';
@@ -36,8 +36,6 @@ const state = reactive({
 	viewAuth: {} as any,
 	gallery: null as any,
 	providedCode: null,
-	slideshowPhotos: [],
-	firstSlideshowPhoto: null,
 	favoriteIds: new Set(),
 	showFavoritesModal: false,
 	showShareModal: false,
@@ -65,9 +63,6 @@ const doClientActions = computed(() => isAdmin.value || isClient.value);
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
 const showSelectors = computed(() => state.selectedIds.size > 0);
-
-const showSlideshow = computed(() => router.currentRoute.value.query.slideshow === 'true' && state.slideshowPhotos.length > 0);
-
 
 const canView = computed(() => {
 	if (isAdmin.value) {
@@ -148,14 +143,9 @@ async function loadGallery() {
 
 const allPhotos = computed(() => state.gallery?.sections?.flatMap(s => s.photos));
 
+const slideshow = ref<InstanceType<typeof Slideshow>>()
 function openSlideshow(photos, firstPhoto) {
-	state.slideshowPhotos = photos;
-	state.firstSlideshowPhoto = firstPhoto;
-	router.push({ query: { slideshow: 'true' } });
-}
-
-function closeSlideshow() {
-	router.back();
+	slideshow.value?.open(photos, firstPhoto);
 }
 
 function toggleFavorite(photo) {
@@ -485,8 +475,7 @@ async function loadDownloadLink() {
 				</template>
 			</div>
 
-			<Slideshow v-if="showSlideshow" :photos="state.slideshowPhotos" :firstPhoto="state.firstSlideshowPhoto"
-				:onClose="closeSlideshow">
+			<Slideshow ref="slideshow">
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
 						@click="toggleFavorite(photo)" size="large" />
