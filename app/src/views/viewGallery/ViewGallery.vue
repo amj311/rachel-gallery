@@ -25,6 +25,7 @@ import { useAppStore } from '@/stores/app.store';
 import OverlayPanel from 'primevue/overlaypanel';
 import RefOpener from '@/components/RefOpener.vue';
 import Snackbar from '@/components/Snackbar.vue';
+import { formatBytes } from '@/utils/bytes';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -60,6 +61,9 @@ const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.Client.email);
 const doClientActions = computed(() => isAdmin.value || isClient.value);
 const canDownload = computed(() => {
+	if (isAdmin.value) {
+		return true;
+	}
 	switch (state.gallery?.downloadAccess) {
 		case 'No one':
 			return false;
@@ -189,33 +193,22 @@ function scrollToTop() {
 }
 
 function downloadMenu(photos, cb?) {
+	const totalSize = photos.reduce((total, photo) => total + photo.size, 0);
 	return [
 		{
 			label: 'Shareable file',
 			command: () => { startDownloadPhotos(photos); cb?.call(); }
 		},
-		photos.length === 1 ? {
-			label: `Printable file (${(photos[0].size / 1e+6).toFixed(1)} MB)`,
+		{
+			label: `Printable hi-res (${formatBytes(totalSize)})`,
 			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
-		} : null,
+		},
 	].filter(Boolean);
 }
 
 
-// my server can't handle pulling large files from google yet, so full print res must be downloaded one at a time
 async function startDownloadPhotos(photos, hiRes = false) {
-	// download individual hi res through google
-	if (hiRes && photos.length === 1) {
-		const link = document.createElement('a');
-		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
-		link.download = photos[0].filename;
-		link.click();
-		link.remove();
-		return;
-	}
-
-
-	if (state.pendingDownload) {
+	if (state.pendingDownload && state.pendingDownload.status !== 'finished') {
 		toast.add({
 			severity: 'warn',
 			summary: 'Wait for previous download to finish',
@@ -236,31 +229,19 @@ async function startDownloadPhotos(photos, hiRes = false) {
 		// have to do these one at a time to not crash server
 		for (const photo of photos) {
 			let width = photo.width;
-
-			let maxBytes = megaBytes.value * 1e+6; // X MB
-			console.log(photo.size * 1e-6, maxBytes / 1e+6);
-			// if (hiRes && photo.size > maxBytes) {
-			// 	// compute new width to approximate desired size
-			// 	// new width = sqrt(area * (width / height))
-			// 	const scaleRatio = maxBytes / photo.size;
-			// 	const targetArea = (width * photo.height) * scaleRatio;
-			// 	const ratio = photo.width / photo.height;
-			// 	width = Math.sqrt(targetArea * ratio);
-			// }
-			// if (!hiRes) {
+			if (!hiRes) {
 				if (photo.width < photo.height) {
-					width = 1600 * (photo.width / photo.height);
+					width = 1200 * (photo.width / photo.height);
 				}
 				else {
-					width = 1600;
+					width = 1200;
 				}
-			// }
+			}
 
 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
 
 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
-			console.log(blob.size * 1e-6);
 		}
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
@@ -304,6 +285,7 @@ async function loadDownloadLink() {
 	if (state.pendingDownload?.status !== 'finished' || !state.pendingDownload?.finalBlob) return;
 
 	var url = URL.createObjectURL(state.pendingDownload?.finalBlob);
+	console.log(url);
 	const link = document.createElement('a');
 	link.href = url;
 	link.download = state.pendingDownload.downloadName!;
@@ -349,25 +331,26 @@ async function loadDownloadLink() {
 							<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
 								class="small-badge" />
 						</div>
-						<template v-if="doClientActions">
-							<RefOpener v-if="doClientActions" :component="OverlayPanel">
-								<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
-								<template #ref>
-									<div class="flex flex-column gap-3 w-20rem">
-										<Button class="justify-content-center" @click="startDownloadPhotos(allPhotos)">Download Gallery</Button>
-										<div>
-											<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
-											<p>This may take several minutes.</p>
-										</div>
-										<p>For printable full-resolution files, download each photo individually.</p>
+						<RefOpener v-if="canDownload" :component="OverlayPanel">
+							<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
+							<template #ref>
+								<div class="flex flex-column gap-3 w-20rem">
+									<Button severity="primary" class="justify-content-center" @click="startDownloadPhotos(allPhotos)">Download Gallery</Button>
+									<div class="text-sm">
+										<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
+										<p>This may take several minutes.</p>
+										<br/>
+										<p>For printable full-resolution files, select only the desired hi-res photos.</p>
 									</div>
-								</template>
-							</RefOpener>
+								</div>
+							</template>
+						</RefOpener>
+						<template v-if="doClientActions">
 							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text
 								@click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
-							<Button v-if="isAdmin" icon="pi pi-cog" text
-								@click="router.push('/admin/galleries/' + state.gallery.id)" v-tooltip.bottom="'Manage Gallery'" />
 						</template>
+						<Button v-if="isAdmin" icon="pi pi-cog" text
+								@click="router.push('/admin/galleries/' + state.gallery.id)" v-tooltip.bottom="'Manage Gallery'" />
 					</div>
 				</div>
 			</NavBar>
@@ -407,15 +390,15 @@ async function loadDownloadLink() {
 
 			<div class="favorites-modal modal" v-if="state.showFavoritesModal">
 				<div class="flex align-items-center ml-2">
-					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
+					<h3>Your Favorites</h3>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu v-if="canDownload" :model="downloadMenu(favoritePhotos)"><Button
+					<DropdownMenu v-if="canDownload && state.favoriteIds.size > 0" :model="downloadMenu(favoritePhotos)"><Button
 							icon="pi pi-download" text />
 					</DropdownMenu>
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
-					<PhotoWall :photos="favoritePhotos">
+					<PhotoWall :photos="favoritePhotos" v-if="state.favoriteIds.size > 0">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
 								<div class="photo-trigger"
@@ -436,6 +419,7 @@ async function loadDownloadLink() {
 							</div>
 						</template>
 					</PhotoWall>
+					<div v-else class="my-3 text-center">Click the <i class="pi pi-heart vertical-align-middle" /> to select your favorites!</div>
 				</div>
 			</div>
 
@@ -453,40 +437,36 @@ async function loadDownloadLink() {
 				</template>
 			</Snackbar>
 
-			<div class="pending-download modal low-right-modal flex align-items-center gap-3"
-				v-if="state.pendingDownload">
-				<template v-if="state.pendingDownload.status === 'finished'">
-					<i class="pi pi-check" />
-					<div>Download ready!</div>
-					<div class="flex-grow-1" />
-					<div>
-						<Button icon="pi pi-download" text @click="loadDownloadLink" />
-						<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
-					</div>
-				</template>
+			<Snackbar v-if="state.pendingDownload">
+				<template #content>
+					<template v-if="state.pendingDownload.status === 'finished'">
+						<i class="pi pi-check" />
+						<div>Download ready!</div>
+					</template>
 
-				<template v-else-if="state.pendingDownload.status === 'error'">
-					<i class="pi pi-exclamation-triangle" />
-					<div>Download failed</div>
-					<div class="flex-grow-1"></div>
-					<div>
-						<Button icon="pi pi-replay" text @click="restartDownload" />
-						<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
-					</div>
-				</template>
+					<template v-else-if="state.pendingDownload.status === 'error'">
+						<i class="pi pi-exclamation-triangle" />
+						<div>Download failed</div>
+					</template>
 
-				<template v-else>
-					<div>Preparing download...</div>
-					<div class="flex-grow-1">
-						<ProgressBar
-							:mode="state.pendingDownload.readyPhotos.length ? 'determinate' : 'indeterminate'"
-							:value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)"
-						>
-							{{}}
-						</ProgressBar>
-					</div>
+					<template v-else>
+						<div>Preparing download...</div>
+						<div class="flex-grow-1">
+							<ProgressBar
+								:mode="state.pendingDownload.readyPhotos.length ? 'determinate' : 'indeterminate'"
+								:value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)"
+							>
+								{{}}
+							</ProgressBar>
+						</div>
+					</template>
 				</template>
-			</div>
+				<template #actions v-if="state.pendingDownload.status !== 'processing'">
+					<Button v-if="state.pendingDownload.status === 'finished'" icon="pi pi-download" text @click="loadDownloadLink" />
+					<Button v-if="state.pendingDownload.status === 'error'" icon="pi pi-replay" text @click="restartDownload" />
+					<Button icon="pi pi-times" text @click="state.pendingDownload = null" />
+				</template>
+			</Snackbar>
 
 			<Slideshow ref="slideshow">
 				<template v-slot="{ photo }">

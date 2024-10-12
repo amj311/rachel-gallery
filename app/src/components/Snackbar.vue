@@ -12,11 +12,9 @@ defineProps<{
 
 <template>
 	<div class="snackbar modal">
-		<slot name="content"></slot>
-		&nbsp;&nbsp;
-		&nbsp;&nbsp;
-		<div class="flex-grow-1"></div>
-		<slot name="actions"></slot>
+		<div class="flex-grow-1 flex align-items-center gap-2"><slot name="content"></slot></div>
+		<div v-if="$slots.actions" class="mr-2"></div>
+		<div class="flex align-items-center"><slot name="actions"></slot></div>
 		<div v-if="closeable" class="close-button" @click="onClose">
 			<slot name="closer"><Button icon="pi pi-times" text @click="onClose" /></slot>
 		</div>

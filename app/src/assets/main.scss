@@ -130,7 +130,6 @@ body.dragging {
 .p-overlaypanel:before {
 	display: none;
 }
-
 .p-overlaypanel:after {
     border-top: 1px solid;
     border-left: 1px solid;
@@ -143,11 +142,16 @@ body.dragging {
     background: inherit;
     transform: rotate(45deg) translateY(60%);
 }
+.p-overlaypanel.p-overlaypanel-flipped:after {
+    transform: rotate(225deg) translate(75%, -10%);
+}
 
 // checkbox
 .p-checkbox.p-highlight .p-checkbox-box {
     border-color: $primary;
     background: $primary;
+}.p-overlaypanel.p-overlaypanel-flipped:after {
+    transform: rotate(225deg) translate(75%, -10%);
 }
 
 // radio
