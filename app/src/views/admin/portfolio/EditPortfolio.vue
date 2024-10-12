@@ -181,7 +181,7 @@ watch(previewSize, () => {
 		<div class="settings-pane">
 			<div class="sticky">
 				<div class="preview-toolbar w-full flex align-items-center gap-3 mb-3">
-					<SelectButton v-model="state.previewSize" optionValue="value" :options="[{icon: 'pi pi-desktop', value: 'desktop'}, {icon: 'pi pi-mobile', value: 'mobile'}]" style="zoom: .9">
+					<SelectButton v-model="state.previewSize" optionValue="value" :options="[{icon: 'pi pi-desktop', value: 'desktop'}, {icon: 'pi pi-mobile', value: 'mobile'}]">
 						<template #option="slotProps">
 							<i :class="slotProps.option.icon"></i>
 						</template>
@@ -301,14 +301,14 @@ watch(previewSize, () => {
 		.section {
 			outline: 3px solid rgb(155, 205, 233);
 		}
+
+		.section-toolbar, .anchor-button {
+			opacity: 1;
+		}
 	}
 
 	&:hover {
 		z-index: 4;
-		
-		.section-toolbar, .anchor-button {
-			opacity: 1;
-		}
 	}
 
 	&.selected {

@@ -33,7 +33,7 @@ function computeSkinny() {
 	isSkinny.value = gridEl!.clientWidth < 600;
 }
 
-const photoSelector: any = ref(null);
+const photoSelector = ref<InstanceType<typeof PortfolioPhotoSelector>>();
 
 const SectionEditor = reactive({
 	editMode: props.editMode,
@@ -59,8 +59,8 @@ const SectionEditor = reactive({
 		}
 	},
 
-	async openPhotoSelector(cb: (photo: any) => void) {
-		photoSelector.value!.open(null, null, section.value.id, cb);
+	async openPhotoSelector(cb: (photo: any) => void, maxPhotos?: number) {
+		photoSelector.value!.open(section.value.id, cb, maxPhotos);
 	}
 })
 

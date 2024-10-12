@@ -22,6 +22,7 @@ const state = reactive({
 	portfolioSectionId: '',
 	galleryList: [] as any[],
 	onImageUploaded: null as any,
+	maxPhotos: null as any,
 });
 
 const allPhotos = computed(() => [
@@ -34,7 +35,7 @@ async function loadGalleries() {
 	state.galleryList = data.data;
 }
 
-function open(galleryPhotos?, openGalleryId?, portfolioSectionId?, onImageUploaded?: (image) => void) {
+function open(portfolioSectionId, onImageUploaded?: (image) => void, maxPhotos?: number) {
 
 	if (!portfolioStore.portfolio?.sections.length) {
 		portfolioStore.loadPortfolio();
@@ -48,11 +49,8 @@ function open(galleryPhotos?, openGalleryId?, portfolioSectionId?, onImageUpload
 	state.onImageUploaded = onImageUploaded;
 
 	state.isVisible = true;
-	state.galleryPhotos = new Set(galleryPhotos || []);
 	state.portfolioSectionId = portfolioSectionId || '';
-	if (openGalleryId) {
-		openGallery(openGalleryId);
-	}
+	state.maxPhotos = maxPhotos;
 
 	loadGalleries();
 }
@@ -72,7 +70,7 @@ function closeGallery() {
 function toggleGalleryPhoto(photo) {
 	if (state.galleryPhotos.has(photo)) {
 		state.galleryPhotos.delete(photo);
-	} else {
+	} else if (allPhotos.value.length < state.maxPhotos) {
 		state.galleryPhotos.add(photo);
 	}
 }
@@ -108,10 +106,6 @@ function sendPhotosToUploader() {
 		<template #header>Select Photos to Add</template>
 
 		<TabView>
-			<TabPanel :header="`Selected Photos (${allPhotos.length})`">
-				<PhotoGrid v-model="allPhotos" />
-			</TabPanel>
-
 			<TabPanel header="Choose from Gallery">
 				<template v-if="state.openGalleryId">
 
@@ -143,6 +137,10 @@ function sendPhotosToUploader() {
 
 			<TabPanel header="Upload">
 				<ImageSelector v-model="state.filePhotos" />
+			</TabPanel>
+
+			<TabPanel :header="`Selected Photos (${allPhotos.length})`">
+				<PhotoGrid v-model="allPhotos" />
 			</TabPanel>
 		</TabView>
 

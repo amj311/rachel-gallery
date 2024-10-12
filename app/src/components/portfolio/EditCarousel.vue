@@ -65,13 +65,13 @@ async function deletePane(pane) {
 <template>
 	<div class="settings-grid">
 		<label>Controls</label>
-		<div><ToggleButton v-model="section.attributes.showControls" onLabel="On" offLabel="Off" style="zoom: .9" /></div>
+		<div><ToggleButton v-model="section.attributes.showControls" onLabel="On" offLabel="Off" /></div>
 
 		<label>Speed</label>
-		<div><Dropdown v-model="section.attributes.speed" :options="['Slow', 'Fast']" style="zoom: .9" /></div>
+		<div><Dropdown v-model="section.attributes.speed" :options="['Slow', 'Fast']" /></div>
 
 		<label>Animation</label>
-		<div><Dropdown v-model="section.attributes.animation" :options="['Fade', 'Slide', 'None']" style="zoom: .9" /></div>
+		<div><Dropdown v-model="section.attributes.animation" :options="['Fade', 'Slide', 'None']" /></div>
 	</div>
 	
 

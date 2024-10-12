@@ -29,7 +29,7 @@ onBeforeMount(() => {
 function selectPhoto() {
 	props.sectionEditor.openPhotoSelector((photo) => {
 		col.value.backgroundPhotoId = photo.id;
-	});
+	}, 1);
 }
 
 const options = computed(() => ([

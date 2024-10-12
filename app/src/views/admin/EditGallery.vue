@@ -361,7 +361,7 @@ function photoOptions(photo) {
 						@click="state.showShareModal = true" />
 				</div>
 				<div class="flex-grow-1"></div>
-				<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline style="zoom: .9;">
+				<Dropdown v-model="state.gallery.visibility" :options="Object.keys(visibilityOptions)" outline>
 					<template #value="{ value }">
 						<div class="flex align-items-center gap-2" :style="{ color: visibilityOptions[value].color }">
 							<i :class="visibilityOptions[value].icon" />
@@ -486,9 +486,9 @@ function photoOptions(photo) {
 			</div>
 		</div>
 
-		<div class="flex align-items-center gap-3">
+		<div class="flex align-items-center gap-3 mt-6">
 			<h2>Sections</h2>
-			<SelectButton v-model="state.sectionPhotoSize" :options="['sm', 'md', 'lg']" style="zoom: .8">
+			<SelectButton v-model="state.sectionPhotoSize" :options="['sm', 'md', 'lg']">
 				<template #option="slotProps">
 					<i :class="`text-${slotProps.option} pi pi-table flex align-items-center`" style="min-height: 1.8rem"></i>
 				</template>
@@ -496,7 +496,7 @@ function photoOptions(photo) {
 			<div class="flex-grow-1"></div>
 		</div>
 		<template v-for="(section, index) in state.gallery.sections" :key="section.id">
-			<div v-if="!section.marked_for_deletion" class="my-6 section" :class="{ expanded: section.expanded }">
+			<div v-if="!section.marked_for_deletion" class="my-4 section" :class="{ expanded: section.expanded }">
 				<div class="flex align-items-center py-2 sticky top-0 z-5 bg-white">
 					<h3>
 						<GhostInput v-model="section.name" placeholder="Section name..." />

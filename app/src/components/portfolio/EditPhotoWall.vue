@@ -32,9 +32,9 @@ function onPhotoDrop() {
 	section.value.photos.forEach((p, i) => p.order = i);
 }
 
-const photoSelector: any = ref(null);
+const photoSelector = ref<InstanceType<typeof PortfolioPhotoSelector>>();
 function openUploadToSection(sectionId) {
-	photoSelector.value!.open(null, null, sectionId);
+	photoSelector.value!.open(sectionId);
 }
 
 onBeforeMount(() => {

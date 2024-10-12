@@ -177,7 +177,7 @@ const objectPosition = computed(() => {
 
 <template>
 	<div class="photoframe" :style="{ 'aspect-ratio': fixedRatio ? `${photo.width}/${photo.height}` : undefined, backgroundColor: state.loadingError ? '#f5f5fa' : undefined }">
-		<div class="state-icons">
+		<div class="state-icons" v-if="state.isLoading || state.loadingError">
 			<i v-if="state.isLoading" class="pi pi-spinner pi-spin" />
 			<i v-if="state.loadingError" class="pi pi-exclamation-triangle" />
 		</div>

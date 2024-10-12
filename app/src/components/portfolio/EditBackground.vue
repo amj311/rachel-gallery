@@ -48,9 +48,9 @@ onBeforeMount(() => {
 	}
 })
 
-const photoSelector: any = ref(null);
+const photoSelector = ref<InstanceType<typeof PortfolioPhotoSelector>>();
 function openUploadToSection(sectionId) {
-	photoSelector.value!.open(null, null, sectionId, props.onImageChange);
+	photoSelector.value!.open(sectionId, props.onImageChange, 1);
 }
 </script>
 

@@ -38,6 +38,7 @@ function openSlideshow(photo?) {
 				<template v-slot="{ photo }">
 					<div
 						class="w-full h-full cursor-pointer"
+						:class="{ 'pointer-events-none': props.editMode }"
 						@click="openSlideshow(photo)"
 					/>
 				</template>

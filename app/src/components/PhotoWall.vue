@@ -205,7 +205,7 @@ function scrollEffect() {
 						:watermark="true" :fillMethod="'cover'" />
 					<div class="skeleton" v-else><i class="pi pi-spinner pi-spin text-gray-400" /></div>
 				</div>
-				<div class="overlay"><slot :photo="tile.photo"></slot></div>
+				<div class="overlay" v-if="$slots.default"><slot :photo="tile.photo"></slot></div>
 			</div>
 		</template>
 	</div>
@@ -223,7 +223,6 @@ function scrollEffect() {
 		.photo-frame {
 			width: 100%;
 			height: 100%;
-			cursor: pointer;
 
 			.skeleton {
 				width: 100%;
@@ -242,6 +241,7 @@ function scrollEffect() {
 			width: 100%;
 			height: 100%;
 			pointer-events: none;
+			cursor: pointer;
 
 			> * {
 				pointer-events: all;
