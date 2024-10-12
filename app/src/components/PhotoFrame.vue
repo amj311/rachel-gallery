@@ -204,8 +204,11 @@ const objectPosition = computed(() => {
 }
 .state-icons {
 	position: absolute;
-    top: calc(50% - .5rem);
-    left: calc(50% - .5rem);
+    width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	font-size: 1rem;
 	color: #555;
 	background: linear-gradient(-30deg, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
