@@ -59,6 +59,19 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
 const isAdmin = computed(() => userStore.currentUser?.isAdmin);
 const isClient = computed(() => userStore.currentUser?.email === state.gallery.Client.email);
 const doClientActions = computed(() => isAdmin.value || isClient.value);
+const canDownload = computed(() => {
+	switch (state.gallery?.downloadAccess) {
+		case 'No one':
+			return false;
+		case 'Client':
+			return isClient.value;
+		case 'Anyone with access':
+			return true;
+		default:
+			return false;
+	}
+});
+const canSelect = computed(() => canDownload.value || doClientActions.value)
 
 const favoritePhotos = computed(() => state.gallery.sections.flatMap(s => s.photos).filter(p => state.favoriteIds.has(p.id)));
 const favoritesKey = computed(() => `gallery/${state.gallery.id}/favorites`);
@@ -375,12 +388,12 @@ async function loadDownloadLink() {
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
+										<DropdownMenu v-if="canDownload" :model="downloadMenu([photo])">
 											<div class="button"><i class="pi pi-download" /></div>
 										</DropdownMenu>
 									</div>
 								</div>
-								<div v-if="doClientActions" class="selector" :class="{ 'show': showSelectors }">
+								<div v-if="canSelect" class="selector" :class="{ 'show': showSelectors }">
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										@click="() => toggleSelected(photo)" binary variant="outlined" />
 								</div>
@@ -396,7 +409,7 @@ async function loadDownloadLink() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu v-if="doClientActions" :model="downloadMenu(favoritePhotos)"><Button
+					<DropdownMenu v-if="canDownload" :model="downloadMenu(favoritePhotos)"><Button
 							icon="pi pi-download" text />
 					</DropdownMenu>
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
@@ -413,7 +426,7 @@ async function loadDownloadLink() {
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
+										<DropdownMenu v-if="canDownload" :model="downloadMenu([photo])">
 											<div class="button"><i class="pi pi-download" /></div>
 										</DropdownMenu>
 									</div>
@@ -435,7 +448,7 @@ async function loadDownloadLink() {
 				</template>
 				<template #actions>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button
+					<DropdownMenu v-if="canDownload" :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button
 							icon="pi pi-download" text /></DropdownMenu>
 				</template>
 			</Snackbar>
@@ -479,7 +492,7 @@ async function loadDownloadLink() {
 				<template v-slot="{ photo }">
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
 						@click="toggleFavorite(photo)" size="large" />
-					<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
+					<DropdownMenu v-if="canDownload" :model="downloadMenu([photo])">
 						<Button text icon="pi pi-download" size="large" />
 					</DropdownMenu>
 				</template>

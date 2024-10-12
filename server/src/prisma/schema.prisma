@@ -81,6 +81,7 @@ model Gallery {
     shareCode      String?
     shareEmails    String[]
     clientCanShare Boolean   @default(false)
+	downloadAccess String    @default("Client")
 
     sections     GallerySection[]
     coverPhoto   Photo?           @relation(fields: [coverPhotoId], references: [id])

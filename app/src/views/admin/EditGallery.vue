@@ -26,6 +26,7 @@ import PortfolioPhotoSelector from '@/components/portfolio/PortfolioPhotoSelecto
 import Snackbar from '@/components/Snackbar.vue';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import SelectButton from 'primevue/selectbutton';
+import { formatBytes } from '@/utils/bytes';
 
 type Photo = any;
 
@@ -448,6 +449,18 @@ function photoOptions(photo) {
 
 					<TabPanel header="Settings">
 						<div class="settings-grid">
+							<label>Total size</label>
+							<div>{{  formatBytes(state.gallery.sections.reduce((total, section) => {
+								return section.photos.reduce((_, photo) => {
+									return total + photo.size;
+								})
+							}, 0)) }}</div>
+
+							<label>Downloads</label>
+							<div>
+								<Dropdown v-model="state.gallery.downloadAccess" :options="['No one', 'Client', 'Anyone with access']" />
+							</div>
+
 							<label>Delete Gallery</label>
 							<div>
 								<Button label="Delete" outlined severity="danger" @click="deleteGallery" />

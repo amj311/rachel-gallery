@@ -137,6 +137,7 @@ export const GalleryService = {
 				shareCode: galleryData.shareCode,
 				clientCanShare: galleryData.clientCanShare,
 				shareEmails: galleryData.shareEmails || undefined,
+				downloadAccess: galleryData.downloadAccess,
 
 				sections: {
 					create: galleryData.sections?.filter(s => !s.id).map(section => ({

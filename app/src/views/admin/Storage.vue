@@ -16,6 +16,7 @@ import SelectButton from 'primevue/selectbutton';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import ProgressBar from 'primevue/progressbar';
 import dayjs from 'dayjs';
+import { bytesToGB, formatBytes } from '@/utils/bytes';
 
 type File = {
 	googleFileId: string,
@@ -62,23 +63,6 @@ async function loadUsage() {
 	const { data } = await request.get('admin/token');
 	state.driveInfo = data.driveInfo;
 }
-
-const bytesToGB = (bytes: number) => {
-	return bytes / 1024 / 1024 / 1024;
-}
-const bytesToMB = (bytes: number) => {
-	return bytes / 1024 / 1024;
-}
-const formatBytes = (bytes) => {
-	let number = Number(bytes);
-	let unit = 'MB';
-	number = bytesToMB(number);
-	if (number > 1999) {
-		number = bytesToGB(bytes);
-		unit = 'GB';
-	}
-	return number.toFixed(number % 1 === 0 ? 0 : 1) + unit;
-};
 
 const usedSpace = computed(() => state.driveInfo?.storageQuota.usage || 0);
 const availableSpace = computed(() => (state.driveInfo?.storageQuota.limit || 0) - usedSpace.value);
