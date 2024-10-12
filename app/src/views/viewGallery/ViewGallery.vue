@@ -285,7 +285,6 @@ async function loadDownloadLink() {
 	if (state.pendingDownload?.status !== 'finished' || !state.pendingDownload?.finalBlob) return;
 
 	var url = URL.createObjectURL(state.pendingDownload?.finalBlob);
-	console.log(url);
 	const link = document.createElement('a');
 	link.href = url;
 	link.download = state.pendingDownload.downloadName!;
