@@ -26,6 +26,7 @@ import OverlayPanel from 'primevue/overlaypanel';
 import RefOpener from '@/components/RefOpener.vue';
 import Snackbar from '@/components/Snackbar.vue';
 import { formatBytes } from '@/utils/bytes';
+import roundRobinAsync from '@/utils/roundRobin';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -227,22 +228,29 @@ async function startDownloadPhotos(photos, hiRes = false) {
 
 	try {
 		// have to do these one at a time to not crash server
-		for (const photo of photos) {
-			let width = photo.width;
-			if (!hiRes) {
-				if (photo.width < photo.height) {
-					width = 1200 * (photo.width / photo.height);
+		await roundRobinAsync(
+			photos,
+			async (photo) => {
+				let width = photo.width;
+				if (!hiRes) {
+					if (photo.width < photo.height) {
+						width = 1200 * (photo.width / photo.height);
+					}
+					else {
+						width = 1200;
+					}
 				}
-				else {
-					width = 1200;
-				}
+
+				const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
+
+				const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
+				state.pendingDownload!.readyPhotos.push({ photo, blob });
+			},
+			{
+				maxRunners: hiRes ? 2 : 4,
+				breakOnRowError: true,
 			}
-
-			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
-
-			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
-			state.pendingDownload.readyPhotos.push({ photo, blob });
-		}
+		)
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
 		let finalBlob;
@@ -453,7 +461,7 @@ async function loadDownloadLink() {
 						<div class="flex-grow-1">
 							<ProgressBar
 								:mode="state.pendingDownload.readyPhotos.length ? 'determinate' : 'indeterminate'"
-								:value="Math.max(state.pendingDownload.readyPhotos.length / state.pendingDownload.photosToDownload.length * 100, 5)"
+								:value="Math.max(state.pendingDownload.readyPhotos.length / (state.pendingDownload.photosToDownload.length + 0.25) * 100, 5)"
 							>
 								{{}}
 							</ProgressBar>
