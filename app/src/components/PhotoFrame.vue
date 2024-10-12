@@ -27,7 +27,7 @@ const props = defineProps<{
 	position?: string | { x: number, y: number },
 	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
 	watermark?: boolean,
-	showLoading?: boolean
+	showLoading?: boolean,
 }>();
 
 const { photo, size = 'xs', watermark, showLoading } = props;
@@ -208,5 +208,6 @@ const objectPosition = computed(() => {
     left: calc(50% - .5rem);
 	font-size: 1rem;
 	color: #555;
+	background: linear-gradient(-30deg, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
 }
 </style>
