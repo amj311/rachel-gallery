@@ -1,9 +1,14 @@
-<script setup lang="ts">
+<script
+	setup
+	lang="ts"
+>
 import { useUserStore } from '../stores/user.store';
 import { AuthService } from '../services/authService';
 import { reactive } from 'vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
 
 const userStore = useUserStore();
 
@@ -29,7 +34,7 @@ async function loginWithEmail() {
 	try {
 		state.isLoading = true;
 		await AuthService.signInWithEmail(state.email, state.password);
-		emit('authenticated');		
+		emit('authenticated');
 	}
 	catch (error: any) {
 		userStore.loginError = error.message;
@@ -81,39 +86,110 @@ function leaveRestPasswordMode() {
 
 
 <template>
-	<div class="flex flex-column gap-2 align-items-center" style="width: 15em">
-		<div v-if="userStore.loginError" class="bg-white border-round-3xl m-3">
+	<div
+		class="flex flex-column gap-2 align-items-center"
+		style="width: 15em"
+	>
+		<div
+			v-if="userStore.loginError"
+			class="bg-white border-round-3xl m-3"
+		>
 			{{ userStore.loginError }}
 		</div>
 
 		<div class="flex flex-column gap-1 w-full align-items-center">
 			<p v-if="state.mode === 'reset_password'">
-				<template v-if="!state.hasSentEmail">Enter your email to have a reset password link sent to you.</template>
-				<template v-else>Thank you. If your email is in our system, you will receive your password reset link shortly.</template>
+				<template v-if="!state.hasSentEmail">Enter your email to have a reset password link sent to
+					you.</template>
+				<template v-else>Thank you. If your email is in our system, you will receive your password reset link
+					shortly.</template>
 			</p>
 
-			<InputText v-if="!(state.mode === 'reset_password' && state.hasSentEmail)" type="text" v-model="state.email" placeholder="Email" size="small" class="w-full" />
+			<InputText
+				v-if="!(state.mode === 'reset_password' && state.hasSentEmail)"
+				type="text"
+				v-model="state.email"
+				placeholder="Email"
+				size="small"
+				class="w-full"
+			/>
 
 			<template v-if="state.mode === 'signup'">
-				<InputText type="text" v-model="state.givenName" placeholder="First Name" size="small" class="w-full" />
-				<InputText type="text" v-model="state.familyName" placeholder="Last Name" size="small" class="w-full" />
+				<InputText
+					type="text"
+					v-model="state.givenName"
+					placeholder="First Name"
+					size="small"
+					class="w-full"
+				/>
+				<InputText
+					type="text"
+					v-model="state.familyName"
+					placeholder="Last Name"
+					size="small"
+					class="w-full"
+				/>
 			</template>
 
-			<InputText v-if="state.mode === 'signup' || state.mode === 'login'" v-model="state.password" placeholder="Password" :type="state.showPassword ? 'text' : 'password'"  size="small" class="w-full" />
+
+			<InputGroup>
+				<InputText
+					v-if="state.mode === 'signup' || state.mode === 'login'"
+					v-model="state.password"
+					placeholder="Password"
+					:type="state.showPassword ? 'text' : 'password'"
+					size="small"
+					class="w-full"
+				/>
+
+				<InputGroupAddon style="padding: 0; cursor: pointer">
+					<i
+						class="pi"
+						:class="state.showPassword ? 'pi-eye-slash' : 'pi-eye'"
+						@click="state.showPassword = !state.showPassword"
+					/>
+				</InputGroupAddon>
+			</InputGroup>
 
 
 			<template v-if="state.mode === 'signup'">
-				<Button severity="primary" @click="createEmailUser" :loading="state.isLoading" class="w-full mt-3 justify-content-around">Create Account</button>
-				<small>Already have an account? <span class="text-link" @click="state.mode = 'login'">Sign in</span></small>
+				<Button
+					severity="primary"
+					@click="createEmailUser"
+					:loading="state.isLoading"
+					class="w-full mt-3 justify-content-around"
+				>Create Account</button>
+				<small>Already have an account? <span
+						class="text-link"
+						@click="state.mode = 'login'"
+					>Sign in</span></small>
 			</template>
 			<template v-else-if="state.mode === 'login'">
-				<Button severity="primary" @click="loginWithEmail" :loading="state.isLoading" class="w-full mt-3 justify-content-around">Sign in</button>
-				<small>New here? <span class="text-link" @click="state.mode = 'signup'">Create account</span></small>
-				<small><span class="text-link" @click="state.mode = 'reset_password'">Forgot password?</span></small>
+				<Button
+					severity="primary"
+					@click="loginWithEmail"
+					:loading="state.isLoading"
+					class="w-full mt-3 justify-content-around"
+				>Sign in</button>
+				<small>New here? <span
+						class="text-link"
+						@click="state.mode = 'signup'"
+					>Create account</span></small>
+				<small><span
+						class="text-link"
+						@click="state.mode = 'reset_password'"
+					>Forgot password?</span></small>
 			</template>
 			<template v-else-if="state.mode === 'reset_password'">
-				<Button v-if="!state.hasSentEmail" @click="sendPasswordResetEmail" class="w-full mt-3 justify-content-around">Send Email</button>
-				<small>Back to <span class="text-link" @click="leaveRestPasswordMode">Sign in</span></small>
+				<Button
+					v-if="!state.hasSentEmail"
+					@click="sendPasswordResetEmail"
+					class="w-full mt-3 justify-content-around"
+				>Send Email</button>
+				<small>Back to <span
+						class="text-link"
+						@click="leaveRestPasswordMode"
+					>Sign in</span></small>
 			</template>
 		</div>
 		<!-- GOOGLE SIGN-IN NOT WORKING!!!!
