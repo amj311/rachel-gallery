@@ -8,6 +8,7 @@ services:
     image: gallery-server
     container_name: gallery-server
     command: node build/index.js
+    restart: on-failure:max=2
     ports:
       - 3101:5000
     depends_on:
@@ -17,6 +18,7 @@ services:
   db:
     image: gallery-db:latest
     container_name: gallery-db
+    restart: on-failure:max=2
     build:
       context: .
       dockerfile: ./Dockerfile.db
