@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import PhotoGrid from '@/components/PhotoGrid.vue';
 import { computed } from 'vue';
 
 const images = defineModel<Set<any>>();
+const setSizeBeforeNewFiles = ref(0);
 
 const props = defineProps<{
 	inline?: boolean,
@@ -14,17 +15,22 @@ const state = reactive({
 });
 
 async function handleFiles(files) {
+	if (!images.value) {
+		throw new Error('No images set provided to file selector!');
+	}
 	state.isProcessingFiles = true;
-	await Promise.all(Array.from(files).map(async file => images.value?.add(await processImageFile(file))));
+	setSizeBeforeNewFiles.value = images.value?.size;
+	await Promise.all(Array.from(files).map(async (file, i) => images.value?.add(await processImageFile(file, i))));
 	state.isProcessingFiles = false;
 }
 
-function processImageFile(file) {
+function processImageFile(file, selectionIndex) {
 	const photo = {
 		blob: file,
 		filename: file.name,
 		size: file.size,
 		type: file.type,
+		uploadOrder: selectionIndex + setSizeBeforeNewFiles.value,
 	} as any;
 
 	// Create data URL for raw file

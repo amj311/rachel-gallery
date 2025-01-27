@@ -154,6 +154,7 @@ function onImageUploadComplete(newPhoto) {
 function sendToUploader() {
 	uploaderStore.queueImages(Array.from(state.imagesToUpload).map(f => ({
 		...f,
+		order: state.showUploadToSection.photos.length + f.uploadOrder,
 		gallerySectionId: state.showUploadToSection!.id,
 		onUploadComplete: onImageUploadComplete,
 	})));
