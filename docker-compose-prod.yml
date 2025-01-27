@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: ./Dockerfile.server.prod
     image: gallery-server
+    labels:
+      - "com.docker.compose.project=gallery"
     container_name: gallery-server
     command: node build/index.js
     restart: on-failure:max=2
