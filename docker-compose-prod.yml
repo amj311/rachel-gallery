@@ -24,6 +24,8 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.db
+    labels:
+      - "com.docker.compose.project=gallery"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
