@@ -2,31 +2,13 @@ import { prisma } from "../prisma/client";
 import { v4 as uuid } from 'uuid';
 import { GoogleDriveService } from "./GoogleDriveService";
 
-const fullGalleryInclusion = {
-	coverPhoto: true,
-	Client: true,
-	Opportunity: true,
-	sections: {
-		include: {
-			photos: {
-				orderBy: {
-					order: 'asc' as any,
-				}
-			}
-		},
-		orderBy: {
-			order: 'asc' as any,
-		}
-	},
-};
-
 export const PhotoService = {
 	async addPhotoToSection(photoData: any) {
-		let order;
-		if (photoData.gallerySectionId) {
+		let order = photoData.order;
+		if (!order && photoData.gallerySectionId) {
 			order = await prisma.photo.count({ where: { gallerySectionId: photoData.gallerySectionId } });
 		}
-		else {
+		else if (!order && photoData.portfolioSectionId) {
 			order = await prisma.photo.count({ where: { portfolioSectionId: photoData.portfolioSectionId } });
 		}
 		return await prisma.photo.create({

@@ -154,7 +154,7 @@ export default (route, _, done) => {
 
 	/** PHOTOS */
 
-	// Upload a photo to a gallery or portfolio section
+	// Upload a photo to a gallery section
 	route.post('/photo', async (request, reply) => {
 		const { galleryId } = request.params;
 		const {

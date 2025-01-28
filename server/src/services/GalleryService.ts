@@ -193,7 +193,7 @@ export const GalleryService = {
 	},
 
 	async addPhotoToSection(gallerySectionId: string, photoData: any) {
-		const order = (await prisma.photo.count({ where: { gallerySectionId } }));
+		const order = photoData.order || (await prisma.photo.count({ where: { gallerySectionId } }));
 		return await prisma.photo.create({
 			data: {
 				...photoData,

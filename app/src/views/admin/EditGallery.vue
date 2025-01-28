@@ -143,7 +143,8 @@ function openUploadToSection(section) {
 }
 
 function onImageUploadComplete(newPhoto) {
-	state.gallery.sections.find(s => s.id === newPhoto.gallerySectionId)!.photos.push(newPhoto);
+	const photos = state.gallery.sections.find(s => s.id === newPhoto.gallerySectionId)!.photos;
+	photos.splice(newPhoto.order || photos.length, 0, newPhoto);
 
 	// Use first uploaded image as gallery cover
 	if (!state.gallery.coverPhoto) {
