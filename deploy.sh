@@ -1,12 +1,12 @@
 #!/bin/sh
 
 # load env vars from file if present
-# Otherwise the should already be present
+# Otherwise they should already be present
 if [[ -f .env.deploy ]]; then
 	. .env.deploy
 fi
 
-cat 'backup.sh' | ssh -o ExitOnForwardFailure=yes ${SSH_USER}@${SSH_HOST}
+bash backup.sh --remote
 
 # Run docker compose on host, force build and recreate
 echo -e "\n\nDeploying new docker image...\n"
