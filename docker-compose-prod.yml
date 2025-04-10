@@ -17,6 +17,7 @@ services:
       - db
     links:
       - db
+
   db:
     image: gallery-db:latest
     container_name: gallery-db
@@ -34,6 +35,26 @@ services:
       - 3102:5432
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  backup:
+    image: gallery-backup:latest
+    container_name: gallery-backup
+    restart: on-failure:max=2
+    build:
+      context: .
+      dockerfile: ./Dockerfile.backup
+    labels:
+      - "com.docker.compose.project=gallery"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=rachel_gallery
+    volumes:
+      - /home/arthur/backups:/backup-dir
+    depends_on:
+      - db
+    links:
+      - db
 
 volumes:
   db-data:
