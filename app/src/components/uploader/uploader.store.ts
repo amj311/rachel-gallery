@@ -100,8 +100,6 @@ export const useUploaderStore = defineStore('uploader', {
 
 			try {
 				photo.uploadStatus = "uploading";
-				await new Promise(resolve => setTimeout(resolve, 5000));
-				
 				let googleRes;
 
 				// If completely new photo, upload to google drive
@@ -135,6 +133,7 @@ export const useUploaderStore = defineStore('uploader', {
 			} catch (error) {
 				console.error("upload failed", error, photo)
 				photo.uploadStatus = "error";
+				photo.uploadError = error;
 			}
 			
 			this.isUploading = false;

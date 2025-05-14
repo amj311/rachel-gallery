@@ -41,7 +41,7 @@ const uploaderStore = useUploaderStore();
 							<div class="status" v-if="photo.uploadStatus === 'complete'">
 								<i class="pi pi-check" style="color: green" />
 							</div>
-							<div class="status retry" v-else-if="photo.uploadStatus === 'error'">
+							<div class="status retry" v-else-if="photo.uploadStatus === 'error'" v-tooltip.top="photo.uploadError?.message">
 								<i class="pi pi-exclamation-triangle" style="color: red" />
 								<i class="pi pi-replay" @click="uploaderStore.retryUploadPhoto(photo)" />
 							</div>
