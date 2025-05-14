@@ -36,6 +36,7 @@ const state = reactive({
 	pageFiles: [] as File[],
 	pageTokens: [''] as string[],
 	currentPage: 0,
+	editableIndex: 1,
 	hasAllPages: false,
 	pageSize: 25,
 	// showUploadToSection: null as any,
@@ -94,6 +95,7 @@ async function loadPage(pageIdx) {
 	state.isLoadingPage = true;
 	try {
 		state.currentPage = pageIdx;
+		state.editableIndex = pageIdx + 1;
 		const params = new URLSearchParams();
 		if (pageToken) params.append('nextPageToken', pageToken);
 		params.append('pageSize', state.pageSize.toString());
@@ -559,14 +561,24 @@ function fileWarning(file: File) {
 				<div class="flex-grow-1"></div>
 
 				<div class="pagination flex align-items-center gap-2">
-					<Button
-						v-if="state.pageTokens.length > 1"
-						text
-						@click="loadPage(state.currentPage - 1)"
-						icon="pi pi-angle-left"
-						size="small"
-						:disabled="state.currentPage === 0"
-					/>
+					<div class="flex align-items-center">
+						<Button
+							v-if="state.pageTokens.length > 1"
+							text
+							@click="loadPage(0)"
+							icon="pi pi-angle-double-left"
+							size="small"
+							:disabled="state.currentPage === 0"
+						/>
+						<Button
+							v-if="state.pageTokens.length > 1"
+							text
+							@click="loadPage(state.currentPage - 1)"
+							icon="pi pi-angle-left"
+							size="small"
+							:disabled="state.currentPage === 0"
+						/>
+					</div>
 					<div
 						v-for="index in pagesBefore"
 						:key="index"
@@ -587,14 +599,24 @@ function fileWarning(file: File) {
 					<template v-if="!state.hasAllPages">
 						<i class="pi pi-ellipsis-h" />
 					</template>
-					<Button
-						v-if="state.pageTokens.length > 1"
-						text
-						@click="loadPage(state.currentPage + 1)"
-						icon="pi pi-angle-right"
-						size="small"
-						:disabled="state.hasAllPages && isOnLastPage"
-					/>
+					<div class="flex align-items-center">
+						<Button
+							v-if="state.pageTokens.length > 1"
+							text
+							@click="loadPage(state.currentPage + 1)"
+							icon="pi pi-angle-right"
+							size="small"
+							:disabled="state.hasAllPages && isOnLastPage"
+						/>
+						<Button
+							v-if="state.pageTokens.length > 1"
+							text
+							@click="loadPage(state.pageTokens.length - 1)"
+							icon="pi pi-angle-double-right"
+							size="small"
+							:disabled="state.hasAllPages && isOnLastPage"
+						/>
+					</div>
 				</div>
 
 				<div class="flex-grow-1"></div>
@@ -800,6 +822,12 @@ function fileWarning(file: File) {
 		font-weight: bold;
 		text-decoration: underline;
 		pointer-events: none;
+	}
+
+	:deep(.p-button) {
+		width: min-content;
+		padding-left: .2em;
+		padding-right: .2em;
 	}
 }
 
