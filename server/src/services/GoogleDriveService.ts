@@ -36,8 +36,15 @@ export const GoogleDriveService = {
 		return this._token;
 	},
 
-	async getDrive() {
-		return google.drive({ version: 'v3', auth: await this._getMainToken() });
+	async _getEmailToken(email?: string) {
+		if (!email || email === currentEmail) {
+			return this._getMainToken();
+		}
+		return await this._getToken(email);
+	},
+
+	async getDrive(ownerEmail?: string) {
+		return google.drive({ version: 'v3', auth: await this._getEmailToken(ownerEmail) });
 	},
 
 	async loadDriveInfo() {
@@ -75,7 +82,7 @@ export const GoogleDriveService = {
 	async deleteFile(googleFileId, owner) {
 		if (!accounts[owner]) throw Error("No such account: " + owner);
 		try {
-			const drive = await this.getDrive();
+			const drive = await this.getDrive(owner);
 			await drive!.files.delete({
 				fileId: googleFileId,
 			});
