@@ -125,6 +125,23 @@ function changePageSize() {
 	loadPage(0);
 }
 
+const isOnLastPage = computed(() => {
+	return state.currentPage === state.pageTokens.length - 1;
+});
+
+const PAGES_RADIUS = 4;
+const pagesBefore = computed(() => {
+	if (state.currentPage === 0) return [];
+	return state.pageTokens.map((_, i) => i).slice(Math.max(0, state.currentPage - PAGES_RADIUS), state.currentPage);
+});
+const pagesAfter = computed(() => {
+	if (isOnLastPage.value) return [];
+	return state.pageTokens.map((_, i) => i).slice(state.currentPage + 1, Math.min(state.pageTokens.length, state.currentPage + PAGES_RADIUS + 1));
+});
+
+
+// SELECTING
+
 const listRef = ref(null);
 function initSelectionDrag(e) {
 	if (!listRef.value) return;
@@ -546,17 +563,27 @@ function fileWarning(file: File) {
 						v-if="state.pageTokens.length > 1"
 						text
 						@click="loadPage(state.currentPage - 1)"
-						icon="pi pi-chevron-left"
+						icon="pi pi-angle-left"
 						size="small"
 						:disabled="state.currentPage === 0"
 					/>
 					<div
-						v-for="page, index in state.pageTokens"
-						:key="page"
+						v-for="index in pagesBefore"
+						:key="index"
 						class="text-link"
 						@click="loadPage(index)"
-						:class="{ active: state.currentPage === index }"
-					>{{ index + 1 }}</div>
+					>
+						{{ index + 1 }}
+					</div>
+					<div class="text-link active">{{ state.currentPage + 1 }}</div>
+					<div
+						v-for="index in pagesAfter"
+						:key="index"
+						class="text-link"
+						@click="loadPage(index)"
+					>
+						{{ index + 1 }}
+					</div>
 					<template v-if="!state.hasAllPages">
 						<i class="pi pi-ellipsis-h" />
 					</template>
@@ -564,9 +591,9 @@ function fileWarning(file: File) {
 						v-if="state.pageTokens.length > 1"
 						text
 						@click="loadPage(state.currentPage + 1)"
-						icon="pi pi-chevron-right"
+						icon="pi pi-angle-right"
 						size="small"
-						:disabled="state.hasAllPages && state.currentPage === state.pageTokens.length - 1"
+						:disabled="state.hasAllPages && isOnLastPage"
 					/>
 				</div>
 
