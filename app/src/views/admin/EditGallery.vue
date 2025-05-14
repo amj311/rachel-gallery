@@ -54,8 +54,9 @@ const state = reactive({
 	newClient: { name: '', email: '' } as any,
 	isCreatingClient: false,
 	showAddToPortfolio: false,
-	selectedSet: new Set<Photo>(),
+	// selectedSet: new Set<Photo>(),
 	sectionPhotoSize: 'md' as 'sm' | 'md' | 'lg',
+	gridRefs: {} as Record<string, InstanceType<typeof PhotoGrid>>,
 });
 
 onBeforeMount(async () => {
@@ -195,8 +196,8 @@ async function deletePhotos(photos) {
 async function deleteSelectedPhotos() {
 	if (!confirm('Are you sure you want to delete these photos')) return;
 
-	await deletePhotos([...state.selectedSet]);
-	state.selectedSet.clear();
+	await deletePhotos([...allSelected.value]);
+	clearAllSelected();
 }
 
 async function deleteSection(section) {
@@ -317,13 +318,23 @@ async function deleteGallery() {
 	}
 }
 
-function toggleSelected(photo) {
-	if (state.selectedSet.has(photo)) {
-		state.selectedSet.delete(photo);
-	} else {
-		state.selectedSet.add(photo);
+const allSelected = computed(() => {
+	return Array.from(Object.values(state.gridRefs)).flatMap((ref) => ref.selected);
+})
+
+function clearAllSelected() {
+	for (const ref of Object.values(state.gridRefs)) {
+		ref.clearSelected();
 	}
 }
+
+// function toggleSelected(photo) {
+// 	if (state.selectedSet.has(photo)) {
+// 		state.selectedSet.delete(photo);
+// 	} else {
+// 		state.selectedSet.add(photo);
+// 	}
+// }
 
 function photoOptions(photo) {
 	return [
@@ -499,13 +510,12 @@ function photoOptions(photo) {
 				</div>
 
 				<PhotoGrid
+					:ref="(ref: any) => state.gridRefs[section.id] = ref"
 					v-model="section.photos"
 					:collapsible="true"
 					:draggable="true"
 					:dragGroup="'gallerySections'"
 					:selectable="true"
-					:isSelected="(photo) => state.selectedSet.has(photo)"
-					@toggleSelected="toggleSelected"
 					:listId="section.id"
 					:onPhotoDrop="onPhotoDrop"
 					:handleAddPhotos="() => openUploadToSection(section)"
@@ -552,16 +562,16 @@ function photoOptions(photo) {
 
 		<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
 
-		<Snackbar v-if="state.selectedSet.size" closeable @close="state.selectedSet.clear()">
+		<Snackbar v-if="allSelected.length" closeable @close="clearAllSelected">
 			<template #content>
 				<div class="flex align-items-center gap-2">
-					<i :class="state.selectedSet.size === 1 ? 'pi pi-image' : 'pi pi-images'" />
-					<div>{{ state.selectedSet.size }} photo{{ state.selectedSet.size === 1 ? '' : 's' }} selected</div>
+					<i :class="allSelected.length === 1 ? 'pi pi-image' : 'pi pi-images'" />
+					<div>{{ allSelected.length }} photo{{ allSelected.length === 1 ? '' : 's' }} selected</div>
 				</div>
 			</template>
 			<template #actions>
 				<Button icon="pi pi-trash" text @click="deleteSelectedPhotos" />
-				<DropdownMenu :model="state.gallery.sections.map(section => ({ label: section.name, command: () => { movePhotosToSection([...state.selectedSet], section); state.selectedSet.clear() } }))">
+				<DropdownMenu :model="state.gallery.sections.map(section => ({ label: section.name, command: () => { movePhotosToSection([...allSelected], section); clearAllSelected() } }))">
 					<Button icon="pi pi-folder" text />
 				</DropdownMenu>
 			</template>

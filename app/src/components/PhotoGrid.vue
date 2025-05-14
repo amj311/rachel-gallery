@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed } from 'vue';
+import { reactive, computed, ref } from 'vue';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import * as Drag from 'vuedraggable';
 import { useAppStore } from '@/stores/app.store';
@@ -25,24 +25,31 @@ const props = defineProps<{
 
 	// selecting options
 	selectable?: boolean,
-	isSelected?: (photo) => boolean,
-	onToggleSelected?: (photo) => void,
 }>();
 
 const state = reactive({
 	expanded: props.collapsible ? false : true,
+
+	// Selection Dragging
+	rowRefs: {} as any,
+	isDragSelecting: false,
+	dragSelectionStart: {} as any,
+	dragSelectionBounds: {} as any,
 });
 
 const visiblePhotos = computed(() => {
 	return state.expanded ? photos.value : photos.value!.slice(0, 10);
 });
 
+
+// PHOTO DRAGGING
 function onMove(e) {
 	document.body.classList.add('dragging');
 }
 function onDrop(e) {
 	document.body.classList.remove('dragging');
 
+	if (!e.from || !e.to) return;
 	const fromListId = e.from.attributes['data-listid'].value;
 	const toListId = e.to.attributes['data-listid'].value;
 	const photo = e.item._underlying_vm_;
@@ -50,11 +57,120 @@ function onDrop(e) {
 	props.onPhotoDrop?.call(null, photo, fromListId, toListId);
 }
 
+
+
+// SELECTION DRAGGING
+const allSelected = computed(() => photos.value?.filter(f => f.selected) || []);
+
+
+const dragSelectionAreaRef = ref(null);
+function initSelectionDrag(e) {
+	if (!dragSelectionAreaRef.value) return;
+	const listEl = dragSelectionAreaRef.value as any;
+	listEl.classList.add('drag-selecting');
+	document.body.classList.add('dragging');
+	window.addEventListener('mousemove', updateDragSelection);
+	window.addEventListener('mouseup', endDragSelection);
+	state.dragSelectionStart = { x: e.clientX, y: e.clientY };
+}
+function updateDragSelection(e: MouseEvent) {
+	state.dragSelectionBounds = {
+		x: Math.min(state.dragSelectionStart.x, e.clientX),
+		y: Math.min(state.dragSelectionStart.y, e.clientY),
+		width: Math.abs(state.dragSelectionStart.x - e.clientX),
+		height: Math.abs(state.dragSelectionStart.y - e.clientY),
+	}
+
+	// do nothing until mouse has dragged a certain distance
+	if (state.dragSelectionBounds.width < 50 && state.dragSelectionBounds.height < 50) {
+		state.isDragSelecting = false;
+		return;
+	}
+
+	state.isDragSelecting = true;
+
+	const mode = e.shiftKey ? 'add' : 'replace';
+
+	Object.values(state.rowRefs).forEach(({ ref, photo }: any) => {
+		const rect = ref.getBoundingClientRect();
+		const inHorizontal = !(
+			(rect.x + rect.width) < state.dragSelectionBounds.x ||
+			(rect.x) > state.dragSelectionBounds.x + state.dragSelectionBounds.width
+		);
+		const inVertical = !(
+			(rect.y + rect.height) < state.dragSelectionBounds.y ||
+			(rect.y) > state.dragSelectionBounds.y + state.dragSelectionBounds.height
+		);
+		const isInSelectionArea = (inHorizontal && inVertical);
+		if (mode === 'add') {
+			if (!photo.selected) {
+				photo.selectionPendingDrag = true;
+			}
+			if (photo.selectionPendingDrag) {
+				photo.selected = isInSelectionArea;
+			}
+			else {
+				photo.selected = isInSelectionArea ? true : photo.selected;
+			}
+		} else {
+			photo.selected = isInSelectionArea;
+		}
+	});
+}
+function endDragSelection() {
+	if (!dragSelectionAreaRef.value) return;
+	const listEl = dragSelectionAreaRef.value as any;
+	state.isDragSelecting = false;
+	state.dragSelectionStart = {};
+	state.dragSelectionBounds = {};
+	listEl.classList.remove('drag-selecting');
+	document.body.classList.remove('dragging');
+
+	window.removeEventListener('mousemove', updateDragSelection);
+	window.removeEventListener('mouseup', endDragSelection);
+
+	allSelected.value.forEach(f => f.selectionPendingDrag = false);
+
+	// remove selection incurred by dragging
+	if (window.getSelection?.call(null)) {
+		if (window.getSelection()!.empty as any) {  // Chrome
+			window.getSelection()!.empty();
+		}
+		else if (window.getSelection()!.removeAllRanges as any) {  // Firefox
+			window.getSelection()!.removeAllRanges();
+		}
+	}
+	else if ((document as any).selection) {  // IE?
+		(document as any).selection.empty();
+	}
+}
+
+
+function handlePhotoClick(photo) {
+	if (props.onPhotoClick) {
+		props.onPhotoClick(photo);
+	}
+	if (props.selectable) {
+		photo.selected = !photo.selected;
+	}
+}
+
+defineExpose({
+	selected: allSelected,
+	clearSelected: () => {
+		photos.value?.forEach(f => f.selected = false);
+	},
+})
+
 </script>
 
 <template>
 	<div :class="{ expanded: state.expanded, [props.size || 'sm']: true }">
-		<div v-if="photos && photos.length" >
+		<div
+			ref="dragSelectionAreaRef"
+			v-if="photos && photos.length"
+			@mousedown="initSelectionDrag"
+		>
 			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" @move="onMove" :data-listid="listId" :scroll-sensitivity="200" :force-fallback="true">
 				<template #header v-if="handleAddPhotos">
 					<div key="add-photos" class="add-photos photo-grid-item" @click="handleAddPhotos">
@@ -64,17 +180,17 @@ function onDrop(e) {
 				<template #item="{ element: photo }">
 					<div
 						v-if="!photo.marked_for_deletion && visiblePhotos?.includes(photo)"
+						:ref="(ref) => state.rowRefs[photo.googleFileId] = { ref, photo }"
 						class="photo-grid-item"
-						:class="{ 'selected': isSelected?.call(null, photo), ...photoClasses?.call(null, photo)}"
-						@click="onPhotoClick?.call(null, photo)"
+						:class="{ 'selected': photo.selected, ...photoClasses?.call(null, photo)}"
+						@click="() => handlePhotoClick(photo)"
+						@mousedown.stop="onMove"
+						@mouseup="onDrop"
 					>
 						<div class="photo-frame" :class="(draggable && !isMobile) ? 'handle' : null">
 							<PhotoFrame :key="photo.id + size" :photo="photo" :size="size as any || 'sm'" />
 						</div>
-						<div class="options">
-							<div v-show="selectable" class="button" :class="{ 'force-visible': isSelected?.call(null, photo) }">
-								<input type="checkbox" :checked="isSelected?.call(null, photo)" @click="() => onToggleSelected?.call(null, photo)" />
-							</div>
+						<div class="options" @click.stop>
 							<i v-show="draggable && isMobile" class="button pi pi-arrows-alt handle" />
 							<div class="flex-grow-1"></div>
 							<slot name="options" :photo="photo">
@@ -103,6 +219,13 @@ function onDrop(e) {
 			<i class="pi pi-plus" />
 			Add Photos
 		</div>
+	</div>
+
+	<div
+		v-if="state.isDragSelecting"
+		class="drag-select-overlay"
+		:style="{ left: state.dragSelectionBounds.x + 'px', top: state.dragSelectionBounds.y + 'px', width: state.dragSelectionBounds.width + 'px', height: state.dragSelectionBounds.height + 'px' }"
+	>
 	</div>
 </template>
 
@@ -148,7 +271,8 @@ function onDrop(e) {
 	}
 
 	&.selected {
-		outline: 2px solid #dde;
+		background: #f0f9ff;
+		outline: 2px solid #b9def7;
 	}
 
 	&.sortable-ghost {
@@ -264,6 +388,15 @@ function onDrop(e) {
 
 .expanded .photo-grid {
 	height: auto;
+}
+
+
+.drag-select-overlay {
+	position: fixed;
+	background: #bef5;
+	outline: 1px solid #befe;
+	z-index: 10;
+	pointer-events: none;
 }
 
 </style>
