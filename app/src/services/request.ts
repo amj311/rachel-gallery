@@ -26,10 +26,6 @@ request.interceptors.request.use(async (config) => {
 	// }
 
 	config.baseURL = serverHost;
-	if (config.method !== 'options') {
-		config.headers.set('X-Target', 'gallery');
-	}
-
 	const token = await AuthService.getToken();
 	if (token) {
 		config.headers.Authorization = token;
