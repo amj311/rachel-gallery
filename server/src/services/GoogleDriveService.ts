@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 import { JWT } from "googleapis-common";
 import { prisma } from '../prisma/client';
 
-const accounts = require(process.env.ACCOUNTS_PATH!);
+const accounts = require(process.env.ACCOUNTS_PATH || '../../../accounts.json');
 const currentEmail = accounts.current;
 
 export const GoogleDriveService = {
