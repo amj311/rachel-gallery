@@ -7,6 +7,7 @@ import request from '@/services/request';
 import { useToast } from 'primevue/usetoast';
 import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
 
 const toast = useToast();
 const userStore = useUserStore();
@@ -120,10 +121,15 @@ async function save() {
 		</div>
 
 		<div class="modal-body">
-			<div v-if="isAdmin" class="my-3 ml-3 flex align-items-center">
-				<Checkbox v-model="state.settings.clientCanShare" binary inputId="clientCanShare" />
-				<label for="clientCanShare" class="ml-2">Allow client to share this gallery</label>
-			</div>
+			<template v-if="isAdmin">
+				<Message v-if="gallery.visibility !== 'published'" severity="warn" :closable="false">
+					This gallery is not published. Only admins will be able to see it.
+				</Message>
+				<div class="my-3 ml-3 flex align-items-center">
+					<Checkbox v-model="state.settings.clientCanShare" binary inputId="clientCanShare" />
+					<label for="clientCanShare" class="ml-2">Allow client to share this gallery</label>
+				</div>
+			</template>
 			<Button class="w-full gap-2" text @click="state.settings.shareMode = 'invite'">
 				<RadioButton v-model="state.settings.shareMode" inputId="ingredient1" name="shareMode" value="invite" />
 				Invite by email

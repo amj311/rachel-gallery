@@ -503,8 +503,8 @@ function photoOptions(photo) {
 					</h3>
 					<div class="text-gray-500">{{  section.photos.length }} {{  section.photos.length === 1 ? 'photo' : 'photos' }}</div>
 					<div class="flex-grow-1"></div>
-					<Button v-if="index > 0" @click="swapSections(index, index - 1)" icon="pi pi-chevron-up" text />
-					<Button v-if="index < state.gallery.sections.length - 1" @click="swapSections(index, index + 1)"
+					<Button v-if="Number(index) > 0" @click="swapSections(Number(index), Number(index) - 1)" icon="pi pi-chevron-up" text />
+					<Button v-if="Number(index) < state.gallery.sections.length - 1" @click="swapSections(Number(index), Number(index) + 1)"
 						icon="pi pi-chevron-down" text />
 					<Button icon="pi pi-trash" text @click="deleteSection(section)" />
 				</div>
