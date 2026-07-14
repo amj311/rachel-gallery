@@ -164,6 +164,10 @@ body.dragging {
 .text-link {
 	cursor: pointer;
 
+	&.primary {
+		color: $primary !important;
+	}
+
 	&:hover {
 		text-decoration: underline;
 	}

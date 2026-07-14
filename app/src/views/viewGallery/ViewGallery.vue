@@ -90,6 +90,8 @@ const canView = computed(() => {
 	return false;
 });
 
+const showLoginModal = ref(false);
+
 const authMode = ref('login');
 
 onBeforeMount(() => {
@@ -312,8 +314,8 @@ async function loadDownloadLink() {
 			<div v-if="canView" class="down-pointer"><i class="pi pi-chevron-down" /></div>
 		</div>
 
-		<div v-if="!canView" class="login-guard">
-			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" />
+		<div v-if="showLoginModal || !canView" class="login-guard">
+			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" :closeable="showLoginModal" @close="showLoginModal = false" />
 			<div v-if="authMode === 'code'" class="code-modal modal">
 				<img :src="watermarkImage" width="100" />
 				<h3>Please enter the access code to view this gallery</h3>
@@ -336,25 +338,27 @@ async function loadDownloadLink() {
 							<Badge v-if="state.favoriteIds.size > 0" severity="contrast" :value="state.favoriteIds.size"
 								class="small-badge" />
 						</div>
-						<template v-if="doClientActions">
-							<RefOpener v-if="doClientActions" :component="OverlayPanel">
-								<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
-								<template #ref>
-									<div class="flex flex-column gap-3 w-20rem">
-										<Button class="justify-content-center" @click="startDownloadPhotos(allPhotos)">Download Gallery</Button>
-										<div>
-											<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
-											<p>This may take several minutes.</p>
-										</div>
-										<p>For printable full-resolution files, download each photo individually.</p>
+						<RefOpener :component="OverlayPanel">
+							<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
+							<template #ref>
+								<div v-if="doClientActions" class="flex flex-column gap-3 w-20rem">
+									<Button class="justify-content-center" @click="startDownloadPhotos(allPhotos)">Download Gallery</Button>
+									<div>
+										<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
+										<p>This may take several minutes.</p>
 									</div>
-								</template>
-							</RefOpener>
-							<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text
-								@click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
-							<Button v-if="isAdmin" icon="pi pi-cog" text
-								@click="router.push('/admin/galleries/' + state.gallery.id)" v-tooltip.bottom="'Manage Gallery'" />
-						</template>
+									<p>For printable full-resolution files, download each photo individually.</p>
+								</div>
+
+								<div v-else class="flex flex-column gap-3 w-20rem">
+									<p>Photos may be downloaded by the gallery owner. Please <a class="text-link primary" @click="showLoginModal = true">login</a> or contact Rachel for assistance.</p>
+								</div>
+							</template>
+						</RefOpener>
+						<Button v-if="state.gallery.clientCanShare" icon="pi pi-user-plus" text
+							@click="state.showShareModal = true" v-tooltip.bottom="'Manage Access'" />
+						<Button v-if="isAdmin" icon="pi pi-cog" text
+							@click="router.push('/admin/galleries/' + state.gallery.id)" v-tooltip.bottom="'Manage Gallery'" />
 					</div>
 				</div>
 			</NavBar>
@@ -514,6 +518,7 @@ async function loadDownloadLink() {
 	bottom: 0;
 	background: #fff5;
 	backdrop-filter: blur(7px);
+	z-index: 1000;
 	cursor: auto;
 
 	.code-modal {

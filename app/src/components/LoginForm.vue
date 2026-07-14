@@ -30,50 +30,72 @@ const state = reactive({
 // 	useIonRouter().push(redirect || '/');
 // }
 
-async function loginWithEmail() {
+
+async function handleAuthErrors(op: () => void) {
 	try {
 		state.isLoading = true;
-		await AuthService.signInWithEmail(state.email, state.password);
-		emit('authenticated');
+		await op();
 	}
 	catch (error: any) {
-		userStore.loginError = error.message;
+		console.log('error', error.message);
+		const errorGroups = [
+			{
+				message: 'Check your email/password',
+				matches: [
+					'auth/invalid-email',
+					'auth/invalid-credential',
+					'auth/missing-password',
+					'auth/weak-password',
+					'auth/email-already-in-use',
+				],
+			},
+			{
+				message: 'Network error',
+				matches: [
+					'auth/network-request-failed',
+				],
+			}
+		]
+		for (const errorGroup of errorGroups) {
+			if (errorGroup.matches.some(m => error.message?.includes(m))) {
+				userStore.loginError = errorGroup.message;
+				return;
+			}
+		}
+
+		console.error(error.message);
+		userStore.loginError = "Unknown error";
 	}
 	finally {
 		state.isLoading = false;
-	}
-}
-async function createEmailUser() {
-	try {
-		state.isLoading = true;
-		await AuthService.createEmailUser(state.email, state.password, state.givenName, state.familyName);
-		emit('authenticated');
-	}
-	catch (error: any) {
-		userStore.loginError = error.message;
-	}
-	finally {
-		state.isLoading = false;
-	}
-}
-async function loginWithGoogle() {
-	try {
-		await AuthService.signInWithGoogle();
-		emit('authenticated');
-	}
-	catch (error: any) {
-		userStore.loginError = error.message;
 	}
 }
 
+async function loginWithEmail() {
+	await handleAuthErrors(async () => {
+		await AuthService.signInWithEmail(state.email, state.password);
+		emit('authenticated');
+	});
+}
+
+async function createEmailUser() {
+	await handleAuthErrors(async () => {
+		await AuthService.createEmailUser(state.email, state.password, state.givenName, state.familyName);
+		emit('authenticated');
+	});
+}
+async function loginWithGoogle() {
+	await handleAuthErrors(async () => {
+		await AuthService.signInWithGoogle();
+		emit('authenticated');
+	});
+}
+
 async function sendPasswordResetEmail() {
-	try {
+	await handleAuthErrors(async () => {
 		await AuthService.sendPasswordResetEmail(state.email);
 		state.hasSentEmail = true;
-	}
-	catch (error: any) {
-		userStore.loginError = error.message;
-	}
+	});
 }
 
 function leaveRestPasswordMode() {
@@ -91,7 +113,7 @@ function leaveRestPasswordMode() {
 		style="width: 15em"
 	>
 		<div
-			v-if="userStore.loginError"
+			v-if="userStore.loginError && !state.isLoading"
 			class="bg-white border-round-3xl m-3"
 		>
 			{{ userStore.loginError }}
