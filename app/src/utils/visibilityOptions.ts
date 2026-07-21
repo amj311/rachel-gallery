@@ -7,10 +7,10 @@ export const visibilityOptions = {
 		label: 'Published',
 		icon: 'pi pi-globe',
 	},
-	// public: {
-	// 	label: 'Public',
-	// 	icon: 'pi pi-eye',
-	// },
+	public: {
+		label: 'Public',
+		icon: 'pi pi-eye',
+	},
 	// hidden: {
 	// 	label: 'Hidden',
 	// 	icon: 'pi pi-eye-slash',
