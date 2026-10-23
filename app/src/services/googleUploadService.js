@@ -30,15 +30,55 @@ export const GoogleUploadService = {
 		this.googleClient = null;
 	},
 
+	// async uploadImage(image) {
+	// 	if (!this.driveInfo.targetFolderId) throw Error("no target folder");
+	// 	if (!image?.blob) throw Error("no image blob");
+	// 	const form = new FormData();
+	// 	form.append('metadata', new Blob([JSON.stringify({ name: image.filename, parents: [this.driveInfo.targetFolderId] })], { type: 'application/json' }));
+	// 	form.append('file', image.blob);
+	// 	const { data } = await axios.post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&access_token=' + this.token.access_token, form);
+	// 	return data;
+	// },
+
 	async uploadImage(image) {
-		if (!this.driveInfo.targetFolderId) throw Error("no target folder");
-		if (!image?.blob) throw Error("no image blob");
-		const form = new FormData();
-		form.append('metadata', new Blob([JSON.stringify({ name: image.filename, parents: [this.driveInfo.targetFolderId] })], { type: 'application/json' }));
-		form.append('file', image.blob);
-		const { data } = await axios.post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&access_token=' + this.token.access_token, form);
-		return data;
+			if (!this.driveInfo.targetFolderId) throw Error("no target folder");
+			if (!image?.blob) throw Error("no image blob");
+		const boundary = `drive_${crypto.randomUUID()}`;
+		const metadata = {
+			name: image.filename,
+			mimeType: image.blob.type || "application/octet-stream",
+			parents: [this.driveInfo.targetFolderId],
+		};
+
+		const body = new Blob([
+			`--${boundary}\r\n`,
+			"Content-Type: application/json; charset=UTF-8\r\n\r\n",
+			JSON.stringify(metadata),
+			`\r\n--${boundary}\r\n`,
+			`Content-Type: ${metadata.mimeType}\r\n\r\n`,
+			image.blob,
+			`\r\n--${boundary}--`,
+		]);
+
+		const response = await fetch(
+			"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${this.token.access_token}`,
+					"Content-Type": `multipart/related; boundary=${boundary}`,
+				},
+				body,
+			}
+		);
+
+		if (!response.ok) {
+			throw new Error(`Drive upload failed (${response.status}): ${await response.text()}`);
+		}
+
+		return response.json();
 	},
+
 
 	async copyFile(fileId) {
 		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + this.token.access_token, {
