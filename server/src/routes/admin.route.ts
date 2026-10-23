@@ -152,6 +152,39 @@ export default (route, _, done) => {
 		}
 	})
 
+
+
+	// Handle orphaned photos from storage manager
+	route.post('/gallery/assignFromGoogle', async (request, reply) => {
+		const { sectionId, photos } = request.body;
+
+		const results = await Promise.all(photos.map(async photo => {
+			try {
+				let finalPhotoId = '';
+				// see if photo with google ID exists
+				const existingPhoto = await GalleryService.findPhoto({ googleFileId: photo.googleFileId });
+				if (existingPhoto) {
+					finalPhotoId = existingPhoto.id;
+					await GalleryService.assignPhotoToSection(sectionId, existingPhoto.id);
+				}
+				else {
+					if (!photo.width || !photo.height) {
+						throw new Error("image must have dimensions")
+					}
+					const createdPhoto = await GalleryService.addPhotoToSection(sectionId, photo);
+					finalPhotoId = createdPhoto.id;
+				}
+				return { success: true, photoId: finalPhotoId, googleFileId: photo.googleFileId };
+			}
+			catch (e) {
+				console.error(e);
+				return { success: false }
+			}
+		}))
+
+		return results;
+	})
+
 	/** PHOTOS */
 
 	// Upload a photo to a gallery section

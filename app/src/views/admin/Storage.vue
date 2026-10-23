@@ -16,6 +16,7 @@ import SelectButton from 'primevue/selectbutton';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import ProgressBar from 'primevue/progressbar';
 import dayjs from 'dayjs';
+import DropdownMenu from '@/components/DropdownMenu.vue';
 
 type File = {
 	googleFileId: string,
@@ -51,11 +52,19 @@ const state = reactive({
 	dragSelectionStart: {} as any,
 	dragSelectionBounds: {} as any,
 	preventOpenDrawer: false,
+	galleries: [] as Array<{ name: string, id: string, sections: Array<{ name: string, id: string }> }>,
 });
 
 onBeforeMount(async () => {
 	loadPage(0);
 	loadUsage();
+})
+
+
+onBeforeMount(async () => {
+	const { data } = await request.get('admin/gallery');
+	state.galleries = data.data;
+	console.log(state.galleries)
 })
 
 
@@ -369,6 +378,58 @@ function fileWarning(file: File) {
 	};
 }
 
+// const galleryMenu = computed(() => state.galleries.map(g => ({ label: g.name, items: [ g.sections.map(s => ({ label: 'hi',  })) ] } )));
+const galleryMenu = computed(() => state.galleries.map(g => (
+	{
+		label: g.name,
+		items: g.sections.map(s => ({ label: s.name, command: () => assignSelectedToGallerySection(g, s) })),
+	}
+)));
+
+async function assignSelectedToGallerySection(gallery, section) {
+	try {
+		console.log(allSelected.value)
+		const { data } = await request.post('admin/gallery/assignFromGoogle', {
+			sectionId: section.id,
+			photos: allSelected.value.map(ph => ({
+				googleFileId: ph.googleFileId,
+				filename: ph.googleFile.name,
+				googleOwnerEmail: ph.googleFile.owners[0]?.emailAddress,
+				type: ph.googleFile.mimeType,
+				width: ph.googleFile.imageMediaMetadata?.width,
+				height: ph.googleFile.imageMediaMetadata?.height,
+				size: Number(ph.googleFile.quotaBytesUsed),
+			})),
+		});
+		for (const photoResult of data) {
+			if (!photoResult.success) {
+				console.log("Failed photo assignment", photoResult);
+				continue;
+			}
+			const pageFileIdx = state.pageFiles.findIndex(f => f.googleFileId === photoResult.googleFileId);
+			state.pageFiles[pageFileIdx].dbPhoto = {
+				Gallery: {
+					name: gallery.name,
+				},
+				GallerySection: {
+					name: section.name,
+				}
+			}
+		}
+		const failedCount = data.filter(p => !p.success).length;
+		if (failedCount) {
+			toast.add({
+				summary: `Could not assign ${failedCount} photos`,
+				life: 5000,
+				severity: 'error',
+			})
+		}
+	}
+	catch (e) {
+
+	}
+}
+
 </script>
 
 
@@ -492,7 +553,7 @@ function fileWarning(file: File) {
 						<div class="details-grid">
 							<label>Used In</label>
 							<div>
-								<template v-for="place, index in Array.from(new Set(allSelected.map(f => fileUsedBy(f)))).sort().reverse()" :key="place">
+								<template v-for="place, index in Array.from(new Set(allSelected.map(f => fileUsedBy(f)))).sort().reverse()" :key="String(place)">
 									<span v-if="!place" class="text-red-500"><i class="pi pi-exclamation-triangle" />&nbsp;Not Used</span>
 									<span v-else>{{ place }}</span>
 									<span v-if="index < Array.from(new Set(allSelected.map(f => fileUsedBy(f)))).length - 1">, </span>
@@ -532,10 +593,12 @@ function fileWarning(file: File) {
 
 						<template v-if="selectedOrphanedPhotos.length">
 							<h3 class="mt-3 mb-2">Handle orphaned photos:</h3>
-							<Button outlined class="align-items-center gap-2" size="small">
-								<i class="pi pi-images text-sm" />
-								Assign to gallery
-							</Button>
+							<DropdownMenu :model="galleryMenu">
+								<Button outlined class="align-items-center gap-2" size="small">
+									<i class="pi pi-images text-sm" />
+									Assign to gallery
+								</Button>
+							</DropdownMenu>
 							&nbsp;
 							<Button outlined severity="danger" class="align-items-center gap-2" size="small">
 								<i class="pi pi-trash text-sm" />
@@ -721,8 +784,8 @@ function fileWarning(file: File) {
 	&.table-view {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
-		column-gap: 5px;
-		row-gap: 15px;
+		// column-gap: 5px;
+		// row-gap: 15px;
 		justify-items: center;
 		align-items: center;
 	}

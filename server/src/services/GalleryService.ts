@@ -1,6 +1,7 @@
 import { prisma } from "../prisma/client";
 import { v4 as uuid } from 'uuid';
 import { GoogleDriveService } from "./GoogleDriveService";
+import { Photo } from "@prisma/client";
 
 const fullGalleryInclusion = {
 	coverPhoto: true,
@@ -62,6 +63,8 @@ export const GalleryService = {
 				Client: true,
 				sections: {
 					select: {
+						name: true,
+						id: true,
 						_count: {
 							select: {
 								photos: true,
@@ -197,11 +200,28 @@ export const GalleryService = {
 		return await prisma.photo.create({
 			data: {
 				...photoData,
+				gallerySectionId,
 				order,
 			},
 		});
 	},
 
+	async assignPhotoToSection(gallerySectionId: string, photoId: string, photoOrder?: number) {
+		const order = photoOrder || (await prisma.photo.count({ where: { gallerySectionId } }));
+		return await prisma.photo.update({
+			where: { id: photoId },
+			data: {
+				gallerySectionId,
+				order,
+			},
+		});
+	},
+
+	async findPhoto(attrs: Partial<Photo>) {
+		return await prisma.photo.findFirst({
+			where: attrs,
+		})
+	},
 
 	// async downloadPhoto(id: string) {
 	// 	const photo = await prisma.photo.findUnique({

@@ -112,7 +112,7 @@ export const GoogleDriveService = {
 				pageSize,
 				pageToken: nextPageToken,
 				q: 'mimeType contains "image/" and trashed = false',
-				fields: 'nextPageToken, files(id, name, mimeType, quotaBytesUsed, createdTime, modifiedTime, owners, parents, webViewLink)',
+				fields: 'nextPageToken, files(id, name, mimeType, imageMediaMetadata(width, height), quotaBytesUsed, createdTime, modifiedTime, owners, parents, webViewLink)',
 			});
 			nextPageToken = data.nextPageToken;
 
