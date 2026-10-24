@@ -183,7 +183,7 @@ function downloadMenu(photos, cb?) {
 			label: 'Shareable file',
 			command: () => { startDownloadPhotos(photos); cb?.call(); }
 		},
-		photos.length === 1 ? {
+		photos.length === 1 && photos[0].size > 2000000 ? {
 			label: `Printable file (${(photos[0].size / 1e+6).toFixed(1)} MB)`,
 			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
 		} : null,
