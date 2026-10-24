@@ -184,6 +184,7 @@ export default (route, _, done) => {
 		}
 	})
 
+
 	// // Begin a download job. Returns a job id for tracking
 	// route.post('/:galleryId/download', async (request, reply) => {
 	// 	const { galleryId } = request.params;

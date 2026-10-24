@@ -25,6 +25,14 @@ import { useAppStore } from '@/stores/app.store';
 import OverlayPanel from 'primevue/overlaypanel';
 import RefOpener from '@/components/RefOpener.vue';
 import Snackbar from '@/components/Snackbar.vue';
+import { RESOLUTION } from '@/utils/resolutions.js';
+
+type Photo = {
+	id: string,
+	googleFileId: string,
+	width: number,
+	height: number,
+};
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -246,6 +254,73 @@ async function startDownloadPhotos(photos, hiRes = false) {
 			// }
 
 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
+
+			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
+			state.pendingDownload.readyPhotos.push({ photo, blob });
+			console.log(blob.size * 1e-6);
+		}
+
+		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
+		let finalBlob;
+
+		if (isMultiple) {
+			const zip = new JSZip();
+			state.pendingDownload.readyPhotos.forEach(({ photo, blob }) => {
+				zip.file(`${photo.filename}`, blob, { compression: 'DEFLATE' });
+			})
+			const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+			finalBlob = new Blob([zipBuffer], { 'type': 'application/zip' });
+		} else {
+			finalBlob = state.pendingDownload?.readyPhotos[0].blob;
+		}
+
+		state.pendingDownload.downloadName = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename;
+		state.pendingDownload.finalBlob = finalBlob;
+		state.pendingDownload.status = 'finished';
+
+		if (state.pendingDownload.readyPhotos.length === 1) {
+			loadDownloadLink();
+		}
+	}
+	catch (e: any) {
+		console.error(e);
+		state.pendingDownload.error = e.message;
+		state.pendingDownload.status = 'error';
+	}
+}
+
+async function startDownloadPhotos2(photos: Array<Photo>, shortestEdge: RESOLUTION) {
+	if (state.pendingDownload) {
+		toast.add({
+			severity: 'warn',
+			summary: 'Wait for previous download to finish',
+			life: 3000,
+		})
+		return;
+	}
+	if (!photos.length) return;
+
+	state.pendingDownload = {
+		status: 'processing',
+		photosToDownload: photos,
+		readyPhotos: [],
+		hiRes: false,
+	};
+
+	try {
+		// have to do these one at a time to not crash server
+		for (const photo of photos) {
+			let outputWidth = photo.width; // if height is shortest edge
+
+			// if width is shortest edge
+			if (photo.width < photo.height) {
+				outputWidth = 1600 * (photo.width / photo.height);
+			}
+			else {
+				outputWidth = 1600;
+			}
+
+			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(outputWidth));
 
 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
