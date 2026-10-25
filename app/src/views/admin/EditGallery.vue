@@ -211,13 +211,34 @@ function sendToUploader() {
 
 		// match renaming
 		...((duplicateHandling.value === 'rename' && f.match) ? {
-			filename: f.filename + '(1)',
+			filename: resolveDuplicateName(f.filename),
 		} : {})
 	}));
 
 	uploaderStore.queueImages(payload);
 	state.imagesToUpload.clear();
 	state.showUploadToSection = null;
+}
+
+function resolveDuplicateName(name: string) {
+	function getNameFrom(fromName: string) {
+		const endNumber = fromName.match(/[\n]^/);
+		if (endNumber) {
+			return fromName.replace(/\n^/, String(Number(endNumber) + 1));
+		}
+		return fromName + ' 1';
+	}
+
+	let fromName = name;
+	while (true) {
+		fromName = getNameFrom(fromName);
+		const match = state.showUploadToSection?.photos.find(ph => ph.filename === fromName);
+		if (match) {
+			fromName = match.filename;
+		}
+		else break;
+	}
+	return fromName;
 }
 
 

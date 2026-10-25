@@ -60,12 +60,14 @@ export const GoogleUploadService = {
 			`\r\n--${boundary}--`,
 		]);
 
+		const token = await this.getToken();
+
 		const response = await fetch(
 			"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
 			{
 				method: "POST",
 				headers: {
-					Authorization: `Bearer ${this.token.access_token}`,
+					Authorization: `Bearer ${token.access_token}`,
 					"Content-Type": `multipart/related; boundary=${boundary}`,
 				},
 				body,
@@ -87,6 +89,7 @@ export const GoogleUploadService = {
 
 		// 3. The Body is simply the raw binary blob
 		const body = image.blob;
+		const token = await this.getToken();
 
 		// 4. Make the PUT Request
 		const response = await fetch(
@@ -95,7 +98,7 @@ export const GoogleUploadService = {
 				// Using PUT is best practice for replacing the entire resource
 				method: "PATCH", 
 				headers: {
-					Authorization: `Bearer ${this.token.access_token}`,
+					Authorization: `Bearer ${token.access_token}`,
 					// Content-Type must match the mime type of the uploaded file
 					"Content-Type": image.blob.type || "application/octet-stream",
 				},
@@ -113,17 +116,20 @@ export const GoogleUploadService = {
 
 
 	async copyFile(fileId) {
-		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + this.token.access_token, {
+		const token = await this.getToken();
+		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + token.access_token, {
 			parents: [this.driveInfo.targetFolderId]
 		});
 		return data;
 	},
 
 	async deleteFile(fileId) {
-		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + this.token.access_token, { trashed: true });
+		const token = await this.getToken();
+		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + token.access_token, { trashed: true });
 	},
 
 	async restoreFile(fileId) {
-		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + this.token.access_token, { trashed: false });
+		const token = await this.getToken();
+		await axios.patch('https://www.googleapis.com/drive/v3/files/' + fileId + '?access_token=' + token.access_token, { trashed: false });
 	}
 }

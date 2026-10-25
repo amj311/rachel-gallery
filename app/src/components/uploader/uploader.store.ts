@@ -46,7 +46,6 @@ export const useUploaderStore = defineStore('uploader', {
 	},
 	actions: {
 		queueImages(images: any[]) {
-			console.log("got images", images)
 			if (!images || images.length === 0) return;
 			// TODO validate images?
 			this.isOpen = true;
@@ -59,6 +58,7 @@ export const useUploaderStore = defineStore('uploader', {
 		},
 
 		async checkGoogleStatus() {
+			console.log("check google", GoogleUploadService.hasValidToken)
 			if (!GoogleUploadService.hasValidToken) {
 				this.googleDriveInfo = {};
 				this.isGoogleReady = false;
@@ -77,7 +77,9 @@ export const useUploaderStore = defineStore('uploader', {
 
 
 		async startUploadLoop() {
+			console.log(this.isUploading)
 			if (this.isUploading) return;
+			console.log("here")
 
 			// run 5 upload workers
 			for (let i = 0; i < 5; i++) {

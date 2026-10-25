@@ -242,8 +242,7 @@ defineExpose({
 	padding-bottom: 5px;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-	column-gap: 5px;
-	row-gap: 15px;
+	row-gap: 10px;
 	justify-items: center;
 	align-items: center;
 }
