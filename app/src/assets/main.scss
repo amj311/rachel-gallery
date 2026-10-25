@@ -203,3 +203,10 @@ body.dragging {
 .word-break {
 	overflow-wrap: break-word;
 }
+
+
+.text-ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

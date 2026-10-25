@@ -17,14 +17,14 @@ export const Resolutions = {
 	},
 	[RESOLUTION.x2400]: {
 		size: RESOLUTION.x2400,
-		bestFor: 'small prints, around 8in',
+		bestFor: 'standard prints, like in a book',
 	},
 	[RESOLUTION.x4800]: {
 		size: RESOLUTION.x4800,
-		bestFor: 'medium prints, around 16in',
+		bestFor: 'bigger prints, like a 16x24 canvas',
 	},
 	[RESOLUTION.x9000]: {
 		size: RESOLUTION.x9000,
-		bestFor: 'large prints, around 30in',
+		bestFor: 'large prints, like a 30x40 canvas',
 	},
 } as const;

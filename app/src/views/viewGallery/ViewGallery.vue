@@ -29,9 +29,11 @@ import Snackbar from '@/components/Snackbar.vue';
 import { RESOLUTION, Resolutions } from '@/utils/resolutions.js';
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import RadioButton from 'primevue/radiobutton';
+import Dropdown from 'primevue/dropdown';
 
 type Photo = {
 	id: string,
+	filename: string,
 	googleFileId: string,
 	width: number,
 	height: number,
@@ -239,8 +241,9 @@ function downloadMenu(photos, cb?) {
 
 const showDownloadDialog = ref(false);
 const downloadDialogPhotos = ref<Array<Photo>>([]);
+const downloadDialogMode = ref<'selectRes' | 'review'>();
 function openDownloadDialog(photos: Array<Photo>) {
-	downloadDialogPhotos.value = photos;
+	downloadDialogPhotos.value = [...photos];
 	showDownloadDialog.value = true;
 }
 function closeDownloadDialog() {
@@ -248,19 +251,24 @@ function closeDownloadDialog() {
 	showDownloadDialog.value = false;
 }
 const previewPhotoStack = computed(() => [...downloadDialogPhotos.value].reverse().slice(0, 5));
-const selectedRes = ref<RESOLUTION | null>(null);
+const selectedRes = ref<typeof Resolutions[keyof typeof Resolutions]>(Resolutions[1024]);
+
+function removePhotoFromDownload(photo) {
+	downloadDialogPhotos.value = downloadDialogPhotos.value.filter(ph => ph.id !== photo.id);
+}
 
 const minShortSideOfDownload = computed(() => Math.min(...downloadDialogPhotos.value.map(photo => smallestEdgePx(photo))));
+const tooSmallPhotos = computed(() => downloadDialogPhotos.value.filter(ph => smallestEdgePx(ph) < selectedRes.value.size));
 
 const downloadDialogProcessing = ref(false);
 
 function handleDownloadDialogButton() {
-	if (!selectedRes.value) return;
-	if (selectedRes.value > minShortSideOfDownload.value) {
+	if (!selectedRes.value.size) return;
+	if (selectedRes.value.size > minShortSideOfDownload.value) {
 		void requestResolution();
 	}
 	else {
-		void startDownloadPhotos2(downloadDialogPhotos.value, selectedRes.value);
+		void startDownloadPhotos2(downloadDialogPhotos.value, selectedRes.value.size);
 		closeDownloadDialog();
 	}
 }
@@ -269,8 +277,8 @@ async function requestResolution() {
 	try {
 		downloadDialogProcessing.value = true;
 		await request.post(`/gallery/${state.gallery.id}/requestRes`, {
-			res: selectedRes.value,
-			photoIds: downloadDialogPhotos.value.map(ph => ph.id),
+			res: selectedRes.value.size,
+			photoIds: tooSmallPhotos.value.map(ph => ph.id),
 		});
 		closeDownloadDialog();
 		toast.add({
@@ -547,7 +555,7 @@ async function loadDownloadLink() {
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 										binary variant="outlined" />
 								</div>
-								<div v-if="isMobile && showSelectors" class="slideshow-trigger button"
+								<div v-if="showSelectors" class="slideshow-trigger button"
 									@click="() => openSlideshow(allPhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
@@ -634,7 +642,7 @@ async function loadDownloadLink() {
 
 			<Slideshow ref="slideshow">
 				<template v-slot="{ photo }">
-					<div v-if="doClientActions" class="selector" :class="{ 'show': showSelectors }" @click="() => toggleSelected(photo)">
+					<div v-if="doClientActions" class="selector pb-1 mr-2" :class="{ 'show': showSelectors }" @click="() => toggleSelected(photo)">
 						<Checkbox :modelValue="state.selectedIds.has(photo.id)"
 							binary variant="outlined" />
 					</div>
@@ -655,7 +663,7 @@ async function loadDownloadLink() {
 			blockScroll
 		>
 			<div class="flex flex-column h-full overflow-hidden gap-3">
-				<div
+				<!-- <div
 					class="relative h-13rem flex-shrink-0"
 				>
 					<div
@@ -663,22 +671,50 @@ async function loadDownloadLink() {
 						:key="file.googleFileId"
 						class="w-12rem h-12rem"
 						style="position: absolute; translate: -50% -50%; filter: drop-shadow(0 0 0.25rem #0003)"
-						:style="{ top: `${50 + index}%`, left: `${50 + index}%`, opacity: 1.3 * ((index + 1) / previewPhotoStack.length), transform: `rotate(${(15 * (index / previewPhotoStack.length)) - 5}deg)` }"
+						:style="{ top: `${50 + index}%`, left: `${50 + index}%`, opacity: 1 * ((index + 1) / previewPhotoStack.length), transform: `rotate(${(20 * (index / (previewPhotoStack.length))) - 10}deg)` }"
 					>
 						<PhotoFrame
 							:photo="{ id: file.googleFileId, googleFileId: file.googleFileId }"
 							size="md"
 						/>
 					</div>
+				</div> -->
+
+				<p>Review the target resolution for each photo:</p>
+
+				<div class="flex flex-column flex-grow-1 overflow-y-auto gap-2">
+					<div v-for="photo in downloadDialogPhotos" class="flex align-items-center gap-2">
+						<div class="h-5rem w-5rem flex-shrink-0">
+							<PhotoFrame
+								:photo="photo"
+							/>
+						</div>
+						<div class="flex-grow-1 flex flex-column justify-content-center align-items-start overflow-hidden">
+							<div class="font-medium w-full text-ellipsis">{{ photo.filename }}</div>
+							<div class="flex flex-wrap gap-2">
+								<span>{{ resolutionString(resolvedResolution(photo, selectedRes.size)) }}</span>
+								<span v-if="smallestEdgePx(photo) < selectedRes.size" class="bg-orange-300 px-2 border-round white-space-nowrap">Too small</span>
+							</div>
+						</div>
+						<div>
+							<Button icon="pi pi-times" text @click="removePhotoFromDownload(photo)" />
+						</div>
+					</div>
 				</div>
 
 				<p>Select the resolution for your download:</p>
-			
-				<div class="flex flex-column flex-grow-1 overflow-y-auto gap-1">
-					<div v-for="res in Resolutions" class="res-option flex gap-2 cursor-pointer" :class="{ selected: res.size === selectedRes }" @click="selectedRes = res.size">
-						<div>
-							<RadioButton binary :modelValue="selectedRes === res.size" />
+				<Dropdown v-model="selectedRes" :options="Object.values(Resolutions)">
+					<template #value="{ value: res }">
+						<div class="font-semibold">
+							For {{ res.bestFor }}
 						</div>
+						<div>
+							<template v-if="downloadDialogPhotos.length === 1">{{ resolutionString(resolvedResolution(downloadDialogPhotos[0], res.size)) }}</template>
+							<template v-else>{{res.size}} on the shorter side</template>
+						</div>
+						<div class="text-sm" v-if="res.size > minShortSideOfDownload">Available upon request</div>
+					</template>
+					<template #option="{ option: res }">
 						<div>
 							<div class="font-semibold">
 								For {{ res.bestFor }}
@@ -689,13 +725,13 @@ async function loadDownloadLink() {
 							</div>
 							<div class="text-sm" v-if="res.size > minShortSideOfDownload">Available upon request</div>
 						</div>
-					</div>
-				</div>
+					</template>
+				</Dropdown>
 
 
 				<div>
-					<div v-if="selectedRes && selectedRes > minShortSideOfDownload" class="mb-2 text-center">
-						The selected images are not stored at that resolution, but can be updated upon request.
+					<div v-if="tooSmallPhotos.length" class="mb-2 text-center">
+						{{ tooSmallPhotos.length }} selected images are not stored at that resolution, but can be updated upon request.
 					</div>
 					<Button
 						severity="primary"
@@ -704,8 +740,12 @@ async function loadDownloadLink() {
 						:disabled="!selectedRes"
 						@click="handleDownloadDialogButton"
 					>
-						<template v-if="selectedRes && selectedRes > minShortSideOfDownload">
+						<template v-if="tooSmallPhotos.length">
 							Request resolution
+						</template>
+						<template v-else-if="downloadDialogMode === 'selectRes' && downloadDialogPhotos.length > 1">
+							<i class="pi pi-download" />
+							Start download
 						</template>
 						<template v-else>
 							<i class="pi pi-download" />
@@ -824,13 +864,13 @@ async function loadDownloadLink() {
 		&.selected {
 			border: 8px solid #fff;
 			box-shadow: 0 2px 5px #0005;
-			transition: 300ms;
+			transition: 300ms linear;
 
 			.selector {
 				background: #fff;
-				margin: -8px 0 0 -3px;
+				margin: -5px 0 0 -2px;
 				opacity: 1;
-				transition: 300ms;
+				transition: 300ms linear;
 			}
 		}
 

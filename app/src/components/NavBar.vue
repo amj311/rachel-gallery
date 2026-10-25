@@ -39,7 +39,6 @@ defineProps<{
 		.logo {
 			font-family: serif;
 			line-height: 1.2;
-			font-size: .8rem;
 			letter-spacing: 2px;
 			text-transform: uppercase;
 			user-select: none;
