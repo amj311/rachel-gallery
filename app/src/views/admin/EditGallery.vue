@@ -27,6 +27,7 @@ import Snackbar from '@/components/Snackbar.vue';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import SelectButton from 'primevue/selectbutton';
 import PhotoFrame from '@/components/PhotoFrame.vue';
+import Dialog from 'primevue/dialog';
 
 type Photo = any;
 
@@ -146,7 +147,17 @@ function openUploadToSection(section) {
 
 function onImageUploadComplete(newPhoto) {
 	const photos = state.gallery.sections.find(s => s.id === newPhoto.gallerySectionId)!.photos;
-	photos.splice(newPhoto.order || photos.length, 0, newPhoto);
+	if (!newPhoto.replace) {
+		photos.splice(newPhoto.order || photos.length, 0, newPhoto);
+	}
+	else {
+		// force photo tile to rerender
+		const idx = photos.findIndex(ph => ph.googleFileId === newPhoto.googleFileId);
+		photos[idx] = {
+			...newPhoto,
+			rerenderStamp: Date.now(),
+		};
+	}
 
 	// Use first uploaded image as gallery cover
 	if (!state.gallery.coverPhoto) {
@@ -154,13 +165,57 @@ function onImageUploadComplete(newPhoto) {
 	}
 }
 
+const duplicateHandling = ref<'overwrite' | 'rename'>('overwrite');
+const duplicateCheckedUploads = ref<Array<any>>([]);
+const duplicateCount = computed(() => duplicateCheckedUploads.value.filter(f => f.match).length);
+const showDuplicatePrompt = ref(false);
+
+function onSubmitUpload() {
+	duplicateCheckedUploads.value = Array.from(state.imagesToUpload).map(i => ({
+		...i,
+		match: state.showUploadToSection?.photos.find(ph => ph.filename === i.filename),
+	}));
+
+	if (duplicateCount.value) {
+		showDuplicatePrompt.value = true;
+		return;
+	}
+	else {
+		sendToUploader();
+	}
+}
+
+function uploadDuplicates(handling) {
+	duplicateHandling.value = handling;
+	showDuplicatePrompt.value = false;
+	sendToUploader();
+	duplicateCheckedUploads.value = [];
+}
+
 function sendToUploader() {
-	uploaderStore.queueImages(Array.from(state.imagesToUpload).map(f => ({
+	const payload = duplicateCheckedUploads.value.map(f => ({
 		...f,
+
+		// new upload defaults
 		order: state.showUploadToSection.photos.length + f.uploadOrder,
 		gallerySectionId: state.showUploadToSection!.id,
 		onUploadComplete: onImageUploadComplete,
-	})));
+
+		// match merging
+		...((duplicateHandling.value === 'overwrite' && f.match) ? {
+			order: f.match.order,
+			id: f.match.id,
+			googleFileId: f.match.googleFileId,
+			replace: true,
+		} : {}),
+
+		// match renaming
+		...((duplicateHandling.value === 'rename' && f.match) ? {
+			filename: f.filename + '(1)',
+		} : {})
+	}));
+
+	uploaderStore.queueImages(payload);
 	state.imagesToUpload.clear();
 	state.showUploadToSection = null;
 }
@@ -361,9 +416,7 @@ async function doUpdatePhoto() {
 		useUploaderStore().queueImages([photoForUpload]);
 	})
 	.then(photoRes => {
-		console.log("FINSIHED!")
-		console.log(photoToUpdatePhoto.value.width, photoToUpdatePhoto.value.height, photoToUpdate.value.resolutionRequest.requestedResolution)
-		if (Math.min(photoToUpdatePhoto.value.width, photoToUpdatePhoto.value.height) > photoToUpdate.value.resolutionRequest.requestedResolution) {
+		if (Math.min(photoToUpdatePhoto.value.width, photoToUpdatePhoto.value.height) > photoToUpdate.value.resolutionRequest?.requestedResolution) {
 			photoToUpdate.value.resolutionRequest = null;
 		}
 	})
@@ -610,13 +663,23 @@ function photoOptions(photo) {
 				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
-				<Button severity="primary" v-if="state.imagesToUpload.size" @click="sendToUploader" size="small"
+				<Button severity="primary" v-if="state.imagesToUpload.size" @click="onSubmitUpload" size="small"
 					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.size }})</Button>
 			</div>
 			<div class="body">
 				<ImageSelector v-model="state.imagesToUpload" />
 			</div>
 		</div>
+
+		<Dialog :visible="showDuplicatePrompt" modal header="Handle duplicate names" :style="{ width: '25rem' }">
+			<p>{{ duplicateCount }} photos have the same name as an existing photo. How would you like to handle them?</p>
+			<div class="flex gap-2 mt-4">
+				<Button type="button" label="Cancel" severity="secondary" outlined @click="showDuplicatePrompt = false"></Button>
+				<div class="flex-grow-1"></div>
+				<Button type="button" label="Rename" severity="secondary" @click="() => uploadDuplicates('rename')"></Button>
+				<Button type="button" label="Replace" severity="primary" @click="() => uploadDuplicates('overwrite')"></Button>
+			</div>
+		</Dialog>
 
 
 		<div v-if="photoToUpdate" id="updateModal" class="modal">

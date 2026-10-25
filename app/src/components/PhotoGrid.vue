@@ -188,7 +188,7 @@ defineExpose({
 						@mouseup="onDrop"
 					>
 						<div class="photo-frame" :class="(draggable && !isMobile) ? 'handle' : null">
-							<PhotoFrame :key="photo.id + size" :photo="photo" :size="size as any || 'sm'" />
+							<PhotoFrame :key="`${photo.id || photo.filename}_${size}_${photo.rerenderStamp}`" :photo="photo" :size="size as any || 'sm'" />
 						</div>
 						<div class="options" @click.stop>
 							<i v-show="draggable && isMobile" class="button pi pi-arrows-alt handle" />

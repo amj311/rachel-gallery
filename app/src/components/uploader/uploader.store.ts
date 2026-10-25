@@ -46,13 +46,16 @@ export const useUploaderStore = defineStore('uploader', {
 	},
 	actions: {
 		queueImages(images: any[]) {
+			console.log("got images", images)
 			if (!images || images.length === 0) return;
 			// TODO validate images?
 			this.isOpen = true;
 			this.viewMode = 'modal';
 			this.photosToUpload.push(...images);
 
+			console.log("before start")
 			this.startUploadLoop();
+			console.log("started!!!")
 		},
 
 		async checkGoogleStatus() {
