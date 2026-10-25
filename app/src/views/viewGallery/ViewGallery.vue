@@ -196,6 +196,10 @@ function scrollToTop() {
 	}
 }
 
+function scrollToSection(section) {
+	document.getElementById('section_'+section.id)?.scrollIntoView();
+}
+
 function smallestEdgePx(photo: Photo) {
 	return Math.min(photo.width, photo.height);
 }
@@ -498,7 +502,12 @@ async function loadDownloadLink() {
 
 		<div v-if="canView">
 			<NavBar sticky>
-				<template #logo><div @click="scrollToTop">{{ state.gallery.name }}</div></template>
+				<template #logo>
+					<DropdownMenu :model="state.gallery?.sections.map(s => ({ label: s.name, command() { scrollToSection(s) } }))">
+					{{ state.gallery.name }}
+					<i class="pi pi-angle-down ml-2 text-black-alpha-40" />
+					</DropdownMenu>
+				</template>
 
 				<div class="flex align-items-center">
 					<div class="flex-grow-1"></div>
@@ -535,7 +544,7 @@ async function loadDownloadLink() {
 			</NavBar>
 
 			<div class="sections-wrapper">
-				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
+				<div v-for="section in state.gallery.sections" :id="'section_'+section.id" :key="section.id" class="section mt-3">
 					<div class="section-header font-serif">{{ section.name }}</div>
 					<PhotoWall :photos="section.photos" :lazyLoad="true" :animate="true" >
 						<template v-slot="{ photo }">
@@ -845,7 +854,7 @@ async function loadDownloadLink() {
 
 	.section-header {
 		font-size: 1.2rem;
-		margin: 7em 0 4em;
+		padding: 7em 0 4em;
 		text-align: center;
 		text-transform: uppercase;
 		font-family: "serif";
