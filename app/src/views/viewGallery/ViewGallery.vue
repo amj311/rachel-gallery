@@ -7,6 +7,7 @@ import GalleryCover from '@/components/GalleryCover.vue';
 import LoginModal from '@/components/LoginModal.vue';
 import NavBar from '@/components/NavBar.vue';
 import Button from 'primevue/button';
+import Sidebar from 'primevue/sidebar';
 import { useUserStore } from '@/stores/user.store';
 import Badge from 'primevue/badge';
 import PhotoWall from '@/components/PhotoWall.vue';
@@ -25,7 +26,9 @@ import { useAppStore } from '@/stores/app.store';
 import OverlayPanel from 'primevue/overlaypanel';
 import RefOpener from '@/components/RefOpener.vue';
 import Snackbar from '@/components/Snackbar.vue';
-import { RESOLUTION } from '@/utils/resolutions.js';
+import { RESOLUTION, Resolutions } from '@/utils/resolutions.js';
+import PhotoFrame from '@/components/PhotoFrame.vue';
+import RadioButton from 'primevue/radiobutton';
 
 type Photo = {
 	id: string,
@@ -52,7 +55,8 @@ const state = reactive({
 	pendingDownload: null as {
 		status: 'processing' | 'finished' | 'error',
 		photosToDownload: any[],
-		hiRes: boolean,
+		res: RESOLUTION,
+		// hiRes: boolean,
 		readyPhotos: { photo, blob }[],
 		finalBlob?: Blob,
 		downloadName?: string,
@@ -146,6 +150,7 @@ async function loadGallery() {
 		}
 
 		useAppStore().setTitle(state.gallery.name);
+		state.selectedIds = new Set(JSON.parse(localStorage.getItem('selected_'+state.gallery.id) || '[]'))
 	}
 
 	state.isLoading = false;
@@ -177,6 +182,10 @@ function toggleSelected(photo) {
 
 const selectedPhotos = computed(() => Array.from(state.selectedIds).map(id => allPhotos.value.find(p => p.id === id)));
 
+watch(() => state.selectedIds.size, () => {
+	localStorage.setItem('selected_'+state.gallery.id, JSON.stringify(Array.from(state.selectedIds)));
+})
+
 
 function scrollToTop() {
 	if (canView.value) {
@@ -185,109 +194,192 @@ function scrollToTop() {
 	}
 }
 
+function smallestEdgePx(photo: Photo) {
+	return Math.min(photo.width, photo.height);
+}
+
+function resolvedResolution(photo: Photo, targetSmallest: RESOLUTION) {
+	if (photo.width < photo.height) {
+		return {
+			width: targetSmallest,
+			height: Math.floor(photo.height * (targetSmallest / photo.width)),
+		}
+	}
+	else {
+		return {
+			height: targetSmallest,
+			width: Math.floor(photo.width * (targetSmallest / photo.height)),
+		}
+	}
+}
+
+function resolutionString(res: { width: number, height: number }) {
+	return `${res.width}x${res.height}`;
+}
+
 function downloadMenu(photos, cb?) {
 	return [
-		{
-			label: 'Shareable file',
-			command: () => { startDownloadPhotos(photos); cb?.call(); }
-		},
-		photos.length === 1 && photos[0].size > 4000000 ? {
-			label: `Printable file (${(photos[0].size / 1e+6).toFixed(1)} MB)`,
-			command: () => { startDownloadPhotos(photos, true); cb?.call(); }
-		} : null,
+		// {
+		// 	label: 'Shareable file',
+		// 	command: () => { startDownloadPhotos2(photos, RESOLUTION.x800); cb?.call(); }
+		// },
+		// photos.length === 1 && photos[0].size > 4000000 ? {
+		// 	label: `Printable file (${(photos[0].size / 1e+6).toFixed(1)} MB)`,
+		// 	command: () => { startDownloadPhotos(photos, true); cb?.call(); }
+		// } : null,
+
+		...Array.from(Object.values(Resolutions)).map(r => {
+			return {
+				label: photos.length === 1 ? resolutionString(resolvedResolution(photos[0], r.size)) : r.size,
+				command: () => startDownloadPhotos2(photos, r.size),
+			}
+		})
 	].filter(Boolean);
 }
 
+const showDownloadDialog = ref(false);
+const downloadDialogPhotos = ref<Array<Photo>>([]);
+function openDownloadDialog(photos: Array<Photo>) {
+	downloadDialogPhotos.value = photos;
+	showDownloadDialog.value = true;
+}
+function closeDownloadDialog() {
+	downloadDialogPhotos.value = [];
+	showDownloadDialog.value = false;
+}
+const previewPhotoStack = computed(() => [...downloadDialogPhotos.value].reverse().slice(0, 5));
+const selectedRes = ref<RESOLUTION | null>(null);
 
-// my server can't handle pulling large files from google yet, so full print res must be downloaded one at a time
-async function startDownloadPhotos(photos, hiRes = false) {
-	// download individual hi res through google
-	if (hiRes && photos.length === 1) {
-		const link = document.createElement('a');
-		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
-		link.download = photos[0].filename;
-		link.click();
-		link.remove();
-		return;
+const minShortSideOfDownload = computed(() => Math.min(...downloadDialogPhotos.value.map(photo => smallestEdgePx(photo))));
+
+const downloadDialogProcessing = ref(false);
+
+function handleDownloadDialogButton() {
+	if (!selectedRes.value) return;
+	if (selectedRes.value > minShortSideOfDownload.value) {
+		void requestResolution();
 	}
-
-
-	if (state.pendingDownload) {
-		toast.add({
-			severity: 'warn',
-			summary: 'Wait for previous download to finish',
-			life: 3000,
-		})
-		return;
-	}
-	if (!photos.length) return;
-
-	state.pendingDownload = {
-		status: 'processing',
-		photosToDownload: photos,
-		readyPhotos: [],
-		hiRes,
-	};
-
-	try {
-		// have to do these one at a time to not crash server
-		for (const photo of photos) {
-			let width = photo.width;
-
-			let maxBytes = megaBytes.value * 1e+6; // X MB
-			console.log(photo.size * 1e-6, maxBytes / 1e+6);
-			// if (hiRes && photo.size > maxBytes) {
-			// 	// compute new width to approximate desired size
-			// 	// new width = sqrt(area * (width / height))
-			// 	const scaleRatio = maxBytes / photo.size;
-			// 	const targetArea = (width * photo.height) * scaleRatio;
-			// 	const ratio = photo.width / photo.height;
-			// 	width = Math.sqrt(targetArea * ratio);
-			// }
-			// if (!hiRes) {
-				if (photo.width < photo.height) {
-					width = 1600 * (photo.width / photo.height);
-				}
-				else {
-					width = 1600;
-				}
-			// }
-
-			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
-
-			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
-			state.pendingDownload.readyPhotos.push({ photo, blob });
-			console.log(blob.size * 1e-6);
-		}
-
-		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
-		let finalBlob;
-
-		if (isMultiple) {
-			const zip = new JSZip();
-			state.pendingDownload.readyPhotos.forEach(({ photo, blob }) => {
-				zip.file(`${photo.filename}`, blob, { compression: 'DEFLATE' });
-			})
-			const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-			finalBlob = new Blob([zipBuffer], { 'type': 'application/zip' });
-		} else {
-			finalBlob = state.pendingDownload?.readyPhotos[0].blob;
-		}
-
-		state.pendingDownload.downloadName = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename;
-		state.pendingDownload.finalBlob = finalBlob;
-		state.pendingDownload.status = 'finished';
-
-		if (state.pendingDownload.readyPhotos.length === 1) {
-			loadDownloadLink();
-		}
-	}
-	catch (e: any) {
-		console.error(e);
-		state.pendingDownload.error = e.message;
-		state.pendingDownload.status = 'error';
+	else {
+		void startDownloadPhotos2(downloadDialogPhotos.value, selectedRes.value);
+		closeDownloadDialog();
 	}
 }
+
+async function requestResolution() {
+	try {
+		downloadDialogProcessing.value = true;
+		await request.post(`/gallery/${state.gallery.id}/requestRes`, {
+			res: selectedRes.value,
+			photoIds: downloadDialogPhotos.value.map(ph => ph.id),
+		});
+		closeDownloadDialog();
+		toast.add({
+			severity: 'success',
+			summary: 'Requested higher resolution',
+			life: 5000,
+		});
+	}
+	catch (e) {
+		toast.add({
+			severity: 'error',
+			summary: 'Failed to request higher resolution',
+			life: 5000,
+		});
+	}
+	finally {
+		downloadDialogProcessing.value = false;
+	}
+}
+
+// my server can't handle pulling large files from google yet, so full print res must be downloaded one at a time
+// async function startDownloadPhotos(photos, hiRes = false) {
+// 	// download individual hi res through google
+// 	if (hiRes && photos.length === 1) {
+// 		const link = document.createElement('a');
+// 		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
+// 		link.download = photos[0].filename;
+// 		link.click();
+// 		link.remove();
+// 		return;
+// 	}
+
+
+// 	if (state.pendingDownload) {
+// 		toast.add({
+// 			severity: 'warn',
+// 			summary: 'Wait for previous download to finish',
+// 			life: 3000,
+// 		})
+// 		return;
+// 	}
+// 	if (!photos.length) return;
+
+// 	state.pendingDownload = {
+// 		status: 'processing',
+// 		photosToDownload: photos,
+// 		readyPhotos: [],
+// 		hiRes,
+// 	};
+
+// 	try {
+// 		// have to do these one at a time to not crash server
+// 		for (const photo of photos) {
+// 			let width = photo.width;
+
+// 			let maxBytes = megaBytes.value * 1e+6; // X MB
+// 			console.log(photo.size * 1e-6, maxBytes / 1e+6);
+// 			// if (hiRes && photo.size > maxBytes) {
+// 			// 	// compute new width to approximate desired size
+// 			// 	// new width = sqrt(area * (width / height))
+// 			// 	const scaleRatio = maxBytes / photo.size;
+// 			// 	const targetArea = (width * photo.height) * scaleRatio;
+// 			// 	const ratio = photo.width / photo.height;
+// 			// 	width = Math.sqrt(targetArea * ratio);
+// 			// }
+// 			// if (!hiRes) {
+// 				if (photo.width < photo.height) {
+// 					width = 1600 * (photo.width / photo.height);
+// 				}
+// 				else {
+// 					width = 1600;
+// 				}
+// 			// }
+
+// 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
+
+// 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
+// 			state.pendingDownload.readyPhotos.push({ photo, blob });
+// 			console.log(blob.size * 1e-6);
+// 		}
+
+// 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
+// 		let finalBlob;
+
+// 		if (isMultiple) {
+// 			const zip = new JSZip();
+// 			state.pendingDownload.readyPhotos.forEach(({ photo, blob }) => {
+// 				zip.file(`${photo.filename}`, blob, { compression: 'DEFLATE' });
+// 			})
+// 			const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+// 			finalBlob = new Blob([zipBuffer], { 'type': 'application/zip' });
+// 		} else {
+// 			finalBlob = state.pendingDownload?.readyPhotos[0].blob;
+// 		}
+
+// 		state.pendingDownload.downloadName = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename;
+// 		state.pendingDownload.finalBlob = finalBlob;
+// 		state.pendingDownload.status = 'finished';
+
+// 		if (state.pendingDownload.readyPhotos.length === 1) {
+// 			loadDownloadLink();
+// 		}
+// 	}
+// 	catch (e: any) {
+// 		console.error(e);
+// 		state.pendingDownload.error = e.message;
+// 		state.pendingDownload.status = 'error';
+// 	}
+// }
 
 async function startDownloadPhotos2(photos: Array<Photo>, shortestEdge: RESOLUTION) {
 	if (state.pendingDownload) {
@@ -304,27 +396,23 @@ async function startDownloadPhotos2(photos: Array<Photo>, shortestEdge: RESOLUTI
 		status: 'processing',
 		photosToDownload: photos,
 		readyPhotos: [],
-		hiRes: false,
+		res: shortestEdge,
 	};
 
 	try {
 		// have to do these one at a time to not crash server
 		for (const photo of photos) {
-			let outputWidth = photo.width; // if height is shortest edge
+			let targetSz = `w${Number(shortestEdge)}`; // if width is shortest edge
 
-			// if width is shortest edge
-			if (photo.width < photo.height) {
-				outputWidth = 1600 * (photo.width / photo.height);
-			}
-			else {
-				outputWidth = 1600;
+			// if height is shortest edge
+			if (photo.height < photo.width) {
+				targetSz = `h${Number(shortestEdge)}`;
 			}
 
-			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(outputWidth));
+			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + targetSz);
 
-			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
+			const blob = new Blob([Buffer.from(data.data) as unknown as ArrayBuffer], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
-			console.log(blob.size * 1e-6);
 		}
 
 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
@@ -360,7 +448,7 @@ function restartDownload() {
 	if (!state.pendingDownload) return;
 	const download = state.pendingDownload;
 	state.pendingDownload = null;
-	startDownloadPhotos(download.photosToDownload, download.hiRes);
+	startDownloadPhotos2(download.photosToDownload, download.res);
 }
 
 
@@ -417,7 +505,7 @@ async function loadDownloadLink() {
 							<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
 							<template #ref>
 								<div v-if="doClientActions" class="flex flex-column gap-3 w-20rem">
-									<Button class="justify-content-center" @click="startDownloadPhotos(allPhotos)">Download Gallery</Button>
+									<Button class="justify-content-center" @click="startDownloadPhotos2(allPhotos, RESOLUTION.x1024)">Download Gallery</Button>
 									<div>
 										<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
 										<p>This may take several minutes.</p>
@@ -438,32 +526,28 @@ async function loadDownloadLink() {
 				</div>
 			</NavBar>
 
-			<!-- <InputNumber v-if="isAdmin" v-model="megaBytes" /> -->
-
 			<div class="sections-wrapper">
 				<div v-for="section in state.gallery.sections" :key="section.id" class="section mt-3">
 					<div class="section-header font-serif">{{ section.name }}</div>
 					<PhotoWall :photos="section.photos" :lazyLoad="true" :animate="true" >
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
-								<div class="photo-trigger" @click="() => !isMobile && openSlideshow(allPhotos, photo)">
+								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)">
 								</div>
 								<div class="bottom-bar">
 									<div class="buttons">
-										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
+										<div class="button" :class="{ 'heart-fixed': useAppStore().isMobile || state.favoriteIds.has(photo.id) }"
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
-											<div class="button"><i class="pi pi-download" /></div>
-										</DropdownMenu>
+										<div class="button" v-if="!isMobile && doClientActions" @click="openDownloadDialog([photo])"><i class="pi pi-download" /></div>
 									</div>
 								</div>
-								<div v-if="doClientActions" class="selector" :class="{ 'show': showSelectors }">
+								<div v-if="doClientActions && (showSelectors || !useAppStore().isMobile)" class="selector" :class="{ 'show': showSelectors }" @click="() => toggleSelected(photo)">
 									<Checkbox :modelValue="state.selectedIds.has(photo.id)"
-										@click="() => toggleSelected(photo)" binary variant="outlined" />
+										binary variant="outlined" />
 								</div>
-								<div v-if="isMobile" class="slideshow-trigger button"
+								<div v-if="isMobile && showSelectors" class="slideshow-trigger button"
 									@click="() => openSlideshow(allPhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
@@ -475,9 +559,7 @@ async function loadDownloadLink() {
 				<div class="flex align-items-center ml-2">
 					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu v-if="doClientActions" :model="downloadMenu(favoritePhotos)"><Button
-							icon="pi pi-download" text />
-					</DropdownMenu>
+					<Button icon="pi pi-download" text v-if="doClientActions" @click="openDownloadDialog(favoritePhotos)" />
 					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
 				</div>
 				<div class="body">
@@ -485,20 +567,17 @@ async function loadDownloadLink() {
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
 								<div class="photo-trigger"
-									@click="() => !isMobile && openSlideshow(favoritePhotos, photo)"></div>
+									@click="() => openSlideshow(favoritePhotos, photo)"></div>
 								<div class="bottom-bar">
 									<div class="buttons">
-										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
-											@click="toggleFavorite(photo)"><i
-												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
+										<div class="button" :class="{ 'heart-fixed': useAppStore().isMobile || state.favoriteIds.has(photo.id) }"
+											@click="toggleFavorite(photo)"
+										>
+											<i :class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
-										<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
-											<div class="button"><i class="pi pi-download" /></div>
-										</DropdownMenu>
+										<div class="button" v-if="!useAppStore().isMobile && doClientActions" @click="openDownloadDialog([photo])"><i class="pi pi-download" /></div>
 									</div>
 								</div>
-								<div v-if="isMobile" class="slideshow-trigger button"
-									@click="() => openSlideshow(favoritePhotos, photo)"><i class="pi pi-expand" /></div>
 							</div>
 						</template>
 					</PhotoWall>
@@ -514,8 +593,7 @@ async function loadDownloadLink() {
 				</template>
 				<template #actions>
 					<div class="flex-grow-1"></div>
-					<DropdownMenu :model="downloadMenu(selectedPhotos, () => state.selectedIds.clear())"><Button
-							icon="pi pi-download" text /></DropdownMenu>
+						<Button icon="pi pi-download" text v-if="doClientActions" @click="openDownloadDialog(selectedPhotos)" />
 				</template>
 			</Snackbar>
 
@@ -556,21 +634,94 @@ async function loadDownloadLink() {
 
 			<Slideshow ref="slideshow">
 				<template v-slot="{ photo }">
+					<div v-if="doClientActions" class="selector" :class="{ 'show': showSelectors }" @click="() => toggleSelected(photo)">
+						<Checkbox :modelValue="state.selectedIds.has(photo.id)"
+							binary variant="outlined" />
+					</div>
 					<Button text :icon="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
 						@click="toggleFavorite(photo)" size="large" />
-					<DropdownMenu v-if="doClientActions" :model="downloadMenu([photo])">
-						<Button text icon="pi pi-download" size="large" />
-					</DropdownMenu>
+					<Button text icon="pi pi-download" size="large" v-if="doClientActions" @click="openDownloadDialog([photo])" />
 				</template>
 			</Slideshow>
 
 			<ShareModal v-model="state.gallery" v-if="state.showShareModal" @close="state.showShareModal = false" />
 		</div>
 
+		<Sidebar
+			v-model:visible="showDownloadDialog"
+			:position="useAppStore().isMobile ? 'bottom' : 'right'"
+			:header="`Download ${downloadDialogPhotos.length} photo${downloadDialogPhotos.length === 1 ? '' : 's'}`"
+			class="w-full sm:w-25rem h-full"
+			blockScroll
+		>
+			<div class="flex flex-column h-full overflow-hidden gap-3">
+				<div
+					class="relative h-13rem flex-shrink-0"
+				>
+					<div
+						v-for="file, index in previewPhotoStack"
+						:key="file.googleFileId"
+						class="w-12rem h-12rem"
+						style="position: absolute; translate: -50% -50%; filter: drop-shadow(0 0 0.25rem #0003)"
+						:style="{ top: `${50 + index}%`, left: `${50 + index}%`, opacity: 1.3 * ((index + 1) / previewPhotoStack.length), transform: `rotate(${(15 * (index / previewPhotoStack.length)) - 5}deg)` }"
+					>
+						<PhotoFrame
+							:photo="{ id: file.googleFileId, googleFileId: file.googleFileId }"
+							size="md"
+						/>
+					</div>
+				</div>
+
+				<p>Select the resolution for your download:</p>
+			
+				<div class="flex flex-column flex-grow-1 overflow-y-auto gap-1">
+					<div v-for="res in Resolutions" class="res-option flex gap-2 cursor-pointer" :class="{ selected: res.size === selectedRes }" @click="selectedRes = res.size">
+						<div>
+							<RadioButton binary :modelValue="selectedRes === res.size" />
+						</div>
+						<div>
+							<div class="font-semibold">
+								For {{ res.bestFor }}
+							</div>
+							<div>
+								<template v-if="downloadDialogPhotos.length === 1">{{ resolutionString(resolvedResolution(downloadDialogPhotos[0], res.size)) }}</template>
+								<template v-else>{{res.size}} on the shorter side</template>
+							</div>
+							<div class="text-sm" v-if="res.size > minShortSideOfDownload">Available upon request</div>
+						</div>
+					</div>
+				</div>
+
+
+				<div>
+					<div v-if="selectedRes && selectedRes > minShortSideOfDownload" class="mb-2 text-center">
+						The selected images are not stored at that resolution, but can be updated upon request.
+					</div>
+					<Button
+						severity="primary"
+						size="large"
+						class="w-full flex align-items-center justify-content-center gap-2" 
+						:disabled="!selectedRes"
+						@click="handleDownloadDialogButton"
+					>
+						<template v-if="selectedRes && selectedRes > minShortSideOfDownload">
+							Request resolution
+						</template>
+						<template v-else>
+							<i class="pi pi-download" />
+							Start download
+						</template>
+					</Button>
+				</div>
+			</div>
+
+		</Sidebar>
 	</div>
 </template>
 
 <style scoped lang="scss">
+@import '@/assets/colors.module.scss';
+
 .small-badge {
 	position: absolute;
 	transform: translate(-25px, 0px);
@@ -661,6 +812,9 @@ async function loadDownloadLink() {
 		letter-spacing: .1em;
 	}
 
+	.selector {
+		zoom: 1.3;
+	}
 
 	.photo-overlay {
 		width: 100%;
@@ -710,7 +864,6 @@ async function loadDownloadLink() {
 			right: 0;
 			background: #0005;
 			color: #fff;
-			opacity: 0;
 		}
 
 		&:hover .slideshow-trigger {
@@ -742,7 +895,7 @@ async function loadDownloadLink() {
 					opacity: 0;
 
 					i {
-						font-size: 1.2rem;
+						font-size: 1.5rem;
 					}
 
 					&.heart-fixed {
@@ -794,6 +947,17 @@ async function loadDownloadLink() {
 #viewGallery.isMobile {
 	.sections-wrapper {
 		padding: 0 5px;
+	}
+}
+
+.res-option {
+	padding: 0.4rem 0.6rem;
+	color: var(--bluegray-600);
+	border: 1px solid;
+	border-radius: 0.5rem;
+
+	&.selected {
+		color: $primary-dark;
 	}
 }
 </style>

@@ -12,12 +12,13 @@ datasource db {
 }
 
 model User {
-    id         String   @id @default(uuid())
-    auth_id    String
-    email      String   @unique
-    givenName  String
-    familyName String
-    isAdmin    Boolean? @default(false)
+    id                 String              @id @default(uuid())
+    auth_id            String
+    email              String              @unique
+    givenName          String
+    familyName         String
+    isAdmin            Boolean?            @default(false)
+    resolutionRequests ResolutionRequest[]
 }
 
 model Inquiry {
@@ -114,7 +115,7 @@ model PortfolioSection {
 // A photo must be duplicated on Google when copied into portfolio section
 // We don't want to handle tricky conditional deleting
 model Photo {
-    id                 String            @id @default(uuid())
+    id                 String             @id @default(uuid())
     filename           String
     googleFileId       String
     googleOwnerEmail   String
@@ -123,9 +124,21 @@ model Photo {
     size               Int
     type               String
     Gallery            Gallery?
-    GallerySection     GallerySection?   @relation(fields: [gallerySectionId], references: [id], onDelete: Cascade)
+    GallerySection     GallerySection?    @relation(fields: [gallerySectionId], references: [id], onDelete: Cascade)
     gallerySectionId   String?
-    PortfolioSection   PortfolioSection? @relation(fields: [portfolioSectionId], references: [id], onDelete: Cascade)
+    PortfolioSection   PortfolioSection?  @relation(fields: [portfolioSectionId], references: [id], onDelete: Cascade)
     portfolioSectionId String?
     order              Int
+    resolutionRequest  ResolutionRequest?
+}
+
+model ResolutionRequest {
+    id                String @id @default(uuid())
+    photoId           String @unique
+    photo             Photo  @relation(fields: [photoId], references: [id])
+    requestedByUserId String
+    requestedByUser   User   @relation(fields: [requestedByUserId], references: [id])
+
+    requestedResolution Int
+    fulfilled           Boolean @default(false)
 }

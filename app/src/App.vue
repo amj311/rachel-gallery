@@ -113,6 +113,8 @@ footer {
 	padding: 5px;
 	font-size: .8em;
 	z-index: 1000;
+	pointer-events: none;
+	opacity: .5;
 
 	&:hover {
 		opacity: 0;

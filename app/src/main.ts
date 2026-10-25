@@ -12,6 +12,7 @@ import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
 import BadgeDirective from 'primevue/badgedirective';
 import ToastService from 'primevue/toastservice';
+import Vue3TouchEvents, { type Vue3TouchEventsOptions } from "vue3-touch-events";
 
 import App from './App.vue'
 import router from './router/router'
@@ -23,5 +24,9 @@ app.directive('badge', BadgeDirective);
 app.directive('tooltip', Tooltip);
 app.use(ToastService);
 app.use(createPinia())
+app.use<Vue3TouchEventsOptions>(Vue3TouchEvents, {
+  disableClick: false
+  // any other global options...
+})
 
 app.mount('#app')

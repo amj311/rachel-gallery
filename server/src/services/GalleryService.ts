@@ -266,4 +266,24 @@ export const GalleryService = {
 			}
 		})
 	},
+
+
+	async requestResolution(photoIds: Array<string>, requestedResolution: number, requestedByUserId) {
+		await Promise.all(photoIds.map(async photoId => {
+			await prisma.resolutionRequest.upsert({
+				where: { photoId },
+				create: {
+					photoId,
+					requestedByUserId,
+					requestedResolution,
+					fulfilled: false,
+				},
+				update: {
+					requestedByUserId,
+					requestedResolution,
+					fulfilled: false,
+				},
+			})
+		}))
+	}
 };

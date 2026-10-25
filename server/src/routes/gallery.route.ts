@@ -133,6 +133,42 @@ export default (route, _, done) => {
 	})
 
 
+	// client requests higher resolution for a photo
+	route.post('/:galleryId/requestRes', async (request, reply) => {
+		const { galleryId } = request.params;
+
+		const gallery = await GalleryService.getGallerySimple(galleryId);
+
+		if (!gallery) {
+			reply.code(404);
+			return {
+				success: false,
+				message: 'Gallery not found'
+			}
+		}
+
+		if (!request.sessionUser?.isAdmin && gallery.clientEmail !== request.sessionUser?.email) {
+			reply.code(403);
+			return {
+				success: false,
+				message: 'You do not have permission to edit this gallery'
+			}
+		}
+
+		const {
+			photoIds,
+			res,
+		} = request.body;
+		if (!Array.isArray(photoIds)) throw new Error();
+		if (!res || typeof res !== 'number') throw new Error();
+
+		await GalleryService.requestResolution(photoIds, res, request.sessionUser.id);
+		// TODO email photographer
+		
+		reply.code(200);
+	})
+
+
 	// // load image data for zipping on frontend
 	// // Minimizes memory usage on server
 	// route.get('/:galleryId/photo/:photoId', async (request, reply) => {
@@ -175,9 +211,12 @@ export default (route, _, done) => {
 	// })
 
 
-	route.get('/:galleryId/photo-google/:googleFileId/:width', async (request, reply) => {
-		const { googleFileId, width } = request.params;
-		const response = await axios.get(`https://drive.google.com/thumbnail?id=${googleFileId}&sz=w${width}`,  { responseType: 'arraybuffer' })
+	route.get('/:galleryId/photo-google/:googleFileId/:sz', async (request, reply) => {
+		const { googleFileId, sz } = request.params;
+		// sz should be wX or hX
+		if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
+
+		const response = await axios.get(`https://drive.google.com/thumbnail?id=${googleFileId}&sz=${sz}`,  { responseType: 'arraybuffer' })
 		return {
 			success: true,
 			data: response.data,

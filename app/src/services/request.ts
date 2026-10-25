@@ -2,8 +2,10 @@ import axios from "axios";
 import { AuthService } from "./authService";
 import { useUserStore } from "@/stores/user.store";
 
+const serverPort = import.meta.env.VITE_SERVER_PORT || 5000;
+
 const request = axios.create();
-const serverHost = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api' : '/api';
+const serverHost = process.env.NODE_ENV === 'development' ? `http://localhost:${serverPort}/api` : '/api';
 
 // async function discoverHost() {
 // 	if (process.env.NODE_ENV === 'development') {

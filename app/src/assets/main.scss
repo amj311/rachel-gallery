@@ -3,6 +3,10 @@
 html {
 	scroll-behavior: smooth;
 }
+
+:root {
+	--color-primary: $primary;
+}
   
 /* #app {
   margin: 0 auto;
@@ -31,12 +35,12 @@ body.dragging {
 }
 
 @media screen and (max-width: 600px) {
-	:root {
-		font-size: 14px;
-	}
-	body {
-		font-size: 13px;
-	}
+	// :root {
+	// 	font-size: 14px;
+	// }
+	// body {
+	// 	font-size: 13px;
+	// }
 }
 
 
