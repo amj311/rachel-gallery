@@ -189,7 +189,6 @@ export default (route, _, done) => {
 
 	// Upload a photo to a gallery section
 	route.post('/photo', async (request, reply) => {
-		const { galleryId } = request.params;
 		const {
 			filename,
 			size,
@@ -202,7 +201,7 @@ export default (route, _, done) => {
 			gallerySectionId,
 			portfolioSectionId,
 		} = request.body;
-		const photo = await GalleryService.addPhotoToSection(galleryId, {
+		const photo = await GalleryService.addPhotoToSection(gallerySectionId, {
 			filename,
 			size,
 			width,
@@ -211,9 +210,37 @@ export default (route, _, done) => {
 			type,
 			googleFileId,
 			googleOwnerEmail,
-			gallerySectionId,
 			portfolioSectionId,
 		});
+		return {
+			success: true,
+			data: photo
+		}
+	})
+
+	// Update photo details after updating image
+	route.post('/photo/:photoId/replace', async (request, reply) => {
+		const { photoId } = request.params;
+		const {
+			size,
+			width,
+			height,
+			type,
+			googleFileId,
+			googleOwnerEmail,
+		} = request.body;
+		
+		const photo = await GalleryService.updatePhoto(photoId, {
+			size,
+			width,
+			height,
+			type,
+			googleFileId,
+			googleOwnerEmail,
+		});
+
+		await GalleryService.evaluateResolutionRequest(photoId, { width, height })
+
 		return {
 			success: true,
 			data: photo

@@ -199,7 +199,7 @@ defineExpose({
 								</DropdownMenu>
 							</slot>
 						</div>
-						<div class="filename">{{ photo.filename }}</div>
+						<div class="filename"><slot name="filename" :photo="photo">{{ photo.filename }}</slot></div>
 					</div>
 				</template>
 			</Drag>

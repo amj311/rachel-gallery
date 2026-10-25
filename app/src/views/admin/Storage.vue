@@ -17,6 +17,7 @@ import PhotoFrame from '@/components/PhotoFrame.vue';
 import ProgressBar from 'primevue/progressbar';
 import dayjs from 'dayjs';
 import DropdownMenu from '@/components/DropdownMenu.vue';
+import { GoogleUploadService } from '@/services/googleUploadService';
 
 type File = {
 	googleFileId: string,
@@ -386,9 +387,11 @@ const galleryMenu = computed(() => state.galleries.map(g => (
 	}
 )));
 
+const assigningPhotos = ref(false);
 async function assignSelectedToGallerySection(gallery, section) {
 	try {
-		console.log(allSelected.value)
+		assigningPhotos.value = true;
+
 		const { data } = await request.post('admin/gallery/assignFromGoogle', {
 			sectionId: section.id,
 			photos: allSelected.value.map(ph => ({
@@ -423,11 +426,59 @@ async function assignSelectedToGallerySection(gallery, section) {
 				life: 5000,
 				severity: 'error',
 			})
+		} else {
+			toast.add({
+				summary: 'Assigned photos to gallery!',
+				severity: 'success',
+				life: 5000,
+			})
 		}
 	}
 	catch (e) {
-
+		console.error(e);
+		toast.add({
+			summary: `Failed to assign photos`,
+			life: 5000,
+			severity: 'error',
+		})
 	}
+	finally {
+		assigningPhotos.value = false;
+	}
+}
+
+const deletingFiles = ref(false);
+async function deleteSelectedPhotos() {
+	if (!confirm("This cannot be undone. Make sure these files are not used by another account.")) return;
+	
+	deletingFiles.value = true;
+	const results = await Promise.all(allSelected.value.map(async file => {
+		try {
+			await GoogleUploadService.deleteFile(file.googleFileId);
+			state.pageFiles = state.pageFiles.filter(f => f.googleFileId !== file.googleFileId);
+			return true;
+		}
+		catch (e) {
+			console.error(e);
+			return false;
+		}
+	}));
+
+	const failedCount = results.filter(success => !success).length;
+	if (failedCount) {
+		toast.add({
+			summary: `Could not delete ${failedCount} photos`,
+			life: 5000,
+			severity: 'error',
+		})
+	} else {
+		toast.add({
+			summary: 'Deleted photos',
+			severity: 'success',
+			life: 5000,
+		})
+	}
+	deletingFiles.value = false;
 }
 
 </script>
@@ -594,13 +645,13 @@ async function assignSelectedToGallerySection(gallery, section) {
 						<template v-if="selectedOrphanedPhotos.length">
 							<h3 class="mt-3 mb-2">Handle orphaned photos:</h3>
 							<DropdownMenu :model="galleryMenu">
-								<Button outlined class="align-items-center gap-2" size="small">
+								<Button outlined class="align-items-center gap-2" size="small" :loading="assigningPhotos">
 									<i class="pi pi-images text-sm" />
 									Assign to gallery
 								</Button>
 							</DropdownMenu>
 							&nbsp;
-							<Button outlined severity="danger" class="align-items-center gap-2" size="small">
+							<Button outlined severity="danger" class="align-items-center gap-2" size="small" @click="deleteSelectedPhotos" :loading="deletingFiles">
 								<i class="pi pi-trash text-sm" />
 								Delete
 							</Button>

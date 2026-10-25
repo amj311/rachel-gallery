@@ -79,6 +79,38 @@ export const GoogleUploadService = {
 		return response.json();
 	},
 
+	async updateImage(googleFileId, image) {
+		if (!this.driveInfo.targetFolderId) throw Error("no target folder");
+		if (!image?.blob) throw Error("no image blob");
+
+		const url = `https://www.googleapis.com/upload/drive/v3/files/${googleFileId}`;
+
+		// 3. The Body is simply the raw binary blob
+		const body = image.blob;
+
+		// 4. Make the PUT Request
+		const response = await fetch(
+			url,
+			{
+				// Using PUT is best practice for replacing the entire resource
+				method: "PATCH", 
+				headers: {
+					Authorization: `Bearer ${this.token.access_token}`,
+					// Content-Type must match the mime type of the uploaded file
+					"Content-Type": image.blob.type || "application/octet-stream",
+				},
+				body,
+			}
+		);
+
+		if (!response.ok) {
+			throw new Error(`Drive update failed (${response.status}): ${await response.text()}`);
+		}
+
+		// Media uploads usually return an empty body or confirmation JSON
+		return { message: "Image updated successfully." }; 
+	},
+
 
 	async copyFile(fileId) {
 		const { data } = await axios.post('https://www.googleapis.com/drive/v3/files/' + fileId + '/copy?access_token=' + this.token.access_token, {

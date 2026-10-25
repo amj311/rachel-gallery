@@ -102,9 +102,14 @@ export const useUploaderStore = defineStore('uploader', {
 				photo.uploadStatus = "uploading";
 				let googleRes;
 
-				// If completely new photo, upload to google drive
-				// Otherwise copy the existing photo
-				if (photo.googleFileId) {
+				if (photo.replace) {
+					if (!photo.googleFileId) throw new Error("no google id on photo!");
+					const oldGoogleId = photo.googleFileId;
+					// upload new image, then delete old one
+					googleRes = await GoogleUploadService.uploadImage(photo);
+					await GoogleUploadService.deleteFile(oldGoogleId);
+				}
+				else if (photo.googleFileId) {
 					googleRes = await GoogleUploadService.copyFile(photo.googleFileId);
 				} else {
 					googleRes = await GoogleUploadService.uploadImage(photo);
@@ -112,16 +117,23 @@ export const useUploaderStore = defineStore('uploader', {
 
 				photo.googleFileId = googleRes.id;
 				photo.googleOwnerEmail = this.googleDriveInfo.user.emailAddress;
-	
-				// save to db. If fails, delete from google
-				try {
-					const { data } = await request.post('admin/photo', photo);
-					photo.id = data.data.id;
+				
+				if (photo.replace) {
+					if (!photo.id) throw new Error("no id on photo!")
+					// just update photo details on db
+					await request.post(`admin/photo/${photo.id}/replace`, photo);
 				}
-				catch (error) {
-					console.log("server save error, deleting from drive.....")
-					await GoogleUploadService.deleteFile(googleRes.id);
-					throw error;
+				else {
+					// save to db. If fails, delete from google
+					try {
+						const { data } = await request.post('admin/photo', photo);
+						photo.id = data.data.id;
+					}
+					catch (error) {
+						console.log("server save error, deleting from drive.....")
+						await GoogleUploadService.deleteFile(googleRes.id);
+						throw error;
+					}
 				}
 	
 				// wrap up and continue

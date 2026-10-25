@@ -12,6 +12,9 @@ const fullGalleryInclusion = {
 			photos: {
 				orderBy: {
 					order: 'asc' as any,
+				},
+				include: {
+					resolutionRequest: true,
 				}
 			}
 		},
@@ -223,6 +226,13 @@ export const GalleryService = {
 		})
 	},
 
+	async updatePhoto(photoId: string, attrs: Partial<Photo>) {
+		return await prisma.photo.update({
+			where: { id: photoId },
+			data: attrs,
+		})
+	},
+
 	// async downloadPhoto(id: string) {
 	// 	const photo = await prisma.photo.findUnique({
 	// 		where: {
@@ -285,5 +295,17 @@ export const GalleryService = {
 				},
 			})
 		}))
+	},
+
+
+	async evaluateResolutionRequest(photoId: string, { width, height }) {
+		const existingRequest = await prisma.resolutionRequest.findFirst({ where: { photoId }});
+		if (!existingRequest) return null;
+
+		if (Math.min(width, height) >= existingRequest.requestedResolution) {
+			await prisma.resolutionRequest.delete({
+				where: { photoId },
+			})
+		}
 	}
 };

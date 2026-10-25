@@ -26,6 +26,7 @@ import PortfolioPhotoSelector from '@/components/portfolio/PortfolioPhotoSelecto
 import Snackbar from '@/components/Snackbar.vue';
 import DropdownMenu from '@/components/DropdownMenu.vue';
 import SelectButton from 'primevue/selectbutton';
+import PhotoFrame from '@/components/PhotoFrame.vue';
 
 type Photo = any;
 
@@ -336,6 +337,50 @@ function clearAllSelected() {
 // 	}
 // }
 
+const photoToUpdate = ref<Photo | null>(null);
+const filesToUpdatePhoto = ref<Set<Photo>>(new Set());
+const photoToUpdatePhoto = computed(() => filesToUpdatePhoto.value.values().next().value);
+const isUpdatingPhoto = ref(false);
+
+function startUpdatePhoto(photo) {
+	photoToUpdate.value = photo;
+}
+
+async function doUpdatePhoto() {
+	if (!photoToUpdatePhoto.value) return;
+	await new Promise((res) => {
+		isUpdatingPhoto.value = true;
+
+		const photoForUpload = {
+			...photoToUpdate.value,
+			...photoToUpdatePhoto.value,
+			replace: true,
+			onUploadComplete: res,
+		}
+
+		useUploaderStore().queueImages([photoForUpload]);
+	})
+	.then(photoRes => {
+		console.log("FINSIHED!")
+		console.log(photoToUpdatePhoto.value.width, photoToUpdatePhoto.value.height, photoToUpdate.value.resolutionRequest.requestedResolution)
+		if (Math.min(photoToUpdatePhoto.value.width, photoToUpdatePhoto.value.height) > photoToUpdate.value.resolutionRequest.requestedResolution) {
+			photoToUpdate.value.resolutionRequest = null;
+		}
+	})
+	.catch(e => {
+		console.error(e);
+		toast.add({
+			severity: 'error',
+			summary: 'Failed to replace photo',
+			life: 5000,
+		})
+	})
+	.finally(() => {
+		photoToUpdate.value = null;
+		isUpdatingPhoto.value = false;
+	})
+}
+
 function photoOptions(photo) {
 	return [
 		{ label: 'Make cover', command: () => assignCoverPhoto(photo) },
@@ -343,6 +388,7 @@ function photoOptions(photo) {
 			label: 'Move to section',
 			items: state.gallery.sections.filter(s => s.id !== photo.gallerySectionId).map(s => ({ label: s.name, command: () => movePhotosToSection([photo], s) })),
 		},
+		{ label: 'Update', command: () => startUpdatePhoto(photo) },
 		{ label: 'Delete', command: () => deletePhoto(photo), class: 'danger' },
 	];
 }
@@ -497,11 +543,12 @@ function photoOptions(photo) {
 		</div>
 		<template v-for="(section, index) in state.gallery.sections" :key="section.id">
 			<div v-if="!section.marked_for_deletion" class="my-6 section" :class="{ expanded: section.expanded }">
-				<div class="flex align-items-center py-2 sticky top-0 z-5 bg-white">
+				<div class="flex align-items-center gap-2 py-2 sticky top-0 z-5 bg-white">
 					<h3>
 						<GhostInput v-model="section.name" placeholder="Section name..." />
 					</h3>
 					<div class="text-gray-500">{{  section.photos.length }} {{  section.photos.length === 1 ? 'photo' : 'photos' }}</div>
+					<div v-if="section.photos.some(p => p.resolutionRequest)" class="bg-orange-300 text-white px-2 border-round">Hi-res Requests</div>
 					<div class="flex-grow-1"></div>
 					<Button v-if="Number(index) > 0" @click="swapSections(Number(index), Number(index) - 1)" icon="pi pi-chevron-up" text />
 					<Button v-if="Number(index) < state.gallery.sections.length - 1" @click="swapSections(Number(index), Number(index) + 1)"
@@ -521,7 +568,18 @@ function photoOptions(photo) {
 					:handleAddPhotos="() => openUploadToSection(section)"
 					:photoOptions="photoOptions"
 					:size="state.sectionPhotoSize"
-				/>
+				>
+					<template #filename="{ photo }">
+						{{ photo.filename }}
+						<div
+							v-if="photo.resolutionRequest"
+							class="bg-orange-300 text-white px-2 border-round cursor-pointer"
+							@click.stop="startUpdatePhoto(photo)"
+						>
+							{{ photo.resolutionRequest.requestedResolution }}
+						</div>
+					</template>
+				</PhotoGrid>
 			</div>
 		</template>
 
@@ -557,6 +615,40 @@ function photoOptions(photo) {
 			</div>
 			<div class="body">
 				<ImageSelector v-model="state.imagesToUpload" />
+			</div>
+		</div>
+
+
+		<div v-if="photoToUpdate" id="updateModal" class="modal">
+			<div class="mb-3 flex align-items-center gap-2">
+				<h3>Update "{{ photoToUpdate.filename }}""</h3>
+			</div>
+			<div class="body flex flex-column gap-3">
+				<div v-if="photoToUpdate.resolutionRequest" class="flex gap-2 align-items-center mb-2">
+					<span class="block w-1rem h-1rem border-round-2xl bg-orange-500"></span>
+					The client has requested this photo at {{ photoToUpdate.resolutionRequest.requestedResolution }} minimum
+				</div>
+
+				<div class="flex gap-2 flex-wrap">
+					<div class="flex flex-grow-1 flex-shrink-0 flex-column align-items-center" style="width: 49%;">
+						<div class="w-10rem h-10rem"><PhotoFrame :photo="photoToUpdate" size="md" /></div>
+						<div>{{ photoToUpdate.width }}x{{ photoToUpdate.height }}</div>
+					</div>
+					<div class="flex flex-grow-1 flex-shrink-0 flex-column align-items-center" style="width: 49%;">
+						<template v-if="filesToUpdatePhoto.size === 1">
+							<div class="w-10rem h-10rem"><PhotoFrame :photo="filesToUpdatePhoto.values().next().value" size="md" /></div>
+							<div>{{ filesToUpdatePhoto.values().next().value.width }}x{{ filesToUpdatePhoto.values().next().value.height }}</div>
+							<Button label="Change" size="small" text icon="pi pi-sync" class="gap-2" @click="filesToUpdatePhoto = new Set()" />
+						</template>
+						<ImageSelector v-else v-model="filesToUpdatePhoto" />
+					</div>
+				</div>
+			</div>
+			<div class="footer mt-3 flex gap-2">
+				<div class="flex-grow-1"></div>
+				<Button outlined @click="photoToUpdate = null" size="small">Cancel</Button>
+				<Button severity="primary" :disabled="filesToUpdatePhoto.size !== 1" @click="doUpdatePhoto" size="small"
+					:loading="isUpdatingPhoto">Update photo</Button>
 			</div>
 		</div>
 
