@@ -553,7 +553,7 @@ async function loadDownloadLink() {
 					<div class="section-header font-serif">{{ section.name }}</div>
 					<PhotoWall :photos="section.photos" :lazyLoad="true" :animate="true" >
 						<template v-slot="{ photo }">
-							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
+							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }" :id="'slideshow-scroll-target__'+photo.id">
 								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)" @contextmenu.prevent="toggleSelected(photo)">
 								</div>
 								<div class="bottom-bar">

@@ -82,7 +82,7 @@ async function goToNext(animate = true) {
 		await new Promise(r => setTimeout(r, animationTime));
 	}
 	state.activePhotoIdx = (state.activePhotoIdx + 1) % state.photos.length;
-	resetAfterSwap();
+	afterSwap();
 }
 
 async function goToPrev(animate = true) {
@@ -91,10 +91,10 @@ async function goToPrev(animate = true) {
 		await new Promise(r => setTimeout(r, animationTime));
 	}
 	state.activePhotoIdx = (state.activePhotoIdx - 1 + state.photos.length) % state.photos.length;
-	resetAfterSwap();
+	afterSwap();
 }
 
-function resetAfterSwap() {
+function afterSwap() {
 	state.animationClass = '';
 	// start and sto to reset time
 	if (isPlaying.value) {
@@ -103,6 +103,9 @@ function resetAfterSwap() {
 	}
 	updateSwipeDelta(0);
 	swipeStartX = 0;
+
+	// scroll to this photo in the background
+	document.getElementById('slideshow-scroll-target__'+activePhoto.value.id)?.scrollIntoView();
 }
 
 function play() {
@@ -206,7 +209,7 @@ function handleTouchEnd(e) {
 }
 
 #Slideshow {
-	background-color: #ffffffdd;
+	background-color: #ffffff;
 	backdrop-filter: blur(6px);
 
 	#topBar {
