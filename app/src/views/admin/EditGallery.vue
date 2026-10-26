@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, watch, computed, ref } from 'vue';
+import { reactive, onBeforeMount, watch, computed, ref, nextTick } from 'vue';
 import request from '@/services/request';
 import { useUploaderStore } from '../../components/uploader/uploader.store';
 import GalleryCover from '@/components/GalleryCover.vue';
@@ -220,16 +220,25 @@ function sendToUploader() {
 	state.showUploadToSection = null;
 }
 
-function resolveDuplicateName(name: string) {
+function resolveDuplicateName(fileName: string) {
+
 	function getNameFrom(fromName: string) {
-		const endNumber = fromName.match(/[\n]^/);
+		const fileExt = fromName.split('.').pop();
+		const partialName = fileExt ? fromName.slice(0, -1 * (fileExt?.length + 1)) : fromName;
+		const endNumber = partialName.match(/[1-9]+$/);
+		
+		let newPartialName = '';
+
 		if (endNumber) {
-			return fromName.replace(/\n^/, String(Number(endNumber) + 1));
+			newPartialName = partialName.replace(new RegExp(String(endNumber)+'$'), String(Number(endNumber) + 1));
 		}
-		return fromName + ' 1';
+		else {
+			newPartialName = partialName + ' 1';
+		}
+		return newPartialName + (fileExt ? `.${fileExt}` : '');
 	}
 
-	let fromName = name;
+	let fromName = fileName;
 	while (true) {
 		fromName = getNameFrom(fromName);
 		const match = state.showUploadToSection?.photos.find(ph => ph.filename === fromName);
@@ -332,14 +341,45 @@ async function createClient() {
 	}
 }
 
-function onPhotoDrop(photo, fromListId, toListId) {
+async function onPhotoDrop(movedPhoto, fromListId, toListId) {
+	await nextTick();
+
 	const fromSection = state.gallery.sections.find(s => s.id === fromListId);
 	const toSection = state.gallery.sections.find(s => s.id === toListId);
 
-	// mark photo for reassignment
-	updatePhotosMoved(photo, fromSection, toSection);
-	
-	// update all photos with current order
+	let selectedPhotosToMove: Array<Photo> = [];
+
+	// Move selected files with it, if it is also selected
+	if (movedPhoto.selected) {
+		// gather all photos that need t be moved, gallery section photo order
+		for (const section of state.gallery.sections) {
+			for (const photo of section.photos) {
+				if (photo.selected) {
+					selectedPhotosToMove.push(photo);
+				}
+			}
+		}
+
+		// remove the selected photos from their original place,
+		// but leave the moved one as a marker for the new insert index
+		for (const section of state.gallery.sections) {
+			section.photos = section.photos.filter(p => !p.selected || p.id === movedPhoto.id);
+		}
+		const insertIdx = toSection.photos.findIndex(ph => ph.id === movedPhoto.id);
+		// set the insert idx on all moved photos so they get sorted into the same spot
+		selectedPhotosToMove.forEach(photo => photo.order = insertIdx);
+
+		// insert the entire array, replacing the already moved photo
+		toSection.photos.splice(insertIdx, 1, ...selectedPhotosToMove);
+	}
+
+
+	// mark all for reassignment
+	for (const photo of [movedPhoto, ...selectedPhotosToMove]) {
+		updatePhotosMoved(photo, fromSection, toSection);
+	}
+
+	// update all photos with new order
 	for (const section of [fromSection, toSection]) {
 		for (const i in section.photos) {
 			section.photos[i].order = parseInt(i);
@@ -396,7 +436,7 @@ async function deleteGallery() {
 }
 
 const allSelected = computed(() => {
-	return Array.from(Object.values(state.gridRefs)).flatMap((ref) => ref.selected);
+	return Array.from(Object.values(state.gridRefs)).flatMap((ref) => ref?.selected);
 })
 
 function clearAllSelected() {
@@ -624,10 +664,13 @@ function photoOptions(photo) {
 					<div class="text-gray-500">{{  section.photos.length }} {{  section.photos.length === 1 ? 'photo' : 'photos' }}</div>
 					<div v-if="section.photos.some(p => p.resolutionRequest)" class="bg-orange-300 text-white px-2 border-round">Hi-res Requests</div>
 					<div class="flex-grow-1"></div>
-					<Button v-if="Number(index) > 0" @click="swapSections(Number(index), Number(index) - 1)" icon="pi pi-chevron-up" text />
-					<Button v-if="Number(index) < state.gallery.sections.length - 1" @click="swapSections(Number(index), Number(index) + 1)"
-						icon="pi pi-chevron-down" text />
-					<Button icon="pi pi-trash" text @click="deleteSection(section)" />
+					<div class="flex align-items-center">
+						<Button v-if="Number(index) > 0" @click="swapSections(Number(index), Number(index) - 1)" icon="pi pi-chevron-up" text />
+						<Button v-if="Number(index) < state.gallery.sections.length - 1" @click="swapSections(Number(index), Number(index) + 1)"
+							icon="pi pi-chevron-down" text />
+						<Button icon="pi pi-plus" text @click="openUploadToSection(section)" />
+						<Button icon="pi pi-trash" text @click="deleteSection(section)" />
+					</div>
 				</div>
 
 				<PhotoGrid

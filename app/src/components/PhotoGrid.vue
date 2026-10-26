@@ -171,8 +171,8 @@ defineExpose({
 			v-if="photos && photos.length"
 			@mousedown="initSelectionDrag"
 		>
-			<Drag v-model="photos" :animation="200" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" @move="onMove" :data-listid="listId" :scroll-sensitivity="200" :force-fallback="true">
-				<template #header v-if="handleAddPhotos">
+			<Drag v-model="photos" :animation="100" :group="dragGroup" itemKey="id" tag="div" class="photo-grid" handle=".handle" @end="onDrop" @move="onMove" :data-listid="listId" :scrollSensitivity="100" :scroll-speed="100" :force-fallback="true">
+				<template #footer v-if="handleAddPhotos">
 					<div key="add-photos" class="add-photos photo-grid-item" @click="handleAddPhotos">
 						<i class="pi pi-plus" />
 					</div>
