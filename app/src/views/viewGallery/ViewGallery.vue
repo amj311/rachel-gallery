@@ -162,6 +162,7 @@ const allPhotos = computed(() => state.gallery?.sections?.flatMap(s => s.photos)
 
 const slideshow = ref<InstanceType<typeof Slideshow>>()
 function openSlideshow(photos, firstPhoto) {
+	console.log("opening!!!")
 	slideshow.value?.open(photos, firstPhoto);
 }
 
@@ -554,11 +555,11 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="section.photos" :lazyLoad="true" :animate="true" >
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }" :id="'slideshow-scroll-target__'+photo.id">
-								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)" @contextmenu.prevent="toggleSelected(photo)">
+								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)" @contextmenu.prevent="() => doClientActions ? toggleSelected(photo) : toggleFavorite(photo)">
 								</div>
 								<div class="bottom-bar">
 									<div class="buttons">
-										<div class="button" :class="{ 'heart-fixed': useAppStore().isMobile || state.favoriteIds.has(photo.id) }"
+										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
@@ -577,19 +578,21 @@ async function loadDownloadLink() {
 				</div>
 			</div>
 
-			<div class="favorites-modal modal" v-if="state.showFavoritesModal">
-				<div class="flex align-items-center ml-2">
-					<h3>Favorites ({{ state.favoriteIds.size }})</h3>
-					<div class="flex-grow-1"></div>
-					<Button icon="pi pi-download" text v-if="doClientActions" @click="openDownloadDialog(favoritePhotos)" />
-					<Button icon="pi pi-times" text @click="state.showFavoritesModal = false" />
-				</div>
+			<Sidebar class="favorites-modal h-full w-full" v-model:visible="state.showFavoritesModal" position="bottom" blockScroll>
+				<template #header>
+					<div class="flex align-items-center ml-2 w-full">
+						<h3>Favorites ({{ state.favoriteIds.size }})</h3>
+						<div class="flex-grow-1"></div>
+						<Button icon="pi pi-download" text v-if="doClientActions" @click="openDownloadDialog(favoritePhotos)" />
+					</div>
+				</template>
 				<div class="body">
 					<PhotoWall :photos="favoritePhotos">
 						<template v-slot="{ photo }">
 							<div class="photo-overlay">
 								<div class="photo-trigger"
-									@click="() => openSlideshow(favoritePhotos, photo)"></div>
+									@click="() => openSlideshow(favoritePhotos, photo)"
+								/>
 								<div class="bottom-bar">
 									<div class="buttons">
 										<div class="button" :class="{ 'heart-fixed': useAppStore().isMobile || state.favoriteIds.has(photo.id) }"
@@ -603,8 +606,11 @@ async function loadDownloadLink() {
 							</div>
 						</template>
 					</PhotoWall>
+					<div v-if="favoritePhotos.length === 0" class="margin-auto text-center">
+						Save the best shots here to find them faster
+					</div>
 				</div>
-			</div>
+			</Sidebar>
 
 			<Snackbar v-if="state.selectedIds.size > 0" closeable @close="state.selectedIds.clear()">
 				<template #content>
@@ -815,7 +821,7 @@ async function loadDownloadLink() {
 	}
 }
 
-#viewGallery {
+#viewGallery, .favorites-modal {
 	#cover {
 		width: 100%;
 		height: 100vh;
