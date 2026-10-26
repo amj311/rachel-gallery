@@ -2,6 +2,7 @@ import { prisma } from "../prisma/client";
 import { v4 as uuid } from 'uuid';
 import { GoogleDriveService } from "./GoogleDriveService";
 import { Photo } from "@prisma/client";
+import { EmailService } from "./EmailService";
 
 const fullGalleryInclusion = {
 	coverPhoto: true,
@@ -278,7 +279,7 @@ export const GalleryService = {
 	},
 
 
-	async requestResolution(photoIds: Array<string>, requestedResolution: number, requestedByUserId) {
+	async requestResolution(galleryId: string, photoIds: Array<string>, requestedResolution: number, requestedByUserId) {
 		await Promise.all(photoIds.map(async photoId => {
 			await prisma.resolutionRequest.upsert({
 				where: { photoId },
@@ -295,6 +296,25 @@ export const GalleryService = {
 				},
 			})
 		}))
+
+		// isolate email sending
+		try {
+			const user = await prisma.user.findFirst({ where: { id: requestedByUserId }});
+			await EmailService.emailPhotographer({
+				subject: 'Hi-res photos requested',
+				text: `
+Hi ${process.env.PHOTOGRAPHER_NAME || 'there'},
+
+${user?.givenName} has requested higher resolutions for ${photoIds.length} photos.
+
+Go to the gallery settings to update the photos: ${process.env.APP_BASE_URL}/admin/galleries/${galleryId}.
+				`,
+			});
+		}
+		catch (e) {
+			console.log("Could not send email");
+		}
+
 	},
 
 

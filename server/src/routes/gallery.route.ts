@@ -162,7 +162,7 @@ export default (route, _, done) => {
 		if (!Array.isArray(photoIds)) throw new Error();
 		if (!res || typeof res !== 'number') throw new Error();
 
-		await GalleryService.requestResolution(photoIds, res, request.sessionUser.id);
+		await GalleryService.requestResolution(galleryId, photoIds, res, request.sessionUser.id);
 		// TODO email photographer
 		
 		reply.code(200);
