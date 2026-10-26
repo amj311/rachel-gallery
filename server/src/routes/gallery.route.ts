@@ -169,6 +169,52 @@ export default (route, _, done) => {
 	})
 
 
+
+
+	// client favorites a photo
+	route.post('/:galleryId/favorites', async (request, reply) => {
+		const { galleryId } = request.params;
+		const photoIds = request.body;
+
+		if (!Array.isArray(photoIds)) {
+			throw new Error("must provide array of photo ids")
+		}
+
+		const gallery = await GalleryService.getGallerySimple(galleryId);
+
+		if (!gallery) {
+			reply.code(404);
+			return {
+				success: false,
+				message: 'Gallery not found'
+			}
+		}
+
+		await GalleryService.setUserFavorites(galleryId, request.sessionUser.id, photoIds);
+		
+		reply.code(200);
+	})
+
+	route.get('/:galleryId/favorites', async (request, reply) => {
+		const { galleryId } = request.params;
+		const gallery = await GalleryService.getGallerySimple(galleryId);
+
+		if (!gallery) {
+			reply.code(404);
+			return {
+				success: false,
+				message: 'Gallery not found'
+			}
+		}
+
+		const photoIds = await GalleryService.getUserFavorites(galleryId, request.sessionUser.id);
+		
+		return {
+			data: photoIds || [],
+		};
+	})
+
+
 	// // load image data for zipping on frontend
 	// // Minimizes memory usage on server
 	// route.get('/:galleryId/photo/:photoId', async (request, reply) => {

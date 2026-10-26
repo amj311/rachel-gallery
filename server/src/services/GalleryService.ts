@@ -307,5 +307,20 @@ export const GalleryService = {
 				where: { photoId },
 			})
 		}
+	},
+
+	async getUserFavorites(galleryId: string, userId: string) {
+		return (await prisma.userFavorite.findFirst({
+			where: { galleryId, userId },
+			select: { photoIds: true }
+		}))?.photoIds;
+	},
+
+	async setUserFavorites(galleryId: string, userId: string, photoIds: Array<string>) {
+		await prisma.userFavorite.upsert({
+			where: { galleryId_userId: { galleryId, userId } },
+			create: { galleryId, userId, photoIds },
+			update: { photoIds }
+		});
 	}
 };

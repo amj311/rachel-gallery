@@ -82,7 +82,7 @@ model Gallery {
     shareCode      String?
     shareEmails    String[]
     clientCanShare Boolean   @default(false)
-	downloadAccess String @default("Client")
+    downloadAccess String    @default("Client")
 
     sections     GallerySection[]
     coverPhoto   Photo?           @relation(fields: [coverPhotoId], references: [id])
@@ -142,4 +142,13 @@ model ResolutionRequest {
 
     requestedResolution Int
     fulfilled           Boolean @default(false)
+}
+
+model UserFavorite {
+    id        String @id @default(uuid())
+    galleryId String
+    userId    String
+	photoIds	String[]
+
+	@@unique([galleryId, userId])
 }

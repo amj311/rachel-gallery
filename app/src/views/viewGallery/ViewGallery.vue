@@ -49,7 +49,8 @@ const state = reactive({
 	viewAuth: {} as any,
 	gallery: null as any,
 	providedCode: null,
-	favoriteIds: new Set(),
+	favoriteIds: new Set<string>(),
+	dbFavoritesFailed: false,
 	showFavoritesModal: false,
 	showShareModal: false,
 	didAdminWarn: false,
@@ -126,8 +127,6 @@ async function loadGallery() {
 	state.viewAuth = data.viewAuth;
 
 	if (data.success) {
-		state.favoriteIds = new Set(JSON.parse(localStorage.getItem(favoritesKey.value) || '[]'));
-
 		if (code) localStorage.setItem('gallery/' + state.galleryIdOrSlug + '/code', code);
 
 		if (!state.didAdminWarn && isAdmin.value && ['draft', 'hidden', 'archived'].includes(state.gallery.visibility)) {
@@ -143,19 +142,62 @@ async function loadGallery() {
 			authMode.value = 'code';
 		}
 
-		// Remove deleted photos from favorites
-		for (const id of state.favoriteIds.values()) {
-			if (!allPhotos.value.find(p => p.id === id)) {
-				state.favoriteIds.delete(id);
-			}
-			localStorage.setItem(favoritesKey.value, JSON.stringify(Array.from(state.favoriteIds)));
-		}
+		void loadFavorites();
 
 		useAppStore().setTitle(state.gallery.name);
 		state.selectedIds = new Set(JSON.parse(localStorage.getItem('selected_'+state.gallery.id) || '[]'))
 	}
 
 	state.isLoading = false;
+}
+
+async function loadFavorites() {
+	const userEmail = userStore.currentUser?.email;
+	let ids = [];
+	try {
+		if (userEmail) {
+			const { data } = await request.get('/gallery/'+state.gallery.id+'/favorites');
+			ids = data.data;
+		}
+		// read from storage as a fallback
+		if (!ids.length) {
+			ids = JSON.parse(localStorage.getItem(favoritesKey.value) || '[]');
+		}
+		state.favoriteIds = new Set(ids);
+		void cleanupFavorites();
+	}
+	catch (e) {
+		console.error(e);
+	}
+}
+
+// Remove deleted photos from favorites
+async function cleanupFavorites() {
+	const deleted: Array<string> = [];
+	for (const id of state.favoriteIds.values()) {
+		if (!allPhotos.value.find(p => p.id === id)) {
+			state.favoriteIds.delete(id);
+			deleted.push(id);
+		}
+	}
+	if (deleted.length) {
+		await saveFavorites();
+	}
+}
+
+// write to local always, db when user email
+async function saveFavorites() {
+	const userEmail = userStore.currentUser?.email;
+	const ids = Array.from(state.favoriteIds);
+	localStorage.setItem(favoritesKey.value, JSON.stringify(ids));
+	if (userEmail) {
+		try {
+			await request.post('/gallery/'+state.gallery.id+'/favorites', ids);
+		}
+		catch (e) {
+			console.error(e);
+		}
+	}
 }
 
 const allPhotos = computed(() => state.gallery?.sections?.flatMap(s => s.photos));
@@ -172,7 +214,7 @@ function toggleFavorite(photo) {
 	} else {
 		state.favoriteIds.add(photo.id);
 	}
-	localStorage.setItem(favoritesKey.value, JSON.stringify(Array.from(state.favoriteIds)));
+	void saveFavorites();
 }
 
 function toggleSelected(photo) {
