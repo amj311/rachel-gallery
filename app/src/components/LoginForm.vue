@@ -132,7 +132,6 @@ function leaveRestPasswordMode() {
 				type="text"
 				v-model="state.email"
 				placeholder="Email"
-				size="small"
 				class="w-full"
 			/>
 
@@ -141,14 +140,12 @@ function leaveRestPasswordMode() {
 					type="text"
 					v-model="state.givenName"
 					placeholder="First Name"
-					size="small"
 					class="w-full"
 				/>
 				<InputText
 					type="text"
 					v-model="state.familyName"
 					placeholder="Last Name"
-					size="small"
 					class="w-full"
 				/>
 			</template>
@@ -160,7 +157,6 @@ function leaveRestPasswordMode() {
 					v-model="state.password"
 					placeholder="Password"
 					:type="state.showPassword ? 'text' : 'password'"
-					size="small"
 					class="w-full"
 				/>
 
@@ -181,10 +177,10 @@ function leaveRestPasswordMode() {
 					:loading="state.isLoading"
 					class="w-full mt-3 justify-content-around"
 				>Create Account</button>
-				<small>Already have an account? <span
+				<span>Already have an account? <span
 						class="text-link"
 						@click="state.mode = 'login'"
-					>Sign in</span></small>
+					>Sign in</span></span>
 			</template>
 			<template v-else-if="state.mode === 'login'">
 				<Button
@@ -193,14 +189,14 @@ function leaveRestPasswordMode() {
 					:loading="state.isLoading"
 					class="w-full mt-3 justify-content-around"
 				>Sign in</button>
-				<small>New here? <span
+				<span>New here? <span
 						class="text-link"
 						@click="state.mode = 'signup'"
-					>Create account</span></small>
-				<small><span
+					>Create account</span></span>
+				<span><span
 						class="text-link"
 						@click="state.mode = 'reset_password'"
-					>Forgot password?</span></small>
+					>Forgot password?</span></span>
 			</template>
 			<template v-else-if="state.mode === 'reset_password'">
 				<Button
@@ -208,10 +204,10 @@ function leaveRestPasswordMode() {
 					@click="sendPasswordResetEmail"
 					class="w-full mt-3 justify-content-around"
 				>Send Email</button>
-				<small>Back to <span
+				<span>Back to <span
 						class="text-link"
 						@click="leaveRestPasswordMode"
-					>Sign in</span></small>
+					>Sign in</span></span>
 			</template>
 		</div>
 		<!-- GOOGLE SIGN-IN NOT WORKING!!!!
