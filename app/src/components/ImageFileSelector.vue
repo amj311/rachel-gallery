@@ -4,7 +4,7 @@ import PhotoGrid from '@/components/PhotoGrid.vue';
 import { computed } from 'vue';
 import Paginator from 'primevue/paginator';
 
-const images = defineModel<Set<any>>();
+const images = defineModel<Array<any>>();
 const setSizeBeforeNewFiles = ref(0);
 
 const props = defineProps<{
@@ -20,9 +20,9 @@ async function handleFiles(files) {
 		throw new Error('No images set provided to file selector!');
 	}
 	state.isProcessingFiles = true;
-	setSizeBeforeNewFiles.value = images.value?.size;
+	setSizeBeforeNewFiles.value = images.value?.length;
 	files.forEach((file, i) => {
-		images.value?.add({
+		images.value?.push({
 			blob: file,
 			filename: file.name,
 			size: file.size,
@@ -34,7 +34,7 @@ async function handleFiles(files) {
 }
 
 function removeFileFromUpload(file) {
-	images.value?.delete(file);
+	images.value?.splice(images.value!.findIndex(f => f === file), 1);
 }
 
 function onDragOver(event) {
@@ -65,9 +65,11 @@ const photoPage = computed(() => Array.from(images.value?.values() || []).slice(
 
 <template>
 	<div>
-		<label v-if="props.inline" for="fileSelect" class="text-link">
-			<slot>Select files</slot>
-		</label>
+		<div v-if="props.inline">
+			<label for="fileSelect">
+				<slot><span class="text-link">Select files</span></slot>
+			</label>
+		</div>
 		<div v-else class="drop-images" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
 			<label for="fileSelect">
 				<div class="drop-text">
@@ -77,7 +79,7 @@ const photoPage = computed(() => Array.from(images.value?.values() || []).slice(
 			<PhotoGrid v-model="photoPage">
 				<template #options="{ photo }"><div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div></template>
 			</PhotoGrid>
-			<Paginator v-if="images!.size > photosPerPage" v-model:first="firstPageIdx" :rows="photosPerPage" :totalRecords="images!.size" template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink" />
+			<Paginator v-if="images!.length > photosPerPage" v-model:first="firstPageIdx" :rows="photosPerPage" :totalRecords="images!.length" template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink" />
 		</div>
 		<input type="file" id="fileSelect" hidden multiple :onchange="(event) => handleFiles(event.target.files)" />
 	</div>

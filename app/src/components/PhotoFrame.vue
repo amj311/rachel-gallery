@@ -27,7 +27,8 @@ const props = defineProps<{
 	position?: string | { x: number, y: number },
 	size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
 	watermark?: boolean,
-	showLoading?: boolean
+	showLoading?: boolean,
+	onDimensions?: (dim: {width: number, height: number}) => void,
 }>();
 
 const { photo, size = 'xs', watermark, showLoading } = props;
@@ -81,6 +82,9 @@ async function loadImage(src) {
 	// get dimensions from if not already known
 	if (!photo.width || !photo.height) {
 		setCanvasSize(returningImage.width, returningImage.height);
+		if (props.onDimensions) {
+			props.onDimensions({ width: returningImage.width, height: returningImage.height });
+		}
 	}
 	return returningImage;
 }

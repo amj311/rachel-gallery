@@ -50,7 +50,7 @@ const state = reactive({
 	gallery: null as any,
 	showUploadToSection: null as any,
 	isProcessingFiles: false,
-	imagesToUpload: new Set<any>(),
+	imagesToUpload: [] as Array<Photo>,
 	showShareModal: false,
 	showNewClientModal: false,
 	newClient: { name: '', email: '' } as any,
@@ -171,7 +171,7 @@ const duplicateCount = computed(() => duplicateCheckedUploads.value.filter(f => 
 const showDuplicatePrompt = ref(false);
 
 function onSubmitUpload() {
-	duplicateCheckedUploads.value = Array.from(state.imagesToUpload).map(i => ({
+	duplicateCheckedUploads.value = state.imagesToUpload.map(i => ({
 		...i,
 		match: state.showUploadToSection?.photos.find(ph => ph.filename === i.filename),
 	}));
@@ -216,7 +216,7 @@ function sendToUploader() {
 	}));
 
 	uploaderStore.queueImages(payload);
-	state.imagesToUpload.clear();
+	state.imagesToUpload = [];
 	state.showUploadToSection = null;
 }
 
@@ -454,9 +454,14 @@ function clearAllSelected() {
 // }
 
 const photoToUpdate = ref<Photo | null>(null);
-const filesToUpdatePhoto = ref<Set<Photo>>(new Set());
-const photoToUpdatePhoto = computed(() => filesToUpdatePhoto.value.values().next().value);
+const filesToUpdatePhoto = ref<Array<Photo>>([]);
+const photoToUpdatePhoto = computed(() => filesToUpdatePhoto.value[0]);
 const isUpdatingPhoto = ref(false);
+
+const newPhotoDimensions = ref({ width: 0, height: 0 });
+function setNewPhotoDimensions(dimensions) {
+	newPhotoDimensions.value = dimensions;
+}
 
 function startUpdatePhoto(photo) {
 	photoToUpdate.value = photo;
@@ -727,8 +732,8 @@ function photoOptions(photo) {
 				<h3>Add photos to {{ state.showUploadToSection!.name }}</h3>
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="state.showUploadToSection = null" size="small">Cancel</Button>
-				<Button severity="primary" v-if="state.imagesToUpload.size" @click="onSubmitUpload" size="small"
-					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.size }})</Button>
+				<Button severity="primary" v-if="state.imagesToUpload.length" @click="onSubmitUpload" size="small"
+					:loading="state.isProcessingFiles">Upload ({{ state.imagesToUpload.length }})</Button>
 			</div>
 			<div class="body">
 				<ImageSelector v-model="state.imagesToUpload" />
@@ -761,20 +766,24 @@ function photoOptions(photo) {
 						<div class="w-10rem h-10rem"><PhotoFrame :photo="photoToUpdate" size="md" /></div>
 						<div>{{ photoToUpdate.width }}x{{ photoToUpdate.height }}</div>
 					</div>
-					<div class="flex flex-grow-1 flex-shrink-0 flex-column align-items-center" style="width: 49%;">
-						<template v-if="filesToUpdatePhoto.size === 1">
-							<div class="w-10rem h-10rem"><PhotoFrame :photo="filesToUpdatePhoto.values().next().value" size="md" /></div>
-							<div>{{ filesToUpdatePhoto.values().next().value.width }}x{{ filesToUpdatePhoto.values().next().value.height }}</div>
-							<Button label="Change" size="small" text icon="pi pi-sync" class="gap-2" @click="filesToUpdatePhoto = new Set()" />
+					<div class="flex flex-grow-1 flex-shrink-0 flex-column align-items-center justify-content-center" style="width: 49%;">
+						<template v-if="photoToUpdatePhoto">
+							<div class="w-10rem h-10rem">
+								<PhotoFrame :photo="photoToUpdatePhoto" size="md" :onDimensions="setNewPhotoDimensions" />
+							</div>
+							<div>{{newPhotoDimensions.width }}x{{newPhotoDimensions.height }}</div>
+							<Button label="Change" size="small" text icon="pi pi-sync" class="gap-2" @click="filesToUpdatePhoto = []" />
 						</template>
-						<ImageSelector v-else v-model="filesToUpdatePhoto" />
+						<ImageSelector v-else v-model="filesToUpdatePhoto" inline>
+							<div label="Select photo" class="p-button gap-2">Select photo</div>
+						</ImageSelector>
 					</div>
 				</div>
 			</div>
 			<div class="footer mt-3 flex gap-2">
 				<div class="flex-grow-1"></div>
 				<Button outlined @click="photoToUpdate = null" size="small">Cancel</Button>
-				<Button severity="primary" :disabled="filesToUpdatePhoto.size !== 1" @click="doUpdatePhoto" size="small"
+				<Button severity="primary" :disabled="!photoToUpdatePhoto" @click="doUpdatePhoto" size="small"
 					:loading="isUpdatingPhoto">Update photo</Button>
 			</div>
 		</div>

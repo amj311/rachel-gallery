@@ -15,7 +15,7 @@ const portfolioStore = usePortfolioStore();
 
 const state = reactive({
 	isVisible: false,
-	filePhotos: new Set<any>(),
+	filePhotos: [],
 	galleryPhotos: new Set<any>(),
 	openGalleryId: '',
 	openGalleryData: null as any,
@@ -41,7 +41,7 @@ function open(galleryPhotos?, openGalleryId?, portfolioSectionId?, onImageUpload
 	}
 	
 	// start with a clean slate
-	state.filePhotos.clear();
+	state.filePhotos = [];
 	state.galleryPhotos.clear();
 	state.openGalleryId = '';
 	state.openGalleryData = null;
