@@ -52,13 +52,10 @@ export const useUploaderStore = defineStore('uploader', {
 			this.viewMode = 'modal';
 			this.photosToUpload.push(...images);
 
-			console.log("before start")
 			this.startUploadLoop();
-			console.log("started!!!")
 		},
 
 		async checkGoogleStatus() {
-			console.log("check google", GoogleUploadService.hasValidToken)
 			if (!GoogleUploadService.hasValidToken) {
 				this.googleDriveInfo = {};
 				this.isGoogleReady = false;
@@ -77,9 +74,7 @@ export const useUploaderStore = defineStore('uploader', {
 
 
 		async startUploadLoop() {
-			console.log(this.isUploading)
 			if (this.isUploading) return;
-			console.log("here")
 
 			// run 5 upload workers
 			for (let i = 0; i < 5; i++) {
@@ -111,14 +106,18 @@ export const useUploaderStore = defineStore('uploader', {
 					if (!photo.googleFileId) throw new Error("no google id on photo!");
 					const oldGoogleId = photo.googleFileId;
 					// upload new image, then delete old one
+					await setPhotoDimensions(photo);
 					googleRes = await GoogleUploadService.uploadImage(photo);
 					await GoogleUploadService.deleteFile(oldGoogleId);
 				}
 				else if (photo.googleFileId) {
 					googleRes = await GoogleUploadService.copyFile(photo.googleFileId);
 				} else {
+					await setPhotoDimensions(photo);
 					googleRes = await GoogleUploadService.uploadImage(photo);
 				}
+
+				
 
 				photo.googleFileId = googleRes.id;
 				photo.googleOwnerEmail = this.googleDriveInfo.user.emailAddress;
@@ -183,3 +182,21 @@ export const useUploaderStore = defineStore('uploader', {
 		}
 	},
 });
+
+
+async function setPhotoDimensions(photo) {
+	if (!photo.blob) throw new Error("Can't get dimensions of photo with no blob");
+	const url = URL.createObjectURL(photo.blob);
+	var img = new Image;
+
+	return new Promise((resolve, reject) => {
+		console.log("getting dims", photo, url)
+		img.onload = function () {
+			photo.width = img.width;
+			photo.height = img.height;
+			URL.revokeObjectURL(url);
+			resolve(photo);
+		};
+		img.src = url;
+	});
+}

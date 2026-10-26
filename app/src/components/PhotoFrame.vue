@@ -20,7 +20,7 @@ const props = defineProps<{
 		googleFileId?: string,
 		width?: number,
 		height?: number,
-		dataUrl?: string
+		blob?: File,
 	},
 	fixedRatio?: boolean,
 	fillMethod?: 'cover' | 'contain',
@@ -124,6 +124,12 @@ async function drawWatermark() {
 	ctx.drawImage(wtr, wtrOffW, wtrOffH, newWtrW, newWtrH);
 }
 
+const objectUrl = ref();
+function createObjectUrl() {
+	objectUrl.value = photo.blob ? URL.createObjectURL(photo.blob) : null;
+	return objectUrl.value;
+}
+
 async function initPhoto() {
 	try {
 		state.isLoading = true;
@@ -139,7 +145,7 @@ async function initPhoto() {
 		await drawImage(isGooglePhoto ?
 			`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`
 			:
-			photo.dataUrl
+			createObjectUrl()
 		);
 		state.isLoadingHiRes = false;
 
@@ -161,6 +167,7 @@ async function initPhoto() {
 }
 
 onMounted(initPhoto);
+onBeforeUnmount(() => URL.revokeObjectURL(objectUrl.value));
 
 const objectPosition = computed(() => {
 	if (!props.position) {

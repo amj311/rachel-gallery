@@ -2,6 +2,7 @@
 import { reactive, ref, watch } from 'vue';
 import PhotoGrid from '@/components/PhotoGrid.vue';
 import { computed } from 'vue';
+import Paginator from 'primevue/paginator';
 
 const images = defineModel<Set<any>>();
 const setSizeBeforeNewFiles = ref(0);
@@ -20,31 +21,16 @@ async function handleFiles(files) {
 	}
 	state.isProcessingFiles = true;
 	setSizeBeforeNewFiles.value = images.value?.size;
-	await Promise.all(Array.from(files).map(async (file, i) => images.value?.add(await processImageFile(file, i))));
+	files.forEach((file, i) => {
+		images.value?.add({
+			blob: file,
+			filename: file.name,
+			size: file.size,
+			type: file.type,
+			uploadOrder: i + setSizeBeforeNewFiles.value,
+		});
+	})
 	state.isProcessingFiles = false;
-}
-
-function processImageFile(file, selectionIndex) {
-	const photo = {
-		blob: file,
-		filename: file.name,
-		size: file.size,
-		type: file.type,
-		uploadOrder: selectionIndex + setSizeBeforeNewFiles.value,
-	} as any;
-
-	// Create data URL for raw file
-	var url = URL.createObjectURL(photo.blob);
-	photo.dataUrl = url;
-	var img = new Image;
-	return new Promise((resolve, reject) => {
-		img.onload = function () {
-			photo.width = img.width;
-			photo.height = img.height;
-			resolve(photo);
-		};
-		img.src = url;
-	});
 }
 
 function removeFileFromUpload(file) {
@@ -70,7 +56,9 @@ function onDrop(event) {
 	event.target.classList.remove('drag-over');
 }
 
-const photoArray = computed(() => Array.from(images.value?.values() || []));
+const firstPageIdx = ref(0);
+const photosPerPage = 30;
+const photoPage = computed(() => Array.from(images.value?.values() || []).slice(firstPageIdx.value, firstPageIdx.value + photosPerPage));
 
 </script>
 
@@ -86,9 +74,10 @@ const photoArray = computed(() => Array.from(images.value?.values() || []));
 					<slot><div>Drag and drop or <a>select images</a></div></slot>
 				</div>
 			</label>
-			<PhotoGrid v-model="photoArray">
+			<PhotoGrid v-model="photoPage">
 				<template #options="{ photo }"><div class="removePhoto" @click="removeFileFromUpload(photo)"><i class="pi pi-times" /></div></template>
 			</PhotoGrid>
+			<Paginator v-if="images!.size > photosPerPage" v-model:first="firstPageIdx" :rows="photosPerPage" :totalRecords="images!.size" template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink" />
 		</div>
 		<input type="file" id="fileSelect" hidden multiple :onchange="(event) => handleFiles(event.target.files)" />
 	</div>
