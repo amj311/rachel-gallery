@@ -308,12 +308,12 @@ function removePhotoFromDownload(photo) {
 }
 
 const minShortSideOfDownload = computed(() => Math.min(...downloadDialogPhotos.value.map(photo => smallestEdgePx(photo))));
-const tooSmallPhotos = computed(() => downloadDialogPhotos.value.filter(ph => smallestEdgePx(ph) < selectedRes.value.size));
+const tooSmallPhotos = computed(() => selectedRes.value ? downloadDialogPhotos.value.filter(ph => smallestEdgePx(ph) < selectedRes.value!.size) : []);
 
 const downloadDialogProcessing = ref(false);
 
 function handleDownloadDialogButton() {
-	if (!selectedRes.value.size) return;
+	if (!selectedRes.value) return;
 	if (selectedRes.value.size > minShortSideOfDownload.value) {
 		void requestResolution();
 	}
@@ -324,6 +324,7 @@ function handleDownloadDialogButton() {
 }
 
 async function requestResolution() {
+	if (!selectedRes.value) return;
 	try {
 		downloadDialogProcessing.value = true;
 		await request.post(`/gallery/${state.gallery.id}/requestRes`, {
@@ -599,9 +600,9 @@ async function loadDownloadLink() {
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }" :id="'slideshow-scroll-target__'+photo.id">
 								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)" @contextmenu.prevent="() => doClientActions ? toggleSelected(photo) : toggleFavorite(photo)">
 								</div>
-								<div class="bottom-bar">
+								<div v-if="!isMobile || showSelectors" class="bottom-bar">
 									<div class="buttons">
-										<div class="button" :class="{ 'heart-fixed': state.favoriteIds.has(photo.id) }"
+										<div class="button" :class="{ 'heart-fixed': showSelectors || state.favoriteIds.has(photo.id) }"
 											@click="toggleFavorite(photo)"><i
 												:class="state.favoriteIds.has(photo.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" />
 										</div>
@@ -725,96 +726,75 @@ async function loadDownloadLink() {
 			blockScroll
 		>
 			<div class="flex flex-column h-full overflow-hidden gap-3">
-				<!-- <div
-					class="relative h-13rem flex-shrink-0"
-				>
-					<div
-						v-for="file, index in previewPhotoStack"
-						:key="file.googleFileId"
-						class="w-12rem h-12rem"
-						style="position: absolute; translate: -50% -50%; filter: drop-shadow(0 0 0.25rem #0003)"
-						:style="{ top: `${50 + index}%`, left: `${50 + index}%`, opacity: 1 * ((index + 1) / previewPhotoStack.length), transform: `rotate(${(20 * (index / (previewPhotoStack.length))) - 10}deg)` }"
-					>
-						<PhotoFrame
-							:photo="{ id: file.googleFileId, googleFileId: file.googleFileId }"
-							size="md"
-						/>
-					</div>
-				</div> -->
 
-				<p>Review the target resolution for each photo:</p>
 
-				<div class="flex flex-column flex-grow-1 overflow-y-auto gap-2">
-					<div v-for="photo in downloadDialogPhotos" class="flex align-items-center gap-2">
-						<div class="h-5rem w-5rem flex-shrink-0">
-							<PhotoFrame
-								:photo="photo"
-							/>
-						</div>
-						<div class="flex-grow-1 flex flex-column justify-content-center align-items-start overflow-hidden">
-							<div class="font-medium w-full text-ellipsis">{{ photo.filename }}</div>
-							<div class="flex flex-wrap gap-2">
-								<span>{{ resolutionString(resolvedResolution(photo, selectedRes.size)) }}</span>
-								<span v-if="smallestEdgePx(photo) < selectedRes.size" class="bg-orange-300 px-2 border-round white-space-nowrap">Too small</span>
+					<div class="flex flex-column flex-grow-1 overflow-y-auto gap-2">
+						<div v-for="photo in downloadDialogPhotos" class="flex align-items-center gap-2">
+							<div class="h-5rem w-5rem flex-shrink-0">
+								<PhotoFrame
+									:photo="photo"
+								/>
+							</div>
+							<div class="flex-grow-1 flex flex-column justify-content-center align-items-start overflow-hidden">
+								<div class="font-medium w-full text-ellipsis">{{ photo.filename }}</div>
+								<div class="flex flex-wrap gap-2">
+									<span>{{ resolutionString(resolvedResolution(photo, selectedRes.size)) }}</span>
+									<span v-if="smallestEdgePx(photo) < selectedRes.size" class="bg-orange-300 px-2 border-round white-space-nowrap">Too small</span>
+								</div>
+							</div>
+							<div>
+								<Button icon="pi pi-times" text @click="removePhotoFromDownload(photo)" />
 							</div>
 						</div>
-						<div>
-							<Button icon="pi pi-times" text @click="removePhotoFromDownload(photo)" />
-						</div>
 					</div>
-				</div>
 
-				<p>Select the resolution for your download:</p>
-				<Dropdown v-model="selectedRes" :options="Object.values(Resolutions)">
-					<template #value="{ value: res }">
-						<div class="font-semibold">
-							For {{ res.bestFor }}
-						</div>
-						<div>
-							<template v-if="downloadDialogPhotos.length === 1">{{ resolutionString(resolvedResolution(downloadDialogPhotos[0], res.size)) }}</template>
-							<template v-else>{{res.size}} on the shorter side</template>
-						</div>
-						<div class="text-sm" v-if="res.size > minShortSideOfDownload">Available upon request</div>
-					</template>
-					<template #option="{ option: res }">
-						<div>
+					<p>Select the resolution for your download:</p>
+					<Dropdown v-model="selectedRes" :options="Object.values(Resolutions)">
+						<template #value="{ value: res }">
 							<div class="font-semibold">
 								For {{ res.bestFor }}
 							</div>
-							<div>
-								<template v-if="downloadDialogPhotos.length === 1">{{ resolutionString(resolvedResolution(downloadDialogPhotos[0], res.size)) }}</template>
-								<template v-else>{{res.size}} on the shorter side</template>
-							</div>
+							<div>{{res.size}} on the shorter side</div>
 							<div class="text-sm" v-if="res.size > minShortSideOfDownload">Available upon request</div>
+						</template>
+						<template #option="{ option: res }">
+							<div>
+								<div class="font-semibold">
+									For {{ res.bestFor }}
+								</div>
+								<div>{{res.size}} on the shorter side</div>
+								<div class="text-sm" v-if="res.size > minShortSideOfDownload">Available upon request</div>
+							</div>
+						</template>
+					</Dropdown>
+
+
+					<div>
+						<div v-if="tooSmallPhotos.length" class="mb-2 text-center">
+							{{ tooSmallPhotos.length }} selected images are not stored at that resolution, but can be updated upon request.
 						</div>
-					</template>
-				</Dropdown>
-
-
-				<div>
-					<div v-if="tooSmallPhotos.length" class="mb-2 text-center">
-						{{ tooSmallPhotos.length }} selected images are not stored at that resolution, but can be updated upon request.
+						<Button
+							severity="primary"
+							size="large"
+							class="w-full flex align-items-center justify-content-center gap-2" 
+							:disabled="!selectedRes"
+							@click="handleDownloadDialogButton"
+						>
+							<template v-if="tooSmallPhotos.length">
+								Request resolution
+							</template>
+							<template v-else-if="downloadDialogMode === 'selectRes' && downloadDialogPhotos.length > 1">
+								<i class="pi pi-download" />
+								Start download
+							</template>
+							<template v-else>
+								<i class="pi pi-download" />
+								Start download
+							</template>
+						</Button>
+						<Button text severity="secondary" label="Cancel" size="large" class="mt-2 w-full text-center" />
 					</div>
-					<Button
-						severity="primary"
-						size="large"
-						class="w-full flex align-items-center justify-content-center gap-2" 
-						:disabled="!selectedRes"
-						@click="handleDownloadDialogButton"
-					>
-						<template v-if="tooSmallPhotos.length">
-							Request resolution
-						</template>
-						<template v-else-if="downloadDialogMode === 'selectRes' && downloadDialogPhotos.length > 1">
-							<i class="pi pi-download" />
-							Start download
-						</template>
-						<template v-else>
-							<i class="pi pi-download" />
-							Start download
-						</template>
-					</Button>
-				</div>
+
 			</div>
 
 		</Sidebar>
@@ -863,7 +843,7 @@ async function loadDownloadLink() {
 	}
 }
 
-#viewGallery, .favorites-modal {
+#viewGallery, .favorites-modal, #Slideshow {
 	#cover {
 		width: 100%;
 		height: 100vh;
