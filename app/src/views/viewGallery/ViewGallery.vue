@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, onBeforeMount, computed, watch } from 'vue';
+import { reactive, onBeforeMount, computed, watch, Directive } from 'vue';
 import request from '@/services/request';
 import Slideshow from '../../components/Slideshow.vue';
 import GalleryCover from '@/components/GalleryCover.vue';
@@ -490,7 +490,7 @@ async function loadDownloadLink() {
 		</div>
 
 		<div v-if="showLoginModal || !canView" class="login-guard">
-			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery" :closeable="showLoginModal" @close="showLoginModal = false" />
+			<LoginModal v-if="authMode === 'login'" message="Please sign in to view this gallery"  :closeable="showLoginModal" @close="showLoginModal = false" />
 			<div v-if="authMode === 'code'" class="code-modal modal">
 				<img :src="watermarkImage" width="100" />
 				<h3>Please enter the access code to view this gallery</h3>
@@ -505,7 +505,7 @@ async function loadDownloadLink() {
 				<template #logo>
 					<DropdownMenu :model="state.gallery?.sections.map(s => ({ label: s.name, command() { scrollToSection(s) } }))">
 					{{ state.gallery.name }}
-					<i class="pi pi-angle-down ml-2 text-black-alpha-40" />
+					<i class="pi pi-angle-down ml-1 text-black-alpha-40" />
 					</DropdownMenu>
 				</template>
 
@@ -549,7 +549,7 @@ async function loadDownloadLink() {
 					<PhotoWall :photos="section.photos" :lazyLoad="true" :animate="true" >
 						<template v-slot="{ photo }">
 							<div class="photo-overlay" :class="{ 'selected': state.selectedIds.has(photo.id) }">
-								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)">
+								<div class="photo-trigger" @click="() => showSelectors ? toggleSelected(photo) : openSlideshow(allPhotos, photo)" @contextmenu.prevent="toggleSelected(photo)">
 								</div>
 								<div class="bottom-bar">
 									<div class="buttons">
