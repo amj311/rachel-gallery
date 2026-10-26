@@ -3,6 +3,7 @@ import { reactive, onBeforeMount, onBeforeUnmount, computed, ref, watch } from '
 import PhotoFrame from '@/components/PhotoFrame.vue';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
+import Sidebar from 'primevue/sidebar';
 
 const router = useRouter();
 
@@ -51,21 +52,17 @@ const isPlaying = computed(() => state.playingTimer !== 0);
 const nextPhoto = computed(() => state.photos[(state.activePhotoIdx + 1) % state.photos.length]);
 const prevPhoto = computed(() => state.photos[(state.activePhotoIdx - 1 + state.photos.length) % state.photos.length]);
 
-const initialScroll = window.scrollY;
-
 function setupListeners() {
 	window.addEventListener('keydown', handleKeydown);
 	window.addEventListener('touchstart', handleTouchStart);
 	window.addEventListener('touchmove', handleTouchMove);
 	window.addEventListener('touchend', handleTouchEnd);
-	window.addEventListener('scroll', preventScroll);
 }
 function removeListeners() {
 	window.removeEventListener('keydown', handleKeydown);
 	window.removeEventListener('touchstart', handleTouchStart);
 	window.removeEventListener('touchmove', handleTouchMove);
 	window.removeEventListener('touchend', handleTouchEnd);
-	window.removeEventListener('scroll', preventScroll);
 }
 
 
@@ -165,50 +162,42 @@ function handleTouchEnd(e) {
 	}
 }
 
-function preventScroll(e) {
-	window.scroll({
-		top: initialScroll,
-		left: 0,
-		behavior: 'instant',
-	});
-}
-
-
 </script>
 
 
 <template>
-	<div id="Slideshow" v-if="showSlideshow">
-		<div id="topBar">
-			<div class="flex justify-content-start"></div>
-			<div class="flex justify-content-center"></div>
-			<div class="flex align-items-center justify-content-end" style="zoom: .9">
-				<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" size="large" />
-				<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" size="large" />
-				<Button text @click="close" icon="pi pi-times" size="large" />
+	<Sidebar blockScroll :visible="showSlideshow" id="Slideshow" class="w-full h-full" position="bottom" :showCloseIcon="false">
+		<template #header>
+			<div id="topBar" class="w-full">
+				<div class="flex justify-content-start"></div>
+				<div class="flex justify-content-center"></div>
+				<div class="flex align-items-center justify-content-end" style="zoom: .9">
+					<Button text v-if="!isPlaying" @click="play" icon="pi pi-play" size="large" />
+					<Button text v-if="isPlaying" @click="stop" icon="pi pi-pause" size="large" />
+					<Button text @click="close" icon="pi pi-times" size="large" />
+				</div>
+			</div>
+		</template>
+		<div class="flex h-full flex-column w-full overflow-hidden">
+			<div class="photo-frame flex-grow-1 w-full" :class="{ 'photo-frame': true, [state.animationClass]: true }">
+				<div class="prev">
+					<PhotoFrame :key="prevPhoto.id" :photo="prevPhoto" :watermark="true" :size="'xl'" />
+				</div>
+				<div class="active">
+					<PhotoFrame :key="activePhoto.id" :photo="activePhoto" :watermark="true" :size="'xl'" />
+				</div>
+				<div class="next">
+					<PhotoFrame :key="nextPhoto.id" :photo="nextPhoto" :watermark="true" :size="'xl'" />
+				</div>
+			</div>
+		
+			<div id="bottomBar" style="zoom: .9">
+				<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" size="large" />
+				<div class="flex align-items-center"><slot :photo="activePhoto"></slot></div>
+				<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" size="large" />
 			</div>
 		</div>
-		<div :class="{ 'photo-frame': true, [state.animationClass]: true }">
-			<div class="prev">
-				<PhotoFrame :key="prevPhoto.id" :photo="prevPhoto" :watermark="true" :size="'xl'" />
-			</div>
-			<div class="active">
-				<PhotoFrame :key="activePhoto.id" :photo="activePhoto" :watermark="true" :size="'xl'" />
-			</div>
-			<div class="next">
-				<PhotoFrame :key="nextPhoto.id" :photo="nextPhoto" :watermark="true" :size="'xl'" />
-			</div>
-		</div>
-		<div id="bottomBar" style="zoom: .9">
-			<Button text @click="() => uiSwap(goToPrev)" icon="pi pi-chevron-left" size="large" />
-			<div class="flex align-items-center"><slot :photo="activePhoto"></slot></div>
-			<Button text @click="() => uiSwap(goToNext)" icon="pi pi-chevron-right" size="large" />
-		</div>
-
-		<div style="display: none">
-
-		</div>
-	</div>
+	</Sidebar>
 </template>
 
 <style lang="scss">
@@ -217,19 +206,8 @@ function preventScroll(e) {
 }
 
 #Slideshow {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: #fffe;
-	backdrop-filter: blur(5px);
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	align-items: center;
-	z-index: 20;
-
+	background-color: #ffffffdd;
+	backdrop-filter: blur(6px);
 
 	#topBar {
 		width: 100%;
@@ -237,7 +215,6 @@ function preventScroll(e) {
 		grid-template-columns: repeat(3, 1fr);
 		justify-content: flex-end;
 		align-items: center;
-		padding: .5em;
 	}
 
 	#bottomBar {

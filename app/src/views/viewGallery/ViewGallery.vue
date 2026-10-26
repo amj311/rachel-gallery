@@ -258,6 +258,9 @@ const previewPhotoStack = computed(() => [...downloadDialogPhotos.value].reverse
 const selectedRes = ref<typeof Resolutions[keyof typeof Resolutions]>(Resolutions[1024]);
 
 function removePhotoFromDownload(photo) {
+	if (downloadDialogPhotos.value.length === 1) {
+		showDownloadDialog.value = false;
+	}
 	downloadDialogPhotos.value = downloadDialogPhotos.value.filter(ph => ph.id !== photo.id);
 }
 
@@ -504,8 +507,10 @@ async function loadDownloadLink() {
 			<NavBar sticky>
 				<template #logo>
 					<DropdownMenu :model="state.gallery?.sections.map(s => ({ label: s.name, command() { scrollToSection(s) } }))">
-					{{ state.gallery.name }}
-					<i class="pi pi-angle-down ml-1 text-black-alpha-40" />
+						<div class="flex align-items-center">
+							{{ state.gallery.name }}
+							<i class="pi pi-angle-down ml-1 text-black-alpha-40" />
+						</div>
 					</DropdownMenu>
 				</template>
 
