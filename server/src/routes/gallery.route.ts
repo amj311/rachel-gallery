@@ -262,7 +262,7 @@ export default (route, _, done) => {
 		// sz should be wX or hX
 		if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
 
-		const response = await axios.get(`https://drive.google.com/thumbnail?id=${googleFileId}&sz=${sz}`,  { responseType: 'arraybuffer' })
+		const response = await axios.get(`https://lh3.googleusercontent.com/d/${googleFileId}=${sz}`,  { responseType: 'arraybuffer' })
 		return {
 			success: true,
 			data: response.data,
@@ -272,11 +272,55 @@ export default (route, _, done) => {
 
 
 	route.get('/thumb/photo-google/:googleFileId/:sz', async (request, reply) => {
+		// const { googleFileId, sz } = request.params;
+		// // sz should be wX or hX
+		// if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
+
+		// reply.redirect(`https://lh3.googleusercontent.com/d/${googleFileId}=${sz}`)
+
+		// 1. Use a Buffer for reliable handling of binary data
+		// Ensure you have the necessary variables for the request
 		const { googleFileId, sz } = request.params;
 		// sz should be wX or hX
 		if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
 
-		reply.redirect(`https://drive.google.com/thumbnail?id=${googleFileId}&sz=${sz}`)
+		try {
+			// Axios fetches the data as an ArrayBuffer
+			const response = await axios.get(
+				`https://lh3.googleusercontent.com/d/${googleFileId}=${sz}`,
+				{ responseType: 'arraybuffer' }
+			);
+
+			// 2. Convert the ArrayBuffer to a Node.js Buffer
+			// This is crucial for reliable binary streaming in Node.js
+			const imageBuffer = Buffer.from(response.data);
+
+			// ==================================================================
+			// 3. SETTING THE HEADERS (This is the most important step)
+			// ==================================================================
+
+			// Get MIME Type: You need a way to determine the actual MIME type (e.g., image/jpeg, image/png). 
+			// A robust solution would use a library like 'file-type' on the imageBuffer.
+			// For this example, we assume a common format (JPEG).
+			const mimeType = 'image/jpeg'; 
+			
+			// Set the headers that tell the browser how to handle the data stream
+			reply.header('Content-Type', mimeType);
+			reply.header('Content-Length', imageBuffer.length);
+			// Optional: Add Cache control headers
+			reply.header('Cache-Control', 'public, max-age=3600');
+
+
+			// 4. STREAMING THE DATA
+			// Instead of returning an object, we return the Buffer directly. 
+			// Fastify/Koas recognizes that a Buffer being returned is raw binary data 
+			// and sends it without attempting JSON serialization.
+			return imageBuffer;
+
+		} catch (error) {
+			// Handle errors, e.g., file not found or bad network request
+			reply.status(404).send({ error: 'Image not found or inaccessible.' });
+		}
 	})
 
 
