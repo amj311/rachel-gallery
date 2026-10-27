@@ -87,7 +87,11 @@ export const GoogleDriveService = {
 				fileId: googleFileId,
 			});
 		}
-		catch(error) {
+		catch(error: any) {
+			// Report success if file already doesn't exist
+			if (error.code === 404) {
+				return;
+			}
 			console.error(error);
 			throw Error("Could not delete file!")
 		}

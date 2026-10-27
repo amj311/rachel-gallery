@@ -34,7 +34,9 @@ defineEmits(['close']);
 	translate: 0 50%;
 
 	&.isMobile {
-		height: 100%;
+		bottom: 0;
+		translate: none;
+		height: 75%;
 		width: 100%;
 	}
 	
