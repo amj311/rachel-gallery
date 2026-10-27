@@ -1,4 +1,3 @@
-import { FOOTER } from "@shared/email_templates";
 import { MailtrapClient, type Address } from "mailtrap";
 const TOKEN = process.env.MAILTRAP_API_TOKEN || '';
 
