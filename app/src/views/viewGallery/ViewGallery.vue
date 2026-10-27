@@ -358,9 +358,9 @@ async function startDownloadPhotos(photos: Array<Photo>, shortestEdge: RESOLUTIO
 				targetSz = `h${Number(shortestEdge)}`;
 			}
 
-			const { data } = await request.get('/gallery/download/photo-google/' + photo.googleFileId + '/' + targetSz);
+			const { data: blob } = await request.get('/gallery/thumb/photo-google/' + photo.googleFileId + '/' + targetSz, { 'responseType': 'blob' });
 
-			const blob = new Blob([Buffer.from(data.data) as unknown as ArrayBuffer], { type: 'image/jpeg' });
+			// const blob = new Blob([Buffer.from(data.data) as unknown as ArrayBuffer], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
 		}
 

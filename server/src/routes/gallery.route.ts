@@ -8,7 +8,6 @@ import JSZip from "jszip";
 // import { DownloadService } from "../services/DownloadService";
 import axios from "axios";
 import { UserService } from "../services/UserService";
-import https from 'https';
 
 export default (route, _, done) => {
 
@@ -258,17 +257,20 @@ export default (route, _, done) => {
 	// })
 
 
-	route.get('/download/photo-google/:googleFileId/:sz', async (request, reply) => {
-		const { googleFileId, sz } = request.params;
-		// sz should be wX or hX
-		if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
+	// NOT IN USE
+	// frontend now streams directly from the thumb/ route
 
-		const response = await axios.get(`https://lh3.googleusercontent.com/d/${googleFileId}=${sz}`,  { responseType: 'arraybuffer' })
-		return {
-			success: true,
-			data: response.data,
-		}
-	})
+	// route.get('/download/photo-google/:googleFileId/:sz', async (request, reply) => {
+	// 	const { googleFileId, sz } = request.params;
+	// 	// sz should be wX or hX
+	// 	if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
+
+	// 	const response = await axios.get(`https://lh3.googleusercontent.com/d/${googleFileId}=${sz}`,  { responseType: 'arraybuffer' })
+	// 	return {
+	// 		success: true,
+	// 		data: response.data,
+	// 	}
+	// })
 
 
 
@@ -312,57 +314,6 @@ export default (route, _, done) => {
 			// return the stream directly. Fastify will automatically pipe this 
 			// stream to the response and handle the closing of the connection.
 			return response.data;
-
-
-			// const options = {
-			// 	hostname: 'lh3.googleusercontent.com',
-			// 	path: `/d/${googleFileId}=${sz}`,
-			// 	method: 'GET',
-			// 	headers: {
-			// 		'User-Agent': 'Mozilla/5.0 (streaming-client)'
-			// 	}
-			// };
-
-			// // 1. Initiate the external request stream
-			// const googleStream = https.request(options, (res) => {
-			// 	// --- CRITICAL STEP: Get MIME Type and Content-Length from response headers ---
-			// 	let mimeType = 'application/octet-stream'; // Fallback default
-			// 	let contentLength: number | null = null;
-
-			// 	// 2. Read and set headers from the source response (res)
-			// 	if (res.statusCode! >= 200 && res.statusCode! < 300) {
-			// 		// Use the Content-Type header provided by Google
-			// 		mimeType = res.headers['content-type'] || mimeType;
-					
-			// 		// Use the Content-Length header for client signaling
-			// 		contentLength = res.headers['content-length'] ? parseInt(res.headers['content-length'], 10) : null;
-
-			// 		// 3. Set the required headers on the outgoing reply stream
-			// 		reply.header('Content-Type', mimeType);
-			// 		if (contentLength) {
-			// 			reply.header('Content-Length', contentLength);
-			// 		}
-			// 		// Optionally add cache control headers
-			// 		reply.header('Cache-Control', 'public, max-age=3600');
-			// 	} else {
-			// 		// Handle HTTP error status codes (e.g., 404, 500)
-			// 		reply.status(res.statusCode).end(`Error fetching image: ${res.statusMessage || 'Unknown Error'}`);
-			// 		return;
-			// 	}
-				
-			// 	// 4. Stream the data chunk by chunk
-			// 	// Pipelining handles the streaming seamlessly.
-			// 	googleStream.pipe(reply);
-			// });
-
-			// // 5. Error Handling for Network Failure (Outgoing Stream)
-			// googleStream.on('error', (err) => {
-			// 	console.error('Streaming error:', err);
-			// 	// If the error happens before headers are sent, we must manually end the reply.
-			// 	if (!reply.headersSent) {
-			// 		reply.status(500).end('Error connecting to image source.');
-			// 	}
-			// });
 
 		} catch (error) {
 			// Handle errors, e.g., file not found or bad network request
