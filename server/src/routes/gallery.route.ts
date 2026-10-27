@@ -8,6 +8,7 @@ import JSZip from "jszip";
 // import { DownloadService } from "../services/DownloadService";
 import axios from "axios";
 import { UserService } from "../services/UserService";
+import https from 'https';
 
 export default (route, _, done) => {
 
@@ -288,34 +289,80 @@ export default (route, _, done) => {
 			// Axios fetches the data as an ArrayBuffer
 			const response = await axios.get(
 				`https://lh3.googleusercontent.com/d/${googleFileId}=${sz}`,
-				{ responseType: 'arraybuffer' }
+				{ responseType: 'stream' }
 			);
 
-			// 2. Convert the ArrayBuffer to a Node.js Buffer
-			// This is crucial for reliable binary streaming in Node.js
-			const imageBuffer = Buffer.from(response.data);
-
 			// ==================================================================
-			// 3. SETTING THE HEADERS (This is the most important step)
+			// 2. SETTING THE HEADERS
 			// ==================================================================
 
-			// Get MIME Type: You need a way to determine the actual MIME type (e.g., image/jpeg, image/png). 
-			// A robust solution would use a library like 'file-type' on the imageBuffer.
-			// For this example, we assume a common format (JPEG).
-			const mimeType = 'image/jpeg'; 
-			
-			// Set the headers that tell the browser how to handle the data stream
+			// Use the Content-Type provided by Google instead of hardcoding it
+			const mimeType = response.headers['content-type'] || 'image/jpeg';
 			reply.header('Content-Type', mimeType);
-			reply.header('Content-Length', imageBuffer.length);
+
+			// Forward the Content-Length from Google's response headers
+			if (response.headers['content-length']) {
+				reply.header('Content-Length', response.headers['content-length']);
+			}
+
 			// Optional: Add Cache control headers
 			reply.header('Cache-Control', 'public, max-age=3600');
 
+			// 3. STREAMING THE DATA
+			// return the stream directly. Fastify will automatically pipe this 
+			// stream to the response and handle the closing of the connection.
+			return response.data;
 
-			// 4. STREAMING THE DATA
-			// Instead of returning an object, we return the Buffer directly. 
-			// Fastify/Koas recognizes that a Buffer being returned is raw binary data 
-			// and sends it without attempting JSON serialization.
-			return imageBuffer;
+
+			// const options = {
+			// 	hostname: 'lh3.googleusercontent.com',
+			// 	path: `/d/${googleFileId}=${sz}`,
+			// 	method: 'GET',
+			// 	headers: {
+			// 		'User-Agent': 'Mozilla/5.0 (streaming-client)'
+			// 	}
+			// };
+
+			// // 1. Initiate the external request stream
+			// const googleStream = https.request(options, (res) => {
+			// 	// --- CRITICAL STEP: Get MIME Type and Content-Length from response headers ---
+			// 	let mimeType = 'application/octet-stream'; // Fallback default
+			// 	let contentLength: number | null = null;
+
+			// 	// 2. Read and set headers from the source response (res)
+			// 	if (res.statusCode! >= 200 && res.statusCode! < 300) {
+			// 		// Use the Content-Type header provided by Google
+			// 		mimeType = res.headers['content-type'] || mimeType;
+					
+			// 		// Use the Content-Length header for client signaling
+			// 		contentLength = res.headers['content-length'] ? parseInt(res.headers['content-length'], 10) : null;
+
+			// 		// 3. Set the required headers on the outgoing reply stream
+			// 		reply.header('Content-Type', mimeType);
+			// 		if (contentLength) {
+			// 			reply.header('Content-Length', contentLength);
+			// 		}
+			// 		// Optionally add cache control headers
+			// 		reply.header('Cache-Control', 'public, max-age=3600');
+			// 	} else {
+			// 		// Handle HTTP error status codes (e.g., 404, 500)
+			// 		reply.status(res.statusCode).end(`Error fetching image: ${res.statusMessage || 'Unknown Error'}`);
+			// 		return;
+			// 	}
+				
+			// 	// 4. Stream the data chunk by chunk
+			// 	// Pipelining handles the streaming seamlessly.
+			// 	googleStream.pipe(reply);
+			// });
+
+			// // 5. Error Handling for Network Failure (Outgoing Stream)
+			// googleStream.on('error', (err) => {
+			// 	console.error('Streaming error:', err);
+			// 	// If the error happens before headers are sent, we must manually end the reply.
+			// 	if (!reply.headersSent) {
+			// 		reply.status(500).end('Error connecting to image source.');
+			// 	}
+			// });
 
 		} catch (error) {
 			// Handle errors, e.g., file not found or bad network request
