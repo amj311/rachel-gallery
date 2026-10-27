@@ -266,26 +266,6 @@ function resolutionString(res: { width: number, height: number }) {
 	return `${res.width}x${res.height}`;
 }
 
-function downloadMenu(photos, cb?) {
-	return [
-		// {
-		// 	label: 'Shareable file',
-		// 	command: () => { startDownloadPhotos2(photos, RESOLUTION.x800); cb?.call(); }
-		// },
-		// photos.length === 1 && photos[0].size > 4000000 ? {
-		// 	label: `Printable file (${(photos[0].size / 1e+6).toFixed(1)} MB)`,
-		// 	command: () => { startDownloadPhotos(photos, true); cb?.call(); }
-		// } : null,
-
-		...Array.from(Object.values(Resolutions)).map(r => {
-			return {
-				label: photos.length === 1 ? resolutionString(resolvedResolution(photos[0], r.size)) : r.size,
-				command: () => startDownloadPhotos2(photos, r.size),
-			}
-		})
-	].filter(Boolean);
-}
-
 const showDownloadDialog = ref(false);
 const downloadDialogPhotos = ref<Array<Photo>>([]);
 const downloadDialogMode = ref<'selectRes' | 'review'>();
@@ -318,7 +298,7 @@ function handleDownloadDialogButton() {
 		void requestResolution();
 	}
 	else {
-		void startDownloadPhotos2(downloadDialogPhotos.value, selectedRes.value.size);
+		void startDownloadPhotos(downloadDialogPhotos.value, selectedRes.value.size);
 		closeDownloadDialog();
 	}
 }
@@ -350,97 +330,7 @@ async function requestResolution() {
 	}
 }
 
-// my server can't handle pulling large files from google yet, so full print res must be downloaded one at a time
-// async function startDownloadPhotos(photos, hiRes = false) {
-// 	// download individual hi res through google
-// 	if (hiRes && photos.length === 1) {
-// 		const link = document.createElement('a');
-// 		link.href = `https://drive.google.com/uc?id=${photos[0].googleFileId}&export=download`;
-// 		link.download = photos[0].filename;
-// 		link.click();
-// 		link.remove();
-// 		return;
-// 	}
-
-
-// 	if (state.pendingDownload) {
-// 		toast.add({
-// 			severity: 'warn',
-// 			summary: 'Wait for previous download to finish',
-// 			life: 3000,
-// 		})
-// 		return;
-// 	}
-// 	if (!photos.length) return;
-
-// 	state.pendingDownload = {
-// 		status: 'processing',
-// 		photosToDownload: photos,
-// 		readyPhotos: [],
-// 		hiRes,
-// 	};
-
-// 	try {
-// 		// have to do these one at a time to not crash server
-// 		for (const photo of photos) {
-// 			let width = photo.width;
-
-// 			let maxBytes = megaBytes.value * 1e+6; // X MB
-// 			console.log(photo.size * 1e-6, maxBytes / 1e+6);
-// 			// if (hiRes && photo.size > maxBytes) {
-// 			// 	// compute new width to approximate desired size
-// 			// 	// new width = sqrt(area * (width / height))
-// 			// 	const scaleRatio = maxBytes / photo.size;
-// 			// 	const targetArea = (width * photo.height) * scaleRatio;
-// 			// 	const ratio = photo.width / photo.height;
-// 			// 	width = Math.sqrt(targetArea * ratio);
-// 			// }
-// 			// if (!hiRes) {
-// 				if (photo.width < photo.height) {
-// 					width = 1600 * (photo.width / photo.height);
-// 				}
-// 				else {
-// 					width = 1600;
-// 				}
-// 			// }
-
-// 			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + Math.round(width));
-
-// 			const blob = new Blob([Buffer.from(data.data)], { type: 'image/jpeg' });
-// 			state.pendingDownload.readyPhotos.push({ photo, blob });
-// 			console.log(blob.size * 1e-6);
-// 		}
-
-// 		const isMultiple = state.pendingDownload?.readyPhotos.length > 1;
-// 		let finalBlob;
-
-// 		if (isMultiple) {
-// 			const zip = new JSZip();
-// 			state.pendingDownload.readyPhotos.forEach(({ photo, blob }) => {
-// 				zip.file(`${photo.filename}`, blob, { compression: 'DEFLATE' });
-// 			})
-// 			const zipBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-// 			finalBlob = new Blob([zipBuffer], { 'type': 'application/zip' });
-// 		} else {
-// 			finalBlob = state.pendingDownload?.readyPhotos[0].blob;
-// 		}
-
-// 		state.pendingDownload.downloadName = isMultiple ? state.gallery.name + '.zip' : state.pendingDownload?.readyPhotos[0].photo.filename;
-// 		state.pendingDownload.finalBlob = finalBlob;
-// 		state.pendingDownload.status = 'finished';
-
-// 		if (state.pendingDownload.readyPhotos.length === 1) {
-// 			loadDownloadLink();
-// 		}
-// 	}
-// 	catch (e: any) {
-// 		console.error(e);
-// 		state.pendingDownload.error = e.message;
-// 		state.pendingDownload.status = 'error';
-// 	}
-// }
-
-async function startDownloadPhotos2(photos: Array<Photo>, shortestEdge: RESOLUTION) {
+async function startDownloadPhotos(photos: Array<Photo>, shortestEdge: RESOLUTION) {
 	if (state.pendingDownload) {
 		toast.add({
 			severity: 'warn',
@@ -468,7 +358,7 @@ async function startDownloadPhotos2(photos: Array<Photo>, shortestEdge: RESOLUTI
 				targetSz = `h${Number(shortestEdge)}`;
 			}
 
-			const { data } = await request.get('/gallery/' + state.gallery.id + '/photo-google/' + photo.googleFileId + '/' + targetSz);
+			const { data } = await request.get('/gallery/download/photo-google/' + photo.googleFileId + '/' + targetSz);
 
 			const blob = new Blob([Buffer.from(data.data) as unknown as ArrayBuffer], { type: 'image/jpeg' });
 			state.pendingDownload.readyPhotos.push({ photo, blob });
@@ -507,7 +397,7 @@ function restartDownload() {
 	if (!state.pendingDownload) return;
 	const download = state.pendingDownload;
 	state.pendingDownload = null;
-	startDownloadPhotos2(download.photosToDownload, download.res);
+	startDownloadPhotos(download.photosToDownload, download.res);
 }
 
 
@@ -571,7 +461,7 @@ async function loadDownloadLink() {
 							<template #trigger><Button icon="pi pi-download" text v-tooltip.bottom="'Download Gallery'" /></template>
 							<template #ref>
 								<div v-if="doClientActions" class="flex flex-column gap-3 w-20rem">
-									<Button class="justify-content-center" @click="startDownloadPhotos2(allPhotos, RESOLUTION.x1024)">Download Gallery</Button>
+									<Button class="justify-content-center" @click="startDownloadPhotos(allPhotos, RESOLUTION.x1024)">Download Gallery</Button>
 									<div>
 										<p>A .zip folder will be created with all {{ allPhotos.length }} photos at a web-compatible resolution.</p>
 										<p>This may take several minutes.</p>

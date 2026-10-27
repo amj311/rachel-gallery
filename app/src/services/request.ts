@@ -5,7 +5,7 @@ import { useUserStore } from "@/stores/user.store";
 const serverPort = import.meta.env.VITE_SERVER_PORT || 5000;
 
 const request = axios.create();
-const serverHost = process.env.NODE_ENV === 'development' ? `http://localhost:${serverPort}/api` : '/api';
+export const serverHost = process.env.NODE_ENV === 'development' ? `http://localhost:${serverPort}/api` : '/api';
 
 // async function discoverHost() {
 // 	if (process.env.NODE_ENV === 'development') {

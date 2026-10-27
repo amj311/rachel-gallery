@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import watermarkImage from '@/assets/images/watermark.png'
+import { serverHost } from '@/services/request';
 
 
 const canvas = ref<HTMLCanvasElement>();
@@ -134,6 +135,10 @@ function createObjectUrl() {
 	return objectUrl.value;
 }
 
+function photoUrl(photo, width) {
+	return serverHost + '/gallery/thumb/photo-google/' + photo.googleFileId + '/w' + width;
+}
+
 async function initPhoto() {
 	try {
 		state.isLoading = true;
@@ -142,15 +147,11 @@ async function initPhoto() {
 
 		if (needsInitialLoad) {
 			state.isLoadingHiRes = true;
-			await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['xs']}`);
-			await drawImage(`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${sizeWidths['sm']}`);
+			await drawImage(photoUrl(photo, sizeWidths['xs']));
+			await drawImage(photoUrl(photo, sizeWidths['sm']));
 		}
 		
-		await drawImage(isGooglePhoto ?
-			`https://drive.google.com/thumbnail?id=${photo.googleFileId}&sz=w${usingSize}`
-			:
-			createObjectUrl()
-		);
+		await drawImage(isGooglePhoto ? photoUrl(photo, usingSize) : createObjectUrl());
 		state.isLoadingHiRes = false;
 
 		if (watermark) {

@@ -257,7 +257,7 @@ export default (route, _, done) => {
 	// })
 
 
-	route.get('/:galleryId/photo-google/:googleFileId/:sz', async (request, reply) => {
+	route.get('/download/photo-google/:googleFileId/:sz', async (request, reply) => {
 		const { googleFileId, sz } = request.params;
 		// sz should be wX or hX
 		if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
@@ -267,6 +267,16 @@ export default (route, _, done) => {
 			success: true,
 			data: response.data,
 		}
+	})
+
+
+
+	route.get('/thumb/photo-google/:googleFileId/:sz', async (request, reply) => {
+		const { googleFileId, sz } = request.params;
+		// sz should be wX or hX
+		if (!sz || !(sz.startsWith('w') || sz.startsWith('h'))) throw new Error("invalid size parameter");
+
+		reply.redirect(`https://drive.google.com/thumbnail?id=${googleFileId}&sz=${sz}`)
 	})
 
 
